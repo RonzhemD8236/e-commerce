@@ -7,8 +7,7 @@ if (isset($_POST['submit'])) {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
 
-    // Query using user_id
-    $sql = "SELECT user_id, email, password, role FROM users WHERE email=? LIMIT 1";
+    $sql = "SELECT id, email, password, role FROM users WHERE email=? LIMIT 1";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -18,12 +17,12 @@ if (isset($_POST['submit'])) {
     if ($stmt->num_rows === 1) {
         $stmt->fetch();
 
+        // Verify password using password_verify
         if (password_verify($password, $hashed_password)) {
             $_SESSION['email'] = $user_email;
             $_SESSION['user_id'] = $user_id;
             $_SESSION['role'] = $role;
-
-            header("Location: ../index.php"); // Redirect to homepage after login
+            header("Location: ../index.php");
             exit();
         } else {
             $_SESSION['message'] = 'Wrong email or password';
@@ -34,19 +33,25 @@ if (isset($_POST['submit'])) {
 }
 ?>
 
-<div class="row col-md-8 mx-auto">
+<div class="row col-md-8 mx-auto ">
     <?php include("../includes/alert.php"); ?>
-    <form action="" method="POST">
-        <div class="mb-3">
-            <label>Email address</label>
-            <input type="email" name="email" class="form-control" required>
+    <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="POST">
+        <div class="form-outline mb-4">
+            <br>
+            <label class="form-label">Email address</label>
+            <input type="email" class="form-control" name="email" required />
         </div>
-        <div class="mb-3">
-            <label>Password</label>
-            <input type="password" name="password" class="form-control" required>
+
+        <div class="form-outline mb-4">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" name="password" required />
         </div>
-        <button type="submit" name="submit" class="btn btn-primary">Sign in</button>
-        <p class="mt-3">Not a member? <a href="register.php">Register</a></p>
+
+        <button type="submit" class="btn btn-primary btn-block mb-4" name="submit">Sign in</button>
+
+        <div class="text-center">
+            <p>Not a member? <a href="register.php">Register</a></p>
+        </div>
     </form>
 </div>
 

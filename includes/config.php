@@ -1,14 +1,11 @@
-<?php
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "cammerce_db";
+<?php 
+$db_host = "localhost:3306";
+$db_username = "root";
+$db_passwd = "";
 
-// Create connection
-$conn = new mysqli($host, $user, $pass, $dbname);
+$conn = mysqli_connect($db_host, $db_username, $db_passwd) or die("Could not connect!\n");
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+// echo "Connection established.\n";
+$db_name = "cammerce_db";
+mysqli_select_db($conn, $db_name) or die("Could not select the database $dbname!\n". mysqli_error($conn));
 ?>
