@@ -4,5 +4,4 @@ print "Hello sayo";
 ?>
 
 
-hellooo everyboy
-gvvtffdfdfdfrd
+yung aso ko ayaw kumain
