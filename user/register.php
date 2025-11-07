@@ -1,88 +1,70 @@
 <?php
-include("../includes/header.php");
+session_start();
 include("../includes/config.php");
+include("../includes/header.php");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
     $confirmPass = trim($_POST['confirmPass']);
 
-    // Validate fields
-    if (empty($email) || empty($password) || empty($confirmPass)) {
-        $_SESSION['error'] = "All fields are required.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['error'] = "Invalid email format.";
-    } elseif ($password !== $confirmPass) {
-        $_SESSION['error'] = "Passwords do not match.";
+    if ($password !== $confirmPass) {
+        $_SESSION['message'] = 'Passwords do not match';
+        header("Location: register.php");
+        exit();
+    }
+
+    $passwordHashed = password_hash($password, PASSWORD_DEFAULT);
+
+    // Insert new user
+    $sql = "INSERT INTO users (email, password, role) VALUES (?, ?, 'customer')";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $email, $passwordHashed);
+
+    if ($stmt->execute()) {
+        $userId = $stmt->insert_id;
+
+        // Insert blank profile
+        $sqlProfile = "INSERT INTO customer (user_id, fname, lname, phone, address, town, zipcode, image_path)
+                       VALUES (?, '', '', '', '', '', '', '')";
+        $stmtProfile = $conn->prepare($sqlProfile);
+        $stmtProfile->bind_param("i", $userId);
+        $stmtProfile->execute();
+
+        // Set session variables
+        $_SESSION['user_id'] = $userId;
+        $_SESSION['email'] = $email;
+        $_SESSION['role'] = 'customer';
+        $_SESSION['new_user'] = true; // Flag for profile page
+
+        // Redirect to profile to fill out details
+        header("Location: profile.php");
+        exit();
     } else {
-        // Check if email already exists in the database
-        $checkSql = "SELECT user_id FROM users WHERE email = ?";
-        $checkStmt = $conn->prepare($checkSql);
-        $checkStmt->bind_param("s", $email);
-        $checkStmt->execute();
-        $checkStmt->store_result();
-
-        if ($checkStmt->num_rows > 0) {
-            $_SESSION['error'] = "Email is already registered.";
-        } else {
-            // Hash password securely
-            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $role = "customer"; // Default role
-
-            // Insert new user into users table
-            $insertUserSql = "INSERT INTO users (email, password, role) VALUES (?, ?, ?)";
-            $insertUserStmt = $conn->prepare($insertUserSql);
-            $insertUserStmt->bind_param("sss", $email, $hashedPassword, $role);
-
-            if ($insertUserStmt->execute()) {
-                $userId = $conn->insert_id; // Get auto-generated user_id
-
-                // Insert blank customer profile for new user
-                $insertCustomerSql = "INSERT INTO customer (user_id, fname, lname, phone, address)
-                      VALUES (?, '', '', '', '')";
-                $insertCustomerStmt = $conn->prepare($insertCustomerSql);
-                $insertCustomerStmt->bind_param("i", $userId);
-                $insertCustomerStmt->execute();
-
-                // Log the user in automatically
-                $_SESSION['user_id'] = $userId;
-                $_SESSION['email'] = $email;
-                $_SESSION['role'] = $role;
-
-                // Redirect to profile setup instead of login
-                header("Location: ../user/profile.php");
-                exit();
-            } else {
-                $_SESSION['error'] = "Error creating account. Please try again.";
-            }
-        }
+        $_SESSION['message'] = 'Registration failed. Email may already be in use.';
+        header("Location: register.php");
+        exit();
     }
 }
 ?>
 
-<br>
-<div class="container-fluid container-lg">
+<div class="row col-md-8 mx-auto">
     <?php include("../includes/alert.php"); ?>
-    <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST">
+    <form action="" method="POST">
         <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required>
+            <label>Email</label>
+            <input type="email" name="email" class="form-control" required>
         </div>
-
         <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" id="password" name="password" required>
+            <label>Password</label>
+            <input type="password" name="password" class="form-control" required>
         </div>
-
         <div class="mb-3">
-            <label for="password2" class="form-label">Confirm Password</label>
-            <input type="password" class="form-control" id="password2" name="confirmPass" required>
+            <label>Confirm Password</label>
+            <input type="password" name="confirmPass" class="form-control" required>
         </div>
-
         <button type="submit" class="btn btn-primary">Register</button>
     </form>
 </div>
 
-<?php
-include("../includes/footer.php");
-?>
+<?php include("../includes/footer.php"); ?>
