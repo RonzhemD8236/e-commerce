@@ -1,3 +1,4 @@
+
 <?
 
 print "Hello sayo";
@@ -7,3 +8,6 @@ print "Hello sayo";
 yung aso ko ayaw kumain
 
 walang may pake 
+
+
+bigyan mo ng pake
