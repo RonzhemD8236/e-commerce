@@ -25,7 +25,7 @@ if (isset($_POST['submit'])) {
             if ($role === 'admin') {
                 header("Location: ../admin/dashboard.php");
             } else {
-                header("Location: ../shop.php");
+                header("Location: ../index.php");
             }
             exit();
         } else {

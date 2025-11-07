@@ -22,7 +22,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'customer') {
 $userId = $_SESSION['user_id'];
 
 // Fetch existing user profile
-$sql = "SELECT * FROM users WHERE user_id = ?";
+$sql = "SELECT u.user_id, u.email, c.fname, c.lname, c.phone, c.address 
+        FROM users u 
+        LEFT JOIN customer c ON u.user_id = c.user_id 
+        WHERE u.user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $userId);
 $stmt->execute();
@@ -59,20 +62,34 @@ if (isset($_POST['submit'])) {
         }
     }
 
-    // Update users table
-    $sql = "UPDATE users 
-            SET first_name=?, last_name=?, address=?, zip_code=?, contact_number=?, profile_photo=? 
+    $isNewProfile = empty($profile['fname']) && empty($profile['lname']);
+
+if ($stmt->execute()) {
+    $_SESSION['success'] = 'Profile saved successfully!';
+    if ($isNewProfile) {
+        header("Location:  ../index.php");
+    } else {
+        header("Location: profile.php");
+    }
+    exit;
+}
+
+
+    // Update customer table instead of users
+    $sql = "UPDATE customer 
+            SET fname=?, lname=?, address=?, phone=? 
             WHERE user_id=?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssssi", $fname, $lname, $address, $zipcode, $phone, $imagePath, $userId);
+    $stmt->bind_param("ssssi", $fname, $lname, $address, $phone, $userId);
 
     if ($stmt->execute()) {
-        $_SESSION['success'] = 'Profile saved successfully!';
-        header("Location: profile.php");
-        exit;
-    } else {
-        $_SESSION['error'] = 'Error saving profile.';
-    }
+    $_SESSION['success'] = 'Profile saved successfully!';
+    header("Location:  ../index.php"); // Redirect to homepage after setup
+    exit;
+} else {
+    $_SESSION['error'] = 'Error saving profile.';
+}
+
 }
 ?>
 
@@ -118,11 +135,11 @@ if (isset($_POST['submit'])) {
                         <div class="row gx-3 mb-3">
                             <div class="col-md-6">
                                 <label class="small mb-1">First name</label>
-                                <input class="form-control" type="text" name="fname" value="<?php echo htmlspecialchars($profile['first_name'] ?? ''); ?>">
+                                <input class="form-control" type="text" name="fname" value="<?php echo htmlspecialchars($profile['fname'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="small mb-1">Last name</label>
-                                <input class="form-control" type="text" name="lname" value="<?php echo htmlspecialchars($profile['last_name'] ?? ''); ?>">
+                                <input class="form-control" type="text" name="lname" value="<?php echo htmlspecialchars($profile['lname'] ?? ''); ?>">
                             </div>
                         </div>
 
@@ -133,14 +150,14 @@ if (isset($_POST['submit'])) {
                             </div>
                             <div class="col-md-6">
                                 <label class="small mb-1">Zip code</label>
-                                <input class="form-control" type="text" name="zipcode" value="<?php echo htmlspecialchars($profile['zip_code'] ?? ''); ?>">
+                                <input class="form-control" type="text" name="zipcode" value="<?php echo htmlspecialchars($zipcode ?? ''); ?>">
                             </div>
                         </div>
 
                         <div class="row gx-3 mb-3">
                             <div class="col-md-6">
                                 <label class="small mb-1">Phone number</label>
-                                <input class="form-control" type="tel" name="phone" value="<?php echo htmlspecialchars($profile['contact_number'] ?? ''); ?>">
+                                <input class="form-control" type="tel" name="phone" value="<?php echo htmlspecialchars($profile['phone'] ?? ''); ?>">
                             </div>
                         </div>
 

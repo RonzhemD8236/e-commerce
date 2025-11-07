@@ -44,9 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $insertCustomerStmt->bind_param("i", $userId);
                 $insertCustomerStmt->execute();
 
+                // Log the user in automatically
+                $_SESSION['user_id'] = $userId;
+                $_SESSION['email'] = $email;
+                $_SESSION['role'] = $role;
 
-                $_SESSION['success'] = "Registration successful! You can now log in.";
-                header("Location: login.php");
+                // Redirect to profile setup instead of login
+                header("Location: ../user/profile.php");
                 exit();
             } else {
                 $_SESSION['error'] = "Error creating account. Please try again.";

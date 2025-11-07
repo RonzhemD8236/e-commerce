@@ -52,7 +52,7 @@ session_start();
         </ul>
 
         <!-- SEARCH BAR -->
-        <form action="/Lensify/e-commerce/search.php" method="GET" class="d-flex flex-column align-items-start">
+        <!-- <form action="/Lensify/e-commerce/search.php" method="GET" class="d-flex flex-column align-items-start">
           <div class="d-flex w-100">
             <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" name="search">
             <button class="btn btn-outline-success" type="submit">Search</button>
@@ -61,7 +61,7 @@ session_start();
           <?php if (isset($_SESSION['email'])): ?>
             <p class="text-muted ms-1 mt-1"><?php echo htmlspecialchars($_SESSION['email']); ?></p>
           <?php endif; ?>
-        </form>
+        </form> -->
 
         <!-- LOGIN / LOGOUT -->
         <?php if (!isset($_SESSION['user_id'])): ?>
