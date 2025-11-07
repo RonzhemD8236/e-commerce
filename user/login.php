@@ -1,45 +1,25 @@
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        .container{
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
 
-        }
+<?
 
-        .item1{
-            grid-columns: span 2;
-        }
-
-    </style>
-</head>
-<body>
-
-<div class = "container">
-<div class ="item0">
-  <form action="">
-        <input type="text">
-    </form>
-</div>
-<div class="item1">
-  <form action="">
-<input type="text" value="tito boy">
-    </form>
-</div>
-
-<div class="item2">
-  <form action="">
-    <input type="text">
-    </form>
-</div>
-
-</div>
+print "Hello sayo";
+?>
 
 
-  
-</body>
-</html>
+yung aso ko ayaw kumain
+
+walang may pake 
+
+
+bigyan mo ng pake
+
+
+
+hiiiiiiiiiiiii  everybody
+
+
+
+psnget no kim
+
+<p>I like to creep around my home and act like a goblin
+
+I don’t know why but I just enjoy doing this. Maybe it’s my way of dealing with stress or something but I just do it about once every week. Generally I’ll carry around a sack and creep around in a sort of crouch-walking position making goblin noises, then I’ll walk around my house and pick up various different “trinkets” and put them in my bag while saying stuff like “I’ll be having that” and laughing maniacally in my goblin voice (“trinkets” can include anything from shit I find on the ground to cutlery or other utensils). The other day I was talking with my neighbours and they mentioned hearing weird noises like what I wrote about and I was just internally screaming the entire conversation. I’m 99% sure they don’t know it’s me but god that 1% chance is seriously weighing on my mind.</p>
