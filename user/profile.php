@@ -1,124 +1,174 @@
 <?php
-session_start();
-include('../includes/db_connect.php');
+// Include database connection
+include('../includes/config.php');
+include('../includes/header.php'); // for navbar
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
-    exit;
+    exit();
 }
 
-$user_id = $_SESSION['user_id'];
+// Redirect if the logged-in user is not a customer
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'customer') {
+    if ($_SESSION['role'] === 'admin') {
+        header("Location: ../admin/dashboard.php");
+    } else {
+        header("Location: login.php");
+    }
+    exit();
+}
 
-// Handle profile update
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $first_name = trim($_POST['first_name']);
-    $last_name = trim($_POST['last_name']);
-    $email = trim($_POST['email']);
-    $contact = trim($_POST['contact_number']);
+$userId = $_SESSION['user_id'];
+
+// Fetch existing user profile
+$sql = "SELECT * FROM users WHERE user_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$profile = $result->fetch_assoc();
+
+// Handle form submission
+if (isset($_POST['submit'])) {
+    $fname = trim($_POST['fname']);
+    $lname = trim($_POST['lname']);
     $address = trim($_POST['address']);
-    $zip_code = trim($_POST['zip_code']);
+    $zipcode = trim($_POST['zipcode']);
+    $phone = trim($_POST['phone']);
+    $imagePath = $profile['profile_photo'] ?? '';
 
-    // Handle profile photo upload
-    $profile_photo = $_POST['current_photo']; // keep current by default
-    if (!empty($_FILES['profile_photo']['name'])) {
-        $target_dir = "../uploads/profile_photos/";
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-        $filename = "user_" . $user_id . "_" . basename($_FILES["profile_photo"]["name"]);
-        $target_file = $target_dir . $filename;
+    // Handle image upload
+    if (!empty($_FILES['image']['name'])) {
+        $targetDir = "../uploads/";
+        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
 
-        if (move_uploaded_file($_FILES["profile_photo"]["tmp_name"], $target_file)) {
-            $profile_photo = $filename;
+        $fileName = time() . "_" . basename($_FILES["image"]["name"]);
+        $targetFile = $targetDir . $fileName;
+        $fileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+        $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
+
+        if (in_array($fileType, $allowedTypes) && $_FILES["image"]["size"] <= 5 * 1024 * 1024) {
+            if (move_uploaded_file($_FILES["image"]["tmp_name"], $targetFile)) {
+                $imagePath = "uploads/" . $fileName;
+            } else {
+                $_SESSION['error'] = "Error uploading image.";
+            }
+        } else {
+            $_SESSION['error'] = "Invalid file type or file too large.";
         }
     }
 
-    // Update query
-    $stmt = $conn->prepare("UPDATE users SET first_name=?, last_name=?, email=?, contact_number=?, address=?, zip_code=?, profile_photo=? WHERE user_id=?");
-    $stmt->bind_param("sssssssi", $first_name, $last_name, $email, $contact, $address, $zip_code, $profile_photo, $user_id);
+    // Update users table
+    $sql = "UPDATE users 
+            SET first_name=?, last_name=?, address=?, zip_code=?, contact_number=?, profile_photo=? 
+            WHERE user_id=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssssssi", $fname, $lname, $address, $zipcode, $phone, $imagePath, $userId);
 
     if ($stmt->execute()) {
-        $_SESSION['success'] = "Profile updated successfully!";
-        $_SESSION['full_name'] = $first_name . ' ' . $last_name;
+        $_SESSION['success'] = 'Profile saved successfully!';
         header("Location: profile.php");
         exit;
     } else {
-        $error = "Error updating profile. Try again.";
+        $_SESSION['error'] = 'Error saving profile.';
     }
 }
-
-// Fetch current user data
-$stmt = $conn->prepare("SELECT * FROM users WHERE user_id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My Profile | Lensify</title>
-    <link rel="stylesheet" href="../assets/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="bg-light">
-<div class="container mt-5 col-md-7">
-    <h2 class="text-center mb-4">My Profile</h2>
+<body>
+<div class="container-xl px-4 mt-4">
+    <?php include("../includes/alert.php"); ?>
 
-    <?php if (!empty($_SESSION['success'])) { echo "<div class='alert alert-success'>".$_SESSION['success']."</div>"; unset($_SESSION['success']); } ?>
-    <?php if (!empty($error)) echo "<div class='alert alert-danger'>$error</div>"; ?>
+    <nav class="nav nav-borders">
+        <a class="nav-link active ms-0">Profile</a>
+    </nav>
+    <hr class="mt-0 mb-4">
 
-    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm bg-white">
-        <div class="text-center mb-4">
-            <?php 
-            $photo = !empty($user['profile_photo']) ? "../uploads/profile_photos/".$user['profile_photo'] : "../assets/default-user.png"; 
-            ?>
-            <img src="<?php echo $photo; ?>" alt="Profile Photo" class="rounded-circle" width="120" height="120">
-            <div class="mt-2">
-                <input type="file" name="profile_photo" class="form-control">
-            </div>
-        </div>
-
-        <input type="hidden" name="current_photo" value="<?php echo htmlspecialchars($user['profile_photo']); ?>">
-
+    <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST" enctype="multipart/form-data">
         <div class="row">
-            <div class="col-md-6 mb-3">
-                <label>First Name</label>
-                <input type="text" name="first_name" class="form-control" value="<?php echo htmlspecialchars($user['first_name']); ?>" required>
+            <!-- Profile Picture -->
+            <div class="col-xl-4">
+                <div class="card mb-4 mb-xl-0">
+                    <div class="card-header">Profile Picture</div>
+                    <div class="card-body text-center">
+                        <img id="profilePreview" class="img-account-profile rounded-circle mb-2"
+                             src="<?php echo !empty($profile['profile_photo']) ? '../' . htmlspecialchars($profile['profile_photo']) : 'http://bootdey.com/img/Content/avatar/avatar1.png'; ?>"
+                             alt="Profile Image" width="200" height="200">
+                        <div class="small font-italic text-muted mb-4">JPG or PNG no larger than 5 MB</div>
+
+                        <input type="file" id="imageInput" name="image" accept=".jpg,.jpeg,.png,.gif" style="display: none;">
+                        <button class="btn btn-primary" type="button" id="uploadButton">Upload new image</button>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-6 mb-3">
-                <label>Last Name</label>
-                <input type="text" name="last_name" class="form-control" value="<?php echo htmlspecialchars($user['last_name']); ?>" required>
+
+            <!-- Account Details -->
+            <div class="col-xl-8">
+                <div class="card mb-4">
+                    <div class="card-header">Account Details</div>
+                    <div class="card-body">
+                        <div class="row gx-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="small mb-1">First name</label>
+                                <input class="form-control" type="text" name="fname" value="<?php echo htmlspecialchars($profile['first_name'] ?? ''); ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small mb-1">Last name</label>
+                                <input class="form-control" type="text" name="lname" value="<?php echo htmlspecialchars($profile['last_name'] ?? ''); ?>">
+                            </div>
+                        </div>
+
+                        <div class="row gx-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="small mb-1">Address</label>
+                                <input class="form-control" type="text" name="address" value="<?php echo htmlspecialchars($profile['address'] ?? ''); ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small mb-1">Zip code</label>
+                                <input class="form-control" type="text" name="zipcode" value="<?php echo htmlspecialchars($profile['zip_code'] ?? ''); ?>">
+                            </div>
+                        </div>
+
+                        <div class="row gx-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="small mb-1">Phone number</label>
+                                <input class="form-control" type="tel" name="phone" value="<?php echo htmlspecialchars($profile['contact_number'] ?? ''); ?>">
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" type="submit" name="submit">Save changes</button>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <div class="mb-3">
-            <label>Email Address</label>
-            <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>" required>
-        </div>
-
-        <div class="mb-3">
-            <label>Contact Number</label>
-            <input type="text" name="contact_number" class="form-control" value="<?php echo htmlspecialchars($user['contact_number']); ?>">
-        </div>
-
-        <div class="mb-3">
-            <label>Address</label>
-            <textarea name="address" class="form-control"><?php echo htmlspecialchars($user['address']); ?></textarea>
-        </div>
-
-        <div class="mb-3">
-            <label>Zip Code</label>
-            <input type="text" name="zip_code" class="form-control" value="<?php echo htmlspecialchars($user['zip_code']); ?>">
-        </div>
-
-        <button type="submit" class="btn btn-primary w-100">Update Profile</button>
-
-        <div class="text-center mt-3">
-            <a href="shop.php" class="btn btn-link">Back to Dashboard</a>
-            <a href="logout.php" class="btn btn-danger">Logout</a>
         </div>
     </form>
 </div>
+
+<script>
+// Open file picker when button is clicked
+document.getElementById('uploadButton').addEventListener('click', function() {
+    document.getElementById('imageInput').click();
+});
+
+// Show preview immediately after selecting a file
+document.getElementById('imageInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('profilePreview').src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+});
+</script>
 </body>
 </html>
