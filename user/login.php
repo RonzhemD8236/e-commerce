@@ -1,4 +1,4 @@
 <?
 
-print "Hello sayo";
+print "Hello LOSER";
 ?>
