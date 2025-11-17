@@ -1,0 +1,82 @@
+/* ----------------------------
+   Login Page Styles
+---------------------------- */
+
+/* General */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Body background removed - will be added per page as needed */
+
+/* Main content wrapper - RIGHT aligned */
+.main-content {
+    display: flex;
+    justify-content: flex-end; /* flex-start (left), center (center), flex-end (right) */
+    align-items: center;
+    min-height: calc(100vh - 70px);
+    padding-top: 20px;
+    padding-right: 50px; /* Spacing from right edge */
+}
+
+/* Login form container */
+.login-container {
+    background-color: rgba(255, 255, 255, 0.92);
+    padding: 40px 50px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.25);
+    
+    /* ⭐ WIDTH CONTROL */
+    width: 550px; /* Increased from 450px - Change to: 500px, 600px, 700px for even wider */
+    max-width: 90%; /* Responsive: takes 90% on smaller screens */
+    
+    /* ⭐ HEIGHT CONTROL (optional) */
+    min-height: auto; /* Change to: 500px, 600px, etc. for fixed minimum height */
+    height: auto; /* Default: adjusts to content. Change to fixed value if needed */
+}
+
+.login-container h3 {
+    font-weight: 600;
+    color: #333;
+}
+
+.login-container .form-label {
+    font-weight: 500;
+    color: #555;
+}
+
+.login-container .form-control {
+    border-radius: 8px;
+    padding: 10px 15px;
+}
+
+.login-container .btn-primary {
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: 600;
+}
+
+.login-container a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+.login-container a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-content {
+        justify-content: center; /* Center on mobile */
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+    
+    .login-container {
+        width: 100%; /* Full width on mobile */
+        padding: 30px 25px; /* Less padding on mobile */
+    }
+}
