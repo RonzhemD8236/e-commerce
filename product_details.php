@@ -145,7 +145,8 @@ body {
     background: #000000; /* solid black background */
     color: #ffffff; /* default text color white */
     margin: 0;
-    padding: 0;
+    body {
+    padding-top: 160px; /* adjust to match your header's actual height */
     font-family: Arial, sans-serif;
 }
 
@@ -154,13 +155,14 @@ body::after,
 body::before {
     display: none;
 }
-
-.main-content {
-    padding-top: 150px;
-    margin-top: 20px;
-    min-height: 100vh;
-    position: relative;
-    z-index: 1;
+/* Make sure your header has the right z-index */
+header, .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #000; /* or whatever your header background is */
 }
 
 /* Ensure product section maintains its position when review form opens */
@@ -310,20 +312,84 @@ body::before {
     background: transparent !important;
 }
 
+.main-content {
+    padding-top: 120px; /* Space for fixed header */
+    margin-top: 0;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+}
 
+.main-content {
+    padding-top: 180px !important; /* increase until nothing overlaps */
+}
+.product-row {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 60px;
+    align-items: stretch;
+}
+
+.product-image-col {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.product-details-col {
+    flex: 0 0 50%;
+    max-width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.image-slider {
+    width: 100%;
+    min-height: 400px;
+    height: 500px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.slider-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: opacity 0.5s ease;
+}
+
+@media (max-width: 768px) {
+    .product-row {
+        flex-direction: column;
+    }
+    
+    .product-image-col,
+    .product-details-col {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
 </style>
 
 <div class="main-content">
-<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 30px;">
-    <div class="row" style="margin-bottom: 60px; align-items: flex-end;">
-        <div class="col-md-6 pe-4 d-flex align-items-end">
-           <div class="image-slider position-relative" style="width:100%; min-height:400px; height:auto; overflow:hidden; border-radius:10px; background:transparent;">
+<div class="container" style="max-width: 1200px; margin: 1200 auto; padding: 50px 20px 100px 20px; margin-top: 400px;">
+    <!-- Product Section -->
+    <div class="product-row">
+        <!-- Image Slider Column -->
+        <div class="product-image-col">
+           <div class="image-slider">
                 <?php if (!empty($images)): ?>
                     <?php foreach ($images as $index => $img): ?>
                         <img src="<?php echo htmlspecialchars($img); ?>" 
                              class="slider-image" 
                              alt="Product Image <?php echo $index + 1; ?>"
-                             style="width:100%; height:100%; object-fit:contain; position:absolute; top:0; left:0; transition: opacity 0.5s ease; opacity:<?php echo $index === 0 ? 1 : 0; ?>;"
+                             style="opacity:<?php echo $index === 0 ? 1 : 0; ?>;"
                              onerror="this.style.display='none';">
                     <?php endforeach; ?>
                     
@@ -349,9 +415,9 @@ body::before {
             </div>
         </div>
 
-        <div class="col-md-6 ps-4 d-flex align-items-end">
-            <div style="width: 100%;">
-                <h2 style="font-size: 1.75rem; margin-bottom: 15px;"><?php echo htmlspecialchars($row['description']); ?></h2>
+        <!-- Product Details Column -->
+        <div class="product-details-col">
+            <h2 style="font-size: 1.75rem; margin-bottom: 15px;"><?php echo htmlspecialchars($row['description']); ?></h2>
             
             <?php if ($totalReviews > 0): ?>
             <div class="mb-2">
@@ -409,7 +475,6 @@ body::before {
                 <button type="button" onclick="submitCart()" class="btn btn-success">Add to Cart</button>
             </form>
             <?php endif; ?>
-            </div>
         </div>
     </div>
 
@@ -776,5 +841,5 @@ function deleteReview(reviewId) {
 }
 <?php endif; ?>
 </script>
-
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 <?php include('./includes/footer.php'); ?>
