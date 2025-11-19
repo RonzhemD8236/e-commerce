@@ -1,5 +1,10 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ../admin/login.php");
+    exit();
+}
 include('../includes/config.php');
 
 if (isset($_GET['id'])) {

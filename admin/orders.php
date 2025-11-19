@@ -1,22 +1,19 @@
 <?php
 session_start();
+
+// ✅ Authentication Check - Admin Only
+// Authentication: Admin Only
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ../admin/login.php");
+    exit();
+}
+
 include('header.php'); // Admin header
 include('../includes/config.php');
 
 // Secure query with prepared statement
-$sql = "SELECT 
-            o.orderinfo_id AS orderId, 
-            SUM(i.sell_price * ol.quantity) AS total, 
-            o.status,
-            o.payment_method,
-            o.shipping_method,
-            o.created_at
-        FROM orderinfo o 
-        INNER JOIN orderline ol USING (orderinfo_id) 
-        INNER JOIN item i USING (item_id)
-        GROUP BY o.orderinfo_id, o.status, o.payment_method, o.shipping_method, o.created_at
-        ORDER BY o.created_at DESC";
-
+$sql = "SELECT * FROM order_summary ORDER BY orderinfo_id DESC";
 $stmt = mysqli_prepare($conn, $sql);
 
 if (!$stmt) {
@@ -451,12 +448,13 @@ $itemCount = mysqli_num_rows($result);
             <?php
             if (mysqli_num_rows($result) > 0) {
                 while ($row = mysqli_fetch_assoc($result)) {
-                    $orderId = intval($row['orderId']);
-                    $total = floatval($row['total']);
-                    $status = htmlspecialchars($row['status']);
+                   $orderId = intval($row['orderinfo_id']);
+                    $total = floatval($row['grand_total']);
+                    $status = htmlspecialchars($row['order_status']);
                     $paymentMethod = htmlspecialchars($row['payment_method'] ?? 'N/A');
                     $shippingMethod = htmlspecialchars($row['shipping_method'] ?? 'N/A');
-                    $createdAt = htmlspecialchars($row['created_at']);
+                    $createdAt = htmlspecialchars($row['date_placed']);
+
                     
                     $statusLower = strtolower($status);
                     echo "<tr class='order-row' data-status='" . $statusLower . "'>";

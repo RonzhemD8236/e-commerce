@@ -1,5 +1,14 @@
 <?php
 session_start();
+
+// ✅ Authentication Check
+// Authentication: Admin Only
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ../admin/login.php");
+    exit();
+}
+
 include('../includes/header.php');
 include('../includes/config.php');
 
@@ -11,53 +20,48 @@ if ($orderId === 0) {
 
 $_SESSION['orderId'] = $orderId;
 
-// ✅ Query for customer/order info with profile image (PREPARED STATEMENT)
-$sql = "SELECT 
-            c.lname, c.fname, c.addressline, c.town, c.zipcode, c.phone, c.image_path,
-            o.orderinfo_id, o.status, o.date_placed, o.date_shipped
-        FROM customer c
-        INNER JOIN orderinfo o USING(customer_id)
-        WHERE o.orderinfo_id = ?
-        LIMIT 1";
+// ✅ Query using order_transaction_details view (PREPARED STATEMENT)
+$sql = "SELECT * FROM order_transaction_details WHERE orderinfo_id = ?";
 
 $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, "i", $orderId);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
-$customer = mysqli_fetch_assoc($result);
+
+// Get all order items
+$orderItems = [];
+$customer = null;
+while ($row = mysqli_fetch_assoc($result)) {
+    if ($customer === null) {
+        // Store customer and order info from first row
+        $customer = $row;
+    }
+    $orderItems[] = $row;
+}
 mysqli_stmt_close($stmt);
 
 if (!$customer) {
     die("Error: Order not found.");
 }
 
-// ✅ Set profile picture path
-$profilePicture = !empty($customer['image_path']) && file_exists("../uploads/" . $customer['image_path']) 
-    ? "../uploads/" . $customer['image_path'] 
-    : "../uploads/default-profile.png";
+// ✅ Set profile picture path - check both profile_img and customer_image_path
+$profilePicture = "../uploads/default-profile.png"; // Default
 
-// ✅ Query for order items (PREPARED STATEMENT)
-$sql = "SELECT 
-            i.description, 
-            ol.quantity, 
-            i.sell_price
-        FROM orderline ol
-        INNER JOIN item i USING(item_id)
-        WHERE ol.orderinfo_id = ?";
-
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $orderId);
-mysqli_stmt_execute($stmt);
-$items = mysqli_stmt_get_result($stmt);
+if (!empty($customer['profile_img']) && file_exists("../uploads/" . $customer['profile_img'])) {
+    $profilePicture = "../uploads/" . $customer['profile_img'];
+} elseif (!empty($customer['customer_image_path']) && file_exists("../uploads/" . $customer['customer_image_path'])) {
+    $profilePicture = "../uploads/" . $customer['customer_image_path'];
+}
 
 // ✅ Calculate status badge color
 $statusColors = [
     'Processing' => 'warning',
     'Delivered' => 'success',
     'Canceled' => 'danger',
-    'Pending' => 'secondary'
+    'Pending' => 'secondary',
+    'Shipped' => 'info'
 ];
-$badgeColor = $statusColors[$customer['status']] ?? 'secondary';
+$badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
 ?>
 
 <style>
@@ -172,6 +176,16 @@ $badgeColor = $statusColors[$customer['status']] ?? 'secondary';
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
+    
+    .info-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #e7f3ff;
+        color: #0066cc;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
 </style>
 
 <div class="container my-5">
@@ -182,7 +196,7 @@ $badgeColor = $statusColors[$customer['status']] ?? 'secondary';
                 <h2 class="mb-1">Order #<?= str_pad($customer['orderinfo_id'], 4, '0', STR_PAD_LEFT) ?></h2>
                 <p class="mb-0 opacity-75">Placed on <?= date('F j, Y', strtotime($customer['date_placed'])) ?></p>
             </div>
-            <span class="status-badge bg-<?= $badgeColor ?>"><?= htmlspecialchars($customer['status']) ?></span>
+            <span class="status-badge bg-<?= $badgeColor ?>"><?= htmlspecialchars($customer['order_status']) ?></span>
         </div>
         
         <div class="info-section">
@@ -193,18 +207,26 @@ $badgeColor = $statusColors[$customer['status']] ?? 'secondary';
                     <div class="d-flex align-items-start">
                         <img src="<?= htmlspecialchars($profilePicture) ?>" 
                              alt="Customer Profile" 
-                             class="rounded-circle profile-image me-3">
+                             class="rounded-circle profile-image me-3"
+                             onerror="this.src='../uploads/default-profile.png'">
                         <div class="flex-grow-1">
                             <div class="info-label">Full Name</div>
-                            <div class="info-value"><?= htmlspecialchars("{$customer['fname']} {$customer['lname']}") ?></div>
+                            <div class="info-value">
+                                <?= htmlspecialchars($customer['customer_name']) ?>
+                                <?php if (!empty($customer['username'])): ?>
+                                    <span class="info-badge">@<?= htmlspecialchars($customer['username']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <div class="info-label">Email Address</div>
+                            <div class="info-value"><?= htmlspecialchars($customer['customer_email']) ?></div>
                             
                             <div class="info-label">Contact Number</div>
-                            <div class="info-value"><?= htmlspecialchars($customer['phone']) ?></div>
+                            <div class="info-value"><?= htmlspecialchars($customer['customer_phone']) ?></div>
                             
                             <div class="info-label">Shipping Address</div>
                             <div class="info-value">
-                                <?= htmlspecialchars($customer['addressline']) ?><br>
-                                <?= htmlspecialchars($customer['town']) ?>, <?= htmlspecialchars($customer['zipcode']) ?>
+                                <?= nl2br(htmlspecialchars($customer['full_address'])) ?>
                             </div>
                         </div>
                     </div>
@@ -225,10 +247,11 @@ $badgeColor = $statusColors[$customer['status']] ?? 'secondary';
                         <?= $customer['date_shipped'] ? date('F j, Y', strtotime($customer['date_shipped'])) : '<span class="text-muted">Not yet shipped</span>' ?>
                     </div>
                     
-                    <div class="info-label">Order Status</div>
-                    <div class="info-value">
-                        <span class="badge bg-<?= $badgeColor ?> status-badge"><?= htmlspecialchars($customer['status']) ?></span>
-                    </div>
+                    <div class="info-label">Payment Method</div>
+                    <div class="info-value"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $customer['payment_method']))) ?></div>
+                    
+                    <div class="info-label">Shipping Method</div>
+                    <div class="info-value"><?= htmlspecialchars(ucwords($customer['shipping_method'])) ?></div>
                 </div>
             </div>
         </div>
@@ -244,31 +267,49 @@ $badgeColor = $statusColors[$customer['status']] ?? 'secondary';
                     <thead>
                         <tr>
                             <th>Item Description</th>
-                            <th class="text-center" style="width: 120px;">Quantity</th>
-                            <th class="text-end" style="width: 150px;">Unit Price</th>
-                            <th class="text-end" style="width: 150px;">Total</th>
+                            <th>Category</th>
+                            <th class="text-center" style="width: 100px;">Quantity</th>
+                            <th class="text-end" style="width: 130px;">Unit Price</th>
+                            <th class="text-end" style="width: 130px;">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
-                        $grandTotal = 0;
-                        while ($row = mysqli_fetch_assoc($items)) {
-                            $total = $row['sell_price'] * $row['quantity'];
-                            $grandTotal += $total;
+                        $itemsSubtotal = 0;
+                        foreach ($orderItems as $item) {
+                            $itemsSubtotal += $item['subtotal'];
                             echo "<tr>";
-                            echo "<td>" . htmlspecialchars($row['description']) . "</td>";
-                            echo "<td class='text-center'>{$row['quantity']}</td>";
-                            echo "<td class='text-end'>₱" . number_format($row['sell_price'], 2) . "</td>";
-                            echo "<td class='text-end'>₱" . number_format($total, 2) . "</td>";
+                            echo "<td>";
+                            echo "<strong>" . htmlspecialchars($item['item_name']) . "</strong>";
+                            if (!empty($item['item_short_desc'])) {
+                                echo "<br><small class='text-muted'>" . htmlspecialchars($item['item_short_desc']) . "</small>";
+                            }
+                            echo "</td>";
+                            echo "<td><span class='badge bg-light text-dark'>" . htmlspecialchars($item['item_category']) . "</span></td>";
+                            echo "<td class='text-center'>";
+                            echo $item['quantity'];
+                            if (!empty($item['available_stock'])) {
+                                echo "<br><small class='text-muted'>Stock: " . $item['available_stock'] . "</small>";
+                            }
+                            echo "</td>";
+                            echo "<td class='text-end'>₱" . number_format($item['item_price'], 2) . "</td>";
+                            echo "<td class='text-end'><strong>₱" . number_format($item['subtotal'], 2) . "</strong></td>";
                             echo "</tr>";
                         }
-                        mysqli_stmt_close($stmt);
                         ?>
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="3" class="text-end">Grand Total:</td>
-                            <td class="text-end">₱<?= number_format($grandTotal, 2) ?></td>
+                            <td colspan="4" class="text-end">Subtotal:</td>
+                            <td class="text-end">₱<?= number_format($itemsSubtotal, 2) ?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end">Shipping Fee:</td>
+                            <td class="text-end">₱<?= number_format($customer['shipping'], 2) ?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
+                            <td class="text-end"><strong>₱<?= number_format($itemsSubtotal + $customer['shipping'], 2) ?></strong></td>
                         </tr>
                     </tfoot>
                 </table>

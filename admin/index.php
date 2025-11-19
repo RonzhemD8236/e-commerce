@@ -1,10 +1,15 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ../admin/login.php");
+    exit();
+}
 include('../admin/header.php');
 include('../includes/config.php');
 
 // Make sure the current user ID is set
-$currentUserId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
+$currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 
 // Determine if a role filter is applied
 $roleFilter = isset($_GET['role']) ? $_GET['role'] : '';
@@ -26,7 +31,7 @@ $sql = "
 $params = [];
 $types = "";
 
-// Add role filter if applied
+// Add role filter if applied (with validation)
 if ($roleFilter === 'customer') {
     $sql .= " AND u.role = ?";
     $params[] = 'customer';
@@ -58,12 +63,19 @@ $sql .= " ORDER BY u.id ASC";
 // Prepare and execute statement
 $stmt = mysqli_prepare($conn, $sql);
 
+if (!$stmt) {
+    die("Prepare failed: " . mysqli_error($conn));
+}
+
 if (!empty($params)) {
     // Dynamically bind parameters
     mysqli_stmt_bind_param($stmt, $types, ...$params);
 }
 
-mysqli_stmt_execute($stmt);
+if (!mysqli_stmt_execute($stmt)) {
+    die("Execute failed: " . mysqli_stmt_error($stmt));
+}
+
 $result = mysqli_stmt_get_result($stmt);
 ?>
 
@@ -327,7 +339,7 @@ $result = mysqli_stmt_get_result($stmt);
     color: white;
 }
 
-/* Page Layout - FIXED */
+/* Page Layout */
 body {
     display: flex;
     flex-direction: column;
@@ -358,7 +370,6 @@ body {
 </style>
 <body>
     
-
 <div class="content-wrapper">
     <div class="content-inner">
         <!-- Hero Banner -->
@@ -377,7 +388,7 @@ body {
                     <input 
                         type="text" 
                         name="search" 
-                        placeholder="Search by name..." 
+                        placeholder="Search by name, username, or email..." 
                         value="<?= htmlspecialchars($searchQuery) ?>"
                     >
                 </form>
@@ -429,16 +440,16 @@ body {
                             }
 
                             $email = !empty($row['email']) ? $row['email'] : '-';
-                            $createdAt = !empty($row['created_at']) ? date('Y-m-d H:i:s', strtotime($row['created_at'])) : '-';
+                            $createdAt = !empty($row['created_at']) ? date('M d, Y g:i A', strtotime($row['created_at'])) : '-';
                             $rowClass = !$row['active'] ? 'inactive' : '';
                             ?>
                             <tr class="<?= $rowClass ?>">
-                                <td><?= $row['id'] ?></td>
+                                <td><?= (int)$row['id'] ?></td>
                                 <td><strong><?= htmlspecialchars($displayName) ?></strong></td>
                                 <td><?= htmlspecialchars($email) ?></td>
                                 <td>
-                                    <span class="role-badge role-<?= $row['role'] ?>">
-                                        <?= htmlspecialchars($row['role']) ?>
+                                    <span class="role-badge role-<?= htmlspecialchars($row['role']) ?>">
+                                        <?= htmlspecialchars(ucfirst($row['role'])) ?>
                                     </span>
                                 </td>
                                 <td>
@@ -450,23 +461,23 @@ body {
                                 <td>
                                     <div class="action-buttons">
                                         <?php if ($row['active']): ?>
-                                            <a href="edit.php?id=<?= $row['id'] ?>" class="btn-edit">Edit</a>
+                                            <a href="edit.php?id=<?= (int)$row['id'] ?>" class="btn-edit">Edit</a>
                                         <?php else: ?>
                                             <button class="btn-disabled" disabled>Edit</button>
                                         <?php endif; ?>
 
                                         <?php if ($row['active']): ?>
                                             <?php if ($row['id'] != $currentUserId): ?>
-                                                <a href="toggle_status.php?id=<?= $row['id'] ?>" 
+                                                <a href="toggle_status.php?id=<?= (int)$row['id'] ?>" 
                                                    class="btn-deactivate" 
                                                    onclick="return confirm('Are you sure you want to deactivate this user?');">
                                                     Deactivate
                                                 </a>
                                             <?php else: ?>
-                                                <button class="btn-disabled" disabled>Deactivate</button>
+                                                <button class="btn-disabled" disabled title="You cannot deactivate yourself">Deactivate</button>
                                             <?php endif; ?>
                                         <?php else: ?>
-                                            <a href="toggle_status.php?id=<?= $row['id'] ?>" 
+                                            <a href="toggle_status.php?id=<?= (int)$row['id'] ?>" 
                                                class="btn-activate" 
                                                onclick="return confirm('Are you sure you want to activate this user?');">
                                                 Activate
@@ -479,7 +490,11 @@ body {
                     <?php else: ?>
                         <tr>
                             <td colspan="7" style="text-align: center; padding: 40px; color: #6b7280;">
-                                No users found matching your criteria.
+                                <?php if (!empty($searchQuery)): ?>
+                                    No users found matching "<?= htmlspecialchars($searchQuery) ?>".
+                                <?php else: ?>
+                                    No users found.
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endif; ?>

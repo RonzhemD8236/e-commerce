@@ -5,7 +5,8 @@ include('header.php'); // Make sure this is correct path
 
 // ✅ Restrict access to admins only
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../user/login.php");
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ../admin/login.php");
     exit();
 }
 
