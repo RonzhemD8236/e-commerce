@@ -48,6 +48,14 @@ $checkSql = "SELECT o.orderinfo_id, c.email, c.fname, c.lname
              INNER JOIN customer c USING(customer_id)
              WHERE o.orderinfo_id = ?";
 $checkStmt = mysqli_prepare($conn, $checkSql);
+
+if (!$checkStmt) {
+    $_SESSION['message'] = 'Database error: ' . mysqli_error($conn);
+    $_SESSION['message_type'] = 'danger';
+    header("Location: orders.php");
+    exit();
+}
+
 mysqli_stmt_bind_param($checkStmt, "i", $orderId);
 mysqli_stmt_execute($checkStmt);
 $checkResult = mysqli_stmt_get_result($checkStmt);
@@ -68,6 +76,14 @@ mysqli_stmt_close($checkStmt);
 // Update the order status
 $sql = "UPDATE orderinfo SET status = ?, updated_at = NOW() WHERE orderinfo_id = ?";
 $stmt = mysqli_prepare($conn, $sql);
+
+if (!$stmt) {
+    $_SESSION['message'] = 'Database error: ' . mysqli_error($conn);
+    $_SESSION['message_type'] = 'danger';
+    header("Location: orders.php");
+    exit();
+}
+
 mysqli_stmt_bind_param($stmt, "si", $status, $orderId);
 
 if (mysqli_stmt_execute($stmt)) {
@@ -77,21 +93,23 @@ if (mysqli_stmt_execute($stmt)) {
                           SET date_shipped = CURDATE() 
                           WHERE orderinfo_id = ? AND date_shipped IS NULL";
         $shipStmt = mysqli_prepare($conn, $updateShipDate);
-        mysqli_stmt_bind_param($shipStmt, "i", $orderId);
-        mysqli_stmt_execute($shipStmt);
-        mysqli_stmt_close($shipStmt);
+        
+        if ($shipStmt) {
+            mysqli_stmt_bind_param($shipStmt, "i", $orderId);
+            mysqli_stmt_execute($shipStmt);
+            mysqli_stmt_close($shipStmt);
+        }
     }
     
-    // ========== SEND EMAIL NOTIFICATION ==========
+    // Send email notification
     $emailSent = sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $customerName);
     
-    // FIXED: Set different message types based on email status
     if ($emailSent) {
         $_SESSION['message'] = "Order #$orderId status updated to '$status' and email sent successfully";
         $_SESSION['message_type'] = 'success';
     } else {
         $_SESSION['message'] = "Order #$orderId status updated to '$status' but email failed to send";
-        $_SESSION['message_type'] = 'warning'; // Changed from 'success' to 'warning'
+        $_SESSION['message_type'] = 'warning';
     }
 } else {
     $_SESSION['message'] = 'Error updating order: ' . mysqli_error($conn);
@@ -109,7 +127,7 @@ exit();
  */
 function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $customerName) {
     try {
-        // Get order items
+        // Get order items using prepared statement
         $itemsSql = "SELECT 
                         i.description, 
                         ol.quantity, 
@@ -120,6 +138,11 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
                      WHERE ol.orderinfo_id = ?";
         
         $itemsStmt = mysqli_prepare($conn, $itemsSql);
+        if (!$itemsStmt) {
+            error_log("Failed to prepare items query: " . mysqli_error($conn));
+            return false;
+        }
+        
         mysqli_stmt_bind_param($itemsStmt, "i", $orderId);
         mysqli_stmt_execute($itemsStmt);
         $itemsResult = mysqli_stmt_get_result($itemsStmt);
@@ -135,7 +158,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
             $itemsHtml .= "
             <tr>
                 <td style='padding: 12px; border-bottom: 1px solid #eee;'>" . htmlspecialchars($item['description']) . "</td>
-                <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: center;'>" . $item['quantity'] . "</td>
+                <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: center;'>" . intval($item['quantity']) . "</td>
                 <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: right;'>₱" . number_format($item['sell_price'], 2) . "</td>
                 <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: right;'>₱" . number_format($itemTotal, 2) . "</td>
             </tr>";
@@ -165,7 +188,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         
         $statusColor = $statusColors[$status] ?? '#6c757d';
         
-        // Get delivery information from database
+        // Get delivery information using prepared statement
         $deliveryInfoSql = "SELECT 
                                 o.created_at,
                                 o.shipping,
@@ -181,17 +204,27 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
                             WHERE o.orderinfo_id = ?";
         
         $deliveryStmt = mysqli_prepare($conn, $deliveryInfoSql);
+        if (!$deliveryStmt) {
+            error_log("Failed to prepare delivery info query: " . mysqli_error($conn));
+            return false;
+        }
+        
         mysqli_stmt_bind_param($deliveryStmt, "i", $orderId);
         mysqli_stmt_execute($deliveryStmt);
         $deliveryResult = mysqli_stmt_get_result($deliveryStmt);
         $deliveryInfo = mysqli_fetch_assoc($deliveryResult);
         mysqli_stmt_close($deliveryStmt);
         
+        if (!$deliveryInfo) {
+            error_log("Delivery info not found for order: $orderId");
+            return false;
+        }
+        
         $orderDate = date('F j, Y g:i A', strtotime($deliveryInfo['created_at']));
-        $shippingMethod = 'Standard Delivery'; // Default since not in database
-        $paymentMethod = 'Cash on Delivery'; // Default since not in database
-        $deliveryName = $deliveryInfo['fname'] . ' ' . $deliveryInfo['lname'];
-        $deliveryPhone = $deliveryInfo['phone'] ?? 'N/A';
+        $shippingMethod = 'Standard Delivery';
+        $paymentMethod = 'Cash on Delivery';
+        $deliveryName = htmlspecialchars($deliveryInfo['fname'] . ' ' . $deliveryInfo['lname']);
+        $deliveryPhone = htmlspecialchars($deliveryInfo['phone'] ?? 'N/A');
         
         // Build full address from customer table
         $addressParts = array_filter([
@@ -200,12 +233,12 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
             $deliveryInfo['state'],
             $deliveryInfo['zipcode']
         ]);
-        $deliveryAddress = !empty($addressParts) ? implode(', ', $addressParts) : 'N/A';
+        $deliveryAddress = !empty($addressParts) ? htmlspecialchars(implode(', ', $addressParts)) : 'N/A';
         
-        // Calculate shipping fee from database or use default
-        $shippingFee = $deliveryInfo['shipping'] ?? 50.00;
+        // Calculate shipping fee
+        $shippingFee = floatval($deliveryInfo['shipping'] ?? 50.00);
         
-        // Email HTML template matching order confirmation style EXACTLY
+        // Email HTML template
         $emailBody = "
         <!DOCTYPE html>
         <html>
@@ -288,10 +321,9 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         </body>
         </html>";
         
-        // Configure PHPMailer with Mailtrap
+        // Configure PHPMailer
         $mail = new PHPMailer(true);
         
-        // Mailtrap SMTP settings
         $mail->isSMTP();
         $mail->Host = 'sandbox.smtp.mailtrap.io';
         $mail->SMTPAuth = true;
@@ -300,7 +332,6 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 2525;
         
-        // Email settings
         $mail->setFrom('noreply@lensify.com', 'Lensify');
         $mail->addAddress($customerEmail, $customerName);
         

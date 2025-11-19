@@ -12,7 +12,7 @@ $roleFilter = isset($_GET['role']) ? $_GET['role'] : '';
 // Get search query if exists
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Fetch all users + customer info (if they exist)
+// Base SQL query with prepared statement
 $sql = "
     SELECT 
         u.id, u.username, u.email, u.role, u.active, u.created_at,
@@ -22,26 +22,49 @@ $sql = "
     WHERE 1=1
 ";
 
+// Prepare parameters array
+$params = [];
+$types = "";
+
 // Add role filter if applied
 if ($roleFilter === 'customer') {
-    $sql .= " AND u.role = 'customer'";
+    $sql .= " AND u.role = ?";
+    $params[] = 'customer';
+    $types .= "s";
 } elseif ($roleFilter === 'admin') {
-    $sql .= " AND u.role = 'admin'";
+    $sql .= " AND u.role = ?";
+    $params[] = 'admin';
+    $types .= "s";
 }
 
 // Add search filter if exists
 if (!empty($searchQuery)) {
-    $searchEscaped = mysqli_real_escape_string($conn, $searchQuery);
+    $searchPattern = "%$searchQuery%";
     $sql .= " AND (
-        u.username LIKE '%$searchEscaped%' OR
-        u.email LIKE '%$searchEscaped%' OR
-        c.fname LIKE '%$searchEscaped%' OR
-        c.lname LIKE '%$searchEscaped%'
+        u.username LIKE ? OR
+        u.email LIKE ? OR
+        c.fname LIKE ? OR
+        c.lname LIKE ?
     )";
+    $params[] = $searchPattern;
+    $params[] = $searchPattern;
+    $params[] = $searchPattern;
+    $params[] = $searchPattern;
+    $types .= "ssss";
 }
 
 $sql .= " ORDER BY u.id ASC";
-$result = mysqli_query($conn, $sql);
+
+// Prepare and execute statement
+$stmt = mysqli_prepare($conn, $sql);
+
+if (!empty($params)) {
+    // Dynamically bind parameters
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
+}
+
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 
 <style>
@@ -321,16 +344,15 @@ body {
 }
 
 .content-inner {
-    padding: 20px 40px 0 40px; /* Removed bottom padding */
+    padding: 20px 40px 0 40px;
 }
 
-/* Remove any margin from the last element before footer */
 .users-table {
     background: white;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    margin-bottom: 0; /* Ensure no bottom margin */
+    margin-bottom: 0;
 }
 
 </style>
@@ -467,5 +489,7 @@ body {
     </div>
 </div>
 
-<?php include('../includes/footer.php'); ?>
-
+<?php 
+mysqli_stmt_close($stmt);
+include('../includes/footer.php'); 
+?>

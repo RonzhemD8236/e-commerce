@@ -3,7 +3,7 @@ session_start();
 include('header.php'); // Admin header
 include('../includes/config.php');
 
-// ---------- UPDATED SQL: include payment_method and shipping_method ----------
+// Secure query with prepared statement
 $sql = "SELECT 
             o.orderinfo_id AS orderId, 
             SUM(i.sell_price * ol.quantity) AS total, 
@@ -14,10 +14,17 @@ $sql = "SELECT
         FROM orderinfo o 
         INNER JOIN orderline ol USING (orderinfo_id) 
         INNER JOIN item i USING (item_id)
-        GROUP BY o.orderinfo_id
+        GROUP BY o.orderinfo_id, o.status, o.payment_method, o.shipping_method, o.created_at
         ORDER BY o.created_at DESC";
 
-$result = mysqli_query($conn, $sql);
+$stmt = mysqli_prepare($conn, $sql);
+
+if (!$stmt) {
+    die("Database error: " . mysqli_error($conn));
+}
+
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 $itemCount = mysqli_num_rows($result);
 
 ?>
@@ -171,7 +178,7 @@ $itemCount = mysqli_num_rows($result);
     color: #92400e;
 }
 
-.status-cancelled {
+.status-cancelled, .status-canceled {
     background-color: #fee2e2;
     color: #991b1b;
 }
@@ -399,7 +406,7 @@ $itemCount = mysqli_num_rows($result);
                 placeholder="Search by order ID..." 
             >
         </div>
-        <div class="btn-add-order" style="cursor: default;">Total Orders: <?php echo $itemCount; ?></div>
+        <div class="btn-add-order" style="cursor: default;">Total Orders: <?php echo intval($itemCount); ?></div>
     </div>
 
     <?php include("../includes/alert.php"); ?>
@@ -444,20 +451,27 @@ $itemCount = mysqli_num_rows($result);
             <?php
             if (mysqli_num_rows($result) > 0) {
                 while ($row = mysqli_fetch_assoc($result)) {
-                    echo "<tr class='order-row' data-status='" . strtolower($row['status']) . "'>";
-                    echo "<td>" . htmlspecialchars($row['orderId']) . "</td>";
-                    echo "<td><strong>₱" . number_format($row['total'], 2) . "</strong></td>";
-                    echo "<td>" . htmlspecialchars($row['payment_method']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['shipping_method']) . "</td>";
+                    $orderId = intval($row['orderId']);
+                    $total = floatval($row['total']);
+                    $status = htmlspecialchars($row['status']);
+                    $paymentMethod = htmlspecialchars($row['payment_method'] ?? 'N/A');
+                    $shippingMethod = htmlspecialchars($row['shipping_method'] ?? 'N/A');
+                    $createdAt = htmlspecialchars($row['created_at']);
+                    
+                    $statusLower = strtolower($status);
+                    echo "<tr class='order-row' data-status='" . $statusLower . "'>";
+                    echo "<td>" . $orderId . "</td>";
+                    echo "<td><strong>₱" . number_format($total, 2) . "</strong></td>";
+                    echo "<td>" . $paymentMethod . "</td>";
+                    echo "<td>" . $shippingMethod . "</td>";
                     
                     // Status badge
-                    $statusLower = strtolower($row['status']);
                     $statusClass = 'status-pending';
                     $statusText = ucfirst($statusLower);
                     
                     if ($statusLower === 'delivered') {
                         $statusClass = 'status-delivered';
-                    } elseif ($statusLower === 'cancelled') {
+                    } elseif ($statusLower === 'cancelled' || $statusLower === 'canceled') {
                         $statusClass = 'status-cancelled';
                     } elseif ($statusLower === 'processing') {
                         $statusClass = 'status-processing';
@@ -466,13 +480,13 @@ $itemCount = mysqli_num_rows($result);
                     }
                     
                     echo "<td><span class='status-badge {$statusClass}'>{$statusText}</span></td>";
-                    echo "<td>" . date('Y-m-d H:i:s', strtotime($row['created_at'])) . "</td>";
+                    echo "<td>" . date('Y-m-d H:i:s', strtotime($createdAt)) . "</td>";
                     
-                    // Actions
+                    // Actions - properly escaped
                     echo "<td>
                             <div class='action-buttons'>
-                                <a href='orderDetails.php?orderinfo_id={$row['orderId']}' class='btn-view'>View</a>
-                                <button class='btn-update' onclick='openUpdateModal({$row['orderId']}, \"" . htmlspecialchars($row['status']) . "\")'>Update</button>
+                                <a href='orderDetails.php?orderinfo_id=" . $orderId . "' class='btn-view'>View</a>
+                                <button class='btn-update' onclick='openUpdateModal(" . $orderId . ", \"" . addslashes($status) . "\")'>Update</button>
                             </div>
                           </td>";
                     
@@ -485,6 +499,9 @@ $itemCount = mysqli_num_rows($result);
                         </td>
                       </tr>";
             }
+            
+            mysqli_stmt_close($stmt);
+            mysqli_close($conn);
             ?>
             </tbody>
         </table>
@@ -541,7 +558,7 @@ window.onclick = function(event) {
     }
 }
 
-// Tab filtering - FIXED VERSION
+// Tab filtering
 document.querySelectorAll('.order-tab').forEach(tab => {
     tab.addEventListener('click', function() {
         // Update active tab styling
