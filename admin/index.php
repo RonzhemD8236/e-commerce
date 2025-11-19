@@ -27,6 +27,7 @@ $sql = "
     WHERE 1=1
 ";
 
+$params = array();
 // Prepare parameters array
 $params = [];
 $types = "";

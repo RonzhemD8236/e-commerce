@@ -68,7 +68,11 @@ if (!empty($errors)) {
 }
 
 // Check if item exists
-$checkItem = mysqli_query($conn, "SELECT item_id FROM item WHERE item_id = $itemId");
+$sql = "SELECT item_id FROM item WHERE item_id = ?";
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $itemId);
+mysqli_stmt_execute($stmt);
+$checkItem = mysqli_stmt_get_result($stmt);
 if (!$checkItem || mysqli_num_rows($checkItem) == 0) {
     echo json_encode(array('success' => false, 'message' => 'Product not found.'));
     exit;

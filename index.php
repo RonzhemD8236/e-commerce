@@ -547,10 +547,12 @@ body {
                 <div class="products-grid" id="productsGrid">
                 <?php
                 $sql = "SELECT i.item_id AS itemId, i.description AS item_name, i.image_path, i.sell_price, s.quantity AS stock
-                        FROM item i
-                        INNER JOIN stock s USING(item_id)
-                        ORDER BY i.item_id ASC";
-                $results = mysqli_query($conn, $sql);
+                            FROM item i
+                            INNER JOIN stock s USING(item_id)
+                            ORDER BY i.item_id ASC";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->execute();
+                    $results = $stmt->get_result();
 
                 if ($results) {
                     while ($row = mysqli_fetch_assoc($results)) {

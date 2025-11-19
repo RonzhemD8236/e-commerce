@@ -150,7 +150,7 @@ include('../includes/config.php');
                         </small>
                     <?php endif; ?>
                 </label>
-                <input type="number"
+                <input type="text"
                        class="form-control"
                        id="qty"
                        placeholder="1"

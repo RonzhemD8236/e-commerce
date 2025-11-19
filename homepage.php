@@ -13,7 +13,9 @@ $sql = "
     ORDER BY i.created_at DESC
     LIMIT 3
 ";
-$products = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$products = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
