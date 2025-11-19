@@ -68,7 +68,11 @@ if (!empty($errors)) {
 }
 
 // Check if item exists
-$checkItem = mysqli_query($conn, "SELECT item_id FROM item WHERE item_id = $itemId");
+$sql = "SELECT item_id FROM item WHERE item_id = ?";
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $itemId);
+mysqli_stmt_execute($stmt);
+$checkItem = mysqli_stmt_get_result($stmt);
 if (!$checkItem || mysqli_num_rows($checkItem) == 0) {
     echo json_encode(array('success' => false, 'message' => 'Product not found.'));
     exit;
@@ -103,10 +107,11 @@ if ($reviewId > 0) {
     }
 } else {
     // Check if customer already reviewed this product
-    $checkExisting = mysqli_query($conn, 
-        "SELECT review_id FROM reviews WHERE customer_id = $customerId AND item_id = $itemId"
-    );
-    
+    $sql = "SELECT review_id FROM reviews WHERE customer_id = ? AND item_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $customerId, $itemId);
+        mysqli_stmt_execute($stmt);
+        $checkExisting = mysqli_stmt_get_result($stmt);
     if ($checkExisting && mysqli_num_rows($checkExisting) > 0) {
         echo json_encode(array('success' => false, 'message' => 'You have already reviewed this product. You can edit your existing review.'));
         exit;

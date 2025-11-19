@@ -21,11 +21,14 @@ $sql = "
     SELECT i.*, s.quantity AS stock 
     FROM item i
     LEFT JOIN stock s ON i.item_id = s.item_id
-    WHERE i.item_id = $itemId
+    WHERE i.item_id = ?
     LIMIT 1
 ";
 
-$result = mysqli_query($conn, $sql);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $itemId);
+$stmt->execute();
+$result = $stmt->get_result();
 
 if (!$result || mysqli_num_rows($result) == 0) {
     echo "<script>alert('Product not found.'); window.location.href='index.php';</script>";

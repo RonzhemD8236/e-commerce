@@ -19,9 +19,12 @@ $item_id = intval($_GET['id']);
 $sql = "SELECT item.*, stock.quantity 
         FROM item 
         LEFT JOIN stock USING (item_id) 
-        WHERE item.item_id = $item_id";
+        WHERE item.item_id = ?";
 
-$result = mysqli_query($conn, $sql);
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $item_id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 
 if (mysqli_num_rows($result) == 0) {
     echo "<script>
