@@ -12,6 +12,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 include('header.php'); // Admin header
 include('../includes/config.php');
 
+<<<<<<< Updated upstream
 // Secure query with prepared statement
 $sql = "SELECT * FROM order_summary ORDER BY orderinfo_id DESC";
 $stmt = mysqli_prepare($conn, $sql);
@@ -22,6 +23,25 @@ if (!$stmt) {
 
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
+=======
+// ---------- UPDATED SQL: include payment_method and shipping_method ----------
+$sql = "SELECT 
+            o.orderinfo_id AS orderId, 
+            SUM(i.sell_price * ol.quantity) AS total, 
+            o.status,
+            o.payment_method,
+            o.shipping_method,
+            o.created_at
+        FROM orderinfo o 
+        INNER JOIN orderline ol USING (orderinfo_id) 
+        INNER JOIN item i USING (item_id)
+        GROUP BY o.orderinfo_id
+        ORDER BY o.created_at DESC";
+
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$result = $stmt->get_result();
+>>>>>>> Stashed changes
 $itemCount = mysqli_num_rows($result);
 
 ?>
@@ -175,7 +195,7 @@ $itemCount = mysqli_num_rows($result);
     color: #92400e;
 }
 
-.status-cancelled, .status-canceled {
+.status-cancelled {
     background-color: #fee2e2;
     color: #991b1b;
 }
@@ -403,7 +423,7 @@ $itemCount = mysqli_num_rows($result);
                 placeholder="Search by order ID..." 
             >
         </div>
-        <div class="btn-add-order" style="cursor: default;">Total Orders: <?php echo intval($itemCount); ?></div>
+        <div class="btn-add-order" style="cursor: default;">Total Orders: <?php echo $itemCount; ?></div>
     </div>
 
     <?php include("../includes/alert.php"); ?>
@@ -448,6 +468,7 @@ $itemCount = mysqli_num_rows($result);
             <?php
             if (mysqli_num_rows($result) > 0) {
                 while ($row = mysqli_fetch_assoc($result)) {
+<<<<<<< Updated upstream
                    $orderId = intval($row['orderinfo_id']);
                     $total = floatval($row['grand_total']);
                     $status = htmlspecialchars($row['order_status']);
@@ -462,14 +483,22 @@ $itemCount = mysqli_num_rows($result);
                     echo "<td><strong>₱" . number_format($total, 2) . "</strong></td>";
                     echo "<td>" . $paymentMethod . "</td>";
                     echo "<td>" . $shippingMethod . "</td>";
+=======
+                    echo "<tr class='order-row' data-status='" . strtolower($row['status']) . "'>";
+                    echo "<td>" . htmlspecialchars($row['orderId']) . "</td>";
+                    echo "<td><strong>₱" . number_format($row['total'], 2) . "</strong></td>";
+                    echo "<td>" . htmlspecialchars($row['payment_method']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['shipping_method']) . "</td>";
+>>>>>>> Stashed changes
                     
                     // Status badge
+                    $statusLower = strtolower($row['status']);
                     $statusClass = 'status-pending';
                     $statusText = ucfirst($statusLower);
                     
                     if ($statusLower === 'delivered') {
                         $statusClass = 'status-delivered';
-                    } elseif ($statusLower === 'cancelled' || $statusLower === 'canceled') {
+                    } elseif ($statusLower === 'cancelled') {
                         $statusClass = 'status-cancelled';
                     } elseif ($statusLower === 'processing') {
                         $statusClass = 'status-processing';
@@ -478,13 +507,13 @@ $itemCount = mysqli_num_rows($result);
                     }
                     
                     echo "<td><span class='status-badge {$statusClass}'>{$statusText}</span></td>";
-                    echo "<td>" . date('Y-m-d H:i:s', strtotime($createdAt)) . "</td>";
+                    echo "<td>" . date('Y-m-d H:i:s', strtotime($row['created_at'])) . "</td>";
                     
-                    // Actions - properly escaped
+                    // Actions
                     echo "<td>
                             <div class='action-buttons'>
-                                <a href='orderDetails.php?orderinfo_id=" . $orderId . "' class='btn-view'>View</a>
-                                <button class='btn-update' onclick='openUpdateModal(" . $orderId . ", \"" . addslashes($status) . "\")'>Update</button>
+                                <a href='orderDetails.php?orderinfo_id={$row['orderId']}' class='btn-view'>View</a>
+                                <button class='btn-update' onclick='openUpdateModal({$row['orderId']}, \"" . htmlspecialchars($row['status']) . "\")'>Update</button>
                             </div>
                           </td>";
                     
@@ -497,9 +526,6 @@ $itemCount = mysqli_num_rows($result);
                         </td>
                       </tr>";
             }
-            
-            mysqli_stmt_close($stmt);
-            mysqli_close($conn);
             ?>
             </tbody>
         </table>
@@ -556,7 +582,7 @@ window.onclick = function(event) {
     }
 }
 
-// Tab filtering
+// Tab filtering - FIXED VERSION
 document.querySelectorAll('.order-tab').forEach(tab => {
     tab.addEventListener('click', function() {
         // Update active tab styling
