@@ -10,24 +10,33 @@ include('../includes/config.php');
 //}
 
 // Fetch Key Metrics
-$totalUsersQuery = $conn->query("SELECT COUNT(*) as total_users FROM users WHERE role='customer'");
-$totalUsers = $totalUsersQuery->fetch_assoc()['total_users'] ?? 0;
+// Total Users
+$stmt = $conn->prepare("SELECT COUNT(*) as total_users FROM users WHERE role='customer'");
+$stmt->execute();
+$totalUsers = $stmt->get_result()->fetch_assoc()['total_users'] ?? 0;
 
-$totalOrdersQuery = $conn->query("SELECT COUNT(*) as total_orders FROM orderinfo");
-$totalOrders = $totalOrdersQuery->fetch_assoc()['total_orders'] ?? 0;
+// Total Orders
+$stmt = $conn->prepare("SELECT COUNT(*) as total_orders FROM orderinfo");
+$stmt->execute();
+$totalOrders = $stmt->get_result()->fetch_assoc()['total_orders'] ?? 0;
 
-$totalProductsQuery = $conn->query("SELECT COUNT(*) as total_products FROM item");
-$totalProducts = $totalProductsQuery->fetch_assoc()['total_products'] ?? 0;
+// Total Products
+$stmt = $conn->prepare("SELECT COUNT(*) as total_products FROM item");
+$stmt->execute();
+$totalProducts = $stmt->get_result()->fetch_assoc()['total_products'] ?? 0;
 
-// Optional: total revenue
-$totalRevenueQuery = $conn->query("SELECT SUM(ol.quantity * i.sell_price) as total_revenue 
-                                  FROM orderline ol
-                                  JOIN item i ON ol.item_id = i.item_id");
-$totalRevenue = $totalRevenueQuery->fetch_assoc()['total_revenue'] ?? 0;
+// Total Revenue
+$stmt = $conn->prepare("SELECT SUM(ol.quantity * i.sell_price) as total_revenue 
+                        FROM orderline ol
+                        JOIN item i ON ol.item_id = i.item_id");
+$stmt->execute();
+$totalRevenue = $stmt->get_result()->fetch_assoc()['total_revenue'] ?? 0;
 
-// Fetch Recent Products / Inventory - FIXED: using description instead of title
-$productsQuery = $conn->query("SELECT item_id, description, sell_price, image_path 
-                               FROM item ORDER BY item_id DESC LIMIT 6");
+// Recent Products
+$stmt = $conn->prepare("SELECT item_id, description, sell_price, image_path 
+                        FROM item ORDER BY item_id DESC LIMIT 6");
+$stmt->execute();
+$productsQuery = $stmt->get_result();
 ?>
 
 <style>

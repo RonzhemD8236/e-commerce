@@ -13,6 +13,7 @@ $roleFilter = isset($_GET['role']) ? $_GET['role'] : '';
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 // Fetch all users + customer info (if they exist)
+// Build the base query
 $sql = "
     SELECT 
         u.id, u.username, u.email, u.role, u.active, u.created_at,
@@ -22,26 +23,47 @@ $sql = "
     WHERE 1=1
 ";
 
+$params = array();
+$types = "";
+
 // Add role filter if applied
 if ($roleFilter === 'customer') {
-    $sql .= " AND u.role = 'customer'";
+    $sql .= " AND u.role = ?";
+    $params[] = 'customer';
+    $types .= "s";
 } elseif ($roleFilter === 'admin') {
-    $sql .= " AND u.role = 'admin'";
+    $sql .= " AND u.role = ?";
+    $params[] = 'admin';
+    $types .= "s";
 }
 
 // Add search filter if exists
 if (!empty($searchQuery)) {
-    $searchEscaped = mysqli_real_escape_string($conn, $searchQuery);
+    $searchParam = "%$searchQuery%";
     $sql .= " AND (
-        u.username LIKE '%$searchEscaped%' OR
-        u.email LIKE '%$searchEscaped%' OR
-        c.fname LIKE '%$searchEscaped%' OR
-        c.lname LIKE '%$searchEscaped%'
+        u.username LIKE ? OR
+        u.email LIKE ? OR
+        c.fname LIKE ? OR
+        c.lname LIKE ?
     )";
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $types .= "ssss";
 }
 
 $sql .= " ORDER BY u.id ASC";
-$result = mysqli_query($conn, $sql);
+
+// Prepare and execute
+$stmt = $conn->prepare($sql);
+
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <style>

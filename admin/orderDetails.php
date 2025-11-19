@@ -17,10 +17,13 @@ $sql = "SELECT
             o.orderinfo_id, o.status, o.date_placed, o.date_shipped
         FROM customer c
         INNER JOIN orderinfo o USING(customer_id)
-        WHERE o.orderinfo_id = $orderId
+        WHERE o.orderinfo_id = ?
         LIMIT 1";
 
-$result = mysqli_query($conn, $sql);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $orderId);
+$stmt->execute();
+$result = $stmt->get_result();
 $customer = mysqli_fetch_assoc($result);
 
 if (!$customer) {
@@ -39,9 +42,12 @@ $sql = "SELECT
             i.sell_price
         FROM orderline ol
         INNER JOIN item i USING(item_id)
-        WHERE ol.orderinfo_id = $orderId";
+        WHERE ol.orderinfo_id = ?";
 
-$items = mysqli_query($conn, $sql);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $orderId);
+$stmt->execute();
+$items = $stmt->get_result();
 
 // ✅ Calculate status badge color
 $statusColors = [
