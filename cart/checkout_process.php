@@ -379,8 +379,8 @@ try {
             <?php endif; ?>
             
             <div style="margin-top: 40px;">
-                <a href="/lensify/e-commerce2/index.php" class="btn">Continue Shopping</a>
-                <a href="/lensify/e-commerce2/customer/orders.php" class="btn btn-secondary">View Orders</a>
+                <a href="/lensify/e-commerce/index.php" class="btn">Continue Shopping</a>
+                <a href="/lensify/e-commerce/user/myorders.php" class="btn btn-secondary">View Orders</a>
             </div>
         </div>
     </body>

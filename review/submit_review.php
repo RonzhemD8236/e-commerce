@@ -91,7 +91,8 @@ if ($orderinfoId <= 0 && isset($userOrder['orderinfo_id'])) {
 }
 
 // Check if this is an update or new review
-if ($reviewId > 0) {
+// FIXED: Check if review_id is set and not empty (handles both 0 and legitimate IDs)
+if (!empty($reviewId)) {
     // Verify the review belongs to this customer
     if (!isReviewOwner($conn, $reviewId, $customerId)) {
         echo json_encode(array('success' => false, 'message' => 'You can only edit your own reviews.'));
@@ -106,12 +107,11 @@ if ($reviewId > 0) {
         echo json_encode(array('success' => false, 'message' => 'Failed to update review. Please try again.'));
     }
 } else {
-    // Check if customer already reviewed this product
-    $sql = "SELECT review_id FROM reviews WHERE customer_id = ? AND item_id = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ii", $customerId, $itemId);
-        mysqli_stmt_execute($stmt);
-        $checkExisting = mysqli_stmt_get_result($stmt);
+    // Check if customer already reviewed this product (including review_id = 0)
+    $checkExisting = mysqli_query($conn, 
+        "SELECT review_id FROM reviews WHERE customer_id = $customerId AND item_id = $itemId"
+    );
+    
     if ($checkExisting && mysqli_num_rows($checkExisting) > 0) {
         echo json_encode(array('success' => false, 'message' => 'You have already reviewed this product. You can edit your existing review.'));
         exit;

@@ -12,8 +12,7 @@ $roleFilter = isset($_GET['role']) ? $_GET['role'] : '';
 // Get search query if exists
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Fetch all users + customer info (if they exist)
-// Build the base query
+// Base SQL query with prepared statement
 $sql = "
     SELECT 
         u.id, u.username, u.email, u.role, u.active, u.created_at,
@@ -24,6 +23,8 @@ $sql = "
 ";
 
 $params = array();
+// Prepare parameters array
+$params = [];
 $types = "";
 
 // Add role filter if applied
@@ -39,31 +40,32 @@ if ($roleFilter === 'customer') {
 
 // Add search filter if exists
 if (!empty($searchQuery)) {
-    $searchParam = "%$searchQuery%";
+    $searchPattern = "%$searchQuery%";
     $sql .= " AND (
         u.username LIKE ? OR
         u.email LIKE ? OR
         c.fname LIKE ? OR
         c.lname LIKE ?
     )";
-    $params[] = $searchParam;
-    $params[] = $searchParam;
-    $params[] = $searchParam;
-    $params[] = $searchParam;
+    $params[] = $searchPattern;
+    $params[] = $searchPattern;
+    $params[] = $searchPattern;
+    $params[] = $searchPattern;
     $types .= "ssss";
 }
 
 $sql .= " ORDER BY u.id ASC";
 
-// Prepare and execute
-$stmt = $conn->prepare($sql);
+// Prepare and execute statement
+$stmt = mysqli_prepare($conn, $sql);
 
 if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
+    // Dynamically bind parameters
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
 }
 
-$stmt->execute();
-$result = $stmt->get_result();
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 
 <style>
@@ -343,16 +345,15 @@ body {
 }
 
 .content-inner {
-    padding: 20px 40px 0 40px; /* Removed bottom padding */
+    padding: 20px 40px 0 40px;
 }
 
-/* Remove any margin from the last element before footer */
 .users-table {
     background: white;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    margin-bottom: 0; /* Ensure no bottom margin */
+    margin-bottom: 0;
 }
 
 </style>
@@ -489,5 +490,7 @@ body {
     </div>
 </div>
 
-<?php include('../includes/footer.php'); ?>
-
+<?php 
+mysqli_stmt_close($stmt);
+include('../includes/footer.php'); 
+?>

@@ -11,7 +11,7 @@ if ($orderId === 0) {
 
 $_SESSION['orderId'] = $orderId;
 
-// ✅ Query for customer/order info with profile image
+// ✅ Query for customer/order info with profile image (PREPARED STATEMENT)
 $sql = "SELECT 
             c.lname, c.fname, c.addressline, c.town, c.zipcode, c.phone, c.image_path,
             o.orderinfo_id, o.status, o.date_placed, o.date_shipped
@@ -20,11 +20,12 @@ $sql = "SELECT
         WHERE o.orderinfo_id = ?
         LIMIT 1";
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $orderId);
-$stmt->execute();
-$result = $stmt->get_result();
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $orderId);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 $customer = mysqli_fetch_assoc($result);
+mysqli_stmt_close($stmt);
 
 if (!$customer) {
     die("Error: Order not found.");
@@ -35,7 +36,7 @@ $profilePicture = !empty($customer['image_path']) && file_exists("../uploads/" .
     ? "../uploads/" . $customer['image_path'] 
     : "../uploads/default-profile.png";
 
-// ✅ Query for order items
+// ✅ Query for order items (PREPARED STATEMENT)
 $sql = "SELECT 
             i.description, 
             ol.quantity, 
@@ -44,10 +45,10 @@ $sql = "SELECT
         INNER JOIN item i USING(item_id)
         WHERE ol.orderinfo_id = ?";
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $orderId);
-$stmt->execute();
-$items = $stmt->get_result();
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $orderId);
+mysqli_stmt_execute($stmt);
+$items = mysqli_stmt_get_result($stmt);
 
 // ✅ Calculate status badge color
 $statusColors = [
@@ -261,6 +262,7 @@ $badgeColor = $statusColors[$customer['status']] ?? 'secondary';
                             echo "<td class='text-end'>₱" . number_format($total, 2) . "</td>";
                             echo "</tr>";
                         }
+                        mysqli_stmt_close($stmt);
                         ?>
                     </tbody>
                     <tfoot>
