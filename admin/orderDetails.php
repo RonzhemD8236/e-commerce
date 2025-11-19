@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-include('../includes/header.php');
+include('../admin/header.php');
 include('../includes/config.php');
 
 // ✅ Validate orderinfo_id parameter
