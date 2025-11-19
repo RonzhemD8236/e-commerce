@@ -9,7 +9,6 @@ unset($_SESSION['errors'], $_SESSION['old']); // clear after use
 ?>
 
 <style>
-/* Keep existing CSS as-is */
 nav.navbar { display: none !important; }
 
 body {
@@ -64,26 +63,26 @@ header, nav, .navbar { position: relative; z-index: 10; }
     <div class="content">
         <div class="register-container">
             <?php include("../includes/alert.php"); ?>
-            <form action="store.php" method="POST" id="registerForm">
+            <form action="store.php" method="POST" id="registerForm" novalidate>
                 <h3 class="text-center mb-4">Register</h3>
                 
                 <div class="mb-3">
                     <label for="username" class="form-label">Username</label>
                     <input type="text" class="form-control" id="username" name="username" 
-                           value="<?= htmlspecialchars($old['username'] ?? '') ?>">
+                           value="<?php echo isset($old['username']) ? htmlspecialchars($old['username']) : ''; ?>">
                     <small class="text-danger" id="usernameError"></small>
                     <?php if(isset($errors['username'])): ?>
-                        <small class="text-danger"><?= $errors['username'] ?></small>
+                        <small class="text-danger d-block"><?php echo $errors['username']; ?></small>
                     <?php endif; ?>
                 </div>
 
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
                     <input type="text" class="form-control" id="email" name="email" 
-                           value="<?= htmlspecialchars($old['email'] ?? '') ?>">
+                           value="<?php echo isset($old['email']) ? htmlspecialchars($old['email']) : ''; ?>">
                     <small class="text-danger" id="emailError"></small>
                     <?php if(isset($errors['email'])): ?>
-                        <small class="text-danger"><?= $errors['email'] ?></small>
+                        <small class="text-danger d-block"><?php echo $errors['email']; ?></small>
                     <?php endif; ?>
                 </div>
 
@@ -95,7 +94,7 @@ header, nav, .navbar { position: relative; z-index: 10; }
                     </span>
                     <small class="text-danger" id="passwordError"></small>
                     <?php if(isset($errors['password'])): ?>
-                        <small class="text-danger"><?= $errors['password'] ?></small>
+                        <small class="text-danger d-block"><?php echo $errors['password']; ?></small>
                     <?php endif; ?>
                 </div>
 
@@ -109,10 +108,10 @@ header, nav, .navbar { position: relative; z-index: 10; }
                 </div>
 
                 <button type="submit" class="btn btn-register w-100 mb-2">Register</button>
-                <a href="/lensify/e-commerce/user/login.php" class="btn btn-secondary w-100 mb-3">Cancel</a>
+                <a href="login.php" class="btn btn-secondary w-100 mb-3">Cancel</a>
 
                 <?php if(isset($errors['general'])): ?>
-                    <div class="alert alert-danger mt-2"><?= $errors['general'] ?></div>
+                    <div class="alert alert-danger mt-2"><?php echo $errors['general']; ?></div>
                 <?php endif; ?>
 
                 <div class="text-center">
@@ -149,10 +148,11 @@ document.getElementById('togglePassword2').addEventListener('click', function ()
     }
 });
 
-// Custom JS validation for required fields
+// JavaScript validation (NO HTML5 validation)
 document.getElementById('registerForm').addEventListener('submit', function(e) {
     let valid = true;
 
+    // Clear previous errors
     document.getElementById('usernameError').textContent = '';
     document.getElementById('emailError').textContent = '';
     document.getElementById('passwordError').textContent = '';
@@ -164,21 +164,48 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const confirm = document.getElementById('password2').value.trim();
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+    // Validate username
     if(username === '') {
         document.getElementById('usernameError').textContent = 'Username is required.';
         valid = false;
+    } else if(username.length < 3) {
+        document.getElementById('usernameError').textContent = 'Username must be at least 3 characters.';
+        valid = false;
     }
+
+    // Validate email
     if(email === '') {
         document.getElementById('emailError').textContent = 'Email is required.';
         valid = false;
     } else if(!emailPattern.test(email)) {
         document.getElementById('emailError').textContent = 'Invalid email format.';
         valid = false;
+    } else {
+        // Check allowed domains
+        const allowedDomains = ['@gmail.com', '@yahoo.com', '@outlook.com'];
+        let validDomain = false;
+        for(let i = 0; i < allowedDomains.length; i++) {
+            if(email.toLowerCase().endsWith(allowedDomains[i])) {
+                validDomain = true;
+                break;
+            }
+        }
+        if(!validDomain) {
+            document.getElementById('emailError').textContent = 'Email must be gmail.com, yahoo.com, or outlook.com';
+            valid = false;
+        }
     }
+
+    // Validate password
     if(password === '') {
         document.getElementById('passwordError').textContent = 'Password is required.';
         valid = false;
+    } else if(password.length < 8) {
+        document.getElementById('passwordError').textContent = 'Password must be at least 8 characters long.';
+        valid = false;
     }
+
+    // Validate confirm password
     if(confirm === '') {
         document.getElementById('confirmError').textContent = 'Confirm Password is required.';
         valid = false;

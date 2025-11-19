@@ -2,19 +2,28 @@
 session_start();
 include("../includes/config.php");
 
-// ✅ Redirect if already logged in (BEFORE any output)
-if (isset($_SESSION['user_id'])) {
-    header("Location: ../index.php");
+// ✅ AUTHENTICATION CHECK: Redirect if already logged in (BEFORE any output)
+if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    // Redirect based on role
+    if (isset($_SESSION['role'])) {
+        if ($_SESSION['role'] === 'admin') {
+            header("Location: ../admin/dashboard.php");
+        } else {
+            header("Location: ../index.php");
+        }
+    } else {
+        header("Location: ../index.php");
+    }
     exit();
 }
 
-// Handle form submission BEFORE including header
+// ✅ Handle form submission BEFORE including header
 if (isset($_POST['submit'])) {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
     $errors = [];
 
-    // ✅ PHP Form Validation
+    // ===== SERVER-SIDE VALIDATION =====
     if (empty($email)) {
         $errors[] = 'Email is required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -25,34 +34,87 @@ if (isset($_POST['submit'])) {
         $errors[] = 'Password is required.';
     }
 
+    // ===== PREPARED STATEMENT LOGIN =====
     if (empty($errors)) {
-        $sql = "SELECT id, email, password, role, active FROM users WHERE email=? LIMIT 1";
+        // ✅ PREPARED STATEMENT: Prevent SQL Injection
+        // Join users and customer tables to get all needed data in one query
+        $sql = "SELECT u.id, u.username, u.email, u.password, u.role, u.active, c.customer_id 
+                FROM users u 
+                LEFT JOIN customer c ON u.id = c.user_id 
+                WHERE u.email = ? 
+                LIMIT 1";
+        
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $stmt->store_result();
-        $stmt->bind_result($user_id, $user_email, $hashed_password, $role, $active);
-
-        if ($stmt->num_rows === 1) {
-            $stmt->fetch();
-
-            if (!$active) {
-                $_SESSION['message'] = 'Your account has been deactivated. Please contact admin.';
-            } elseif (password_verify($password, $hashed_password)) {
-                $_SESSION['email'] = $user_email;
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['role'] = $role;
-                header("Location: ../index.php");
-                exit();
+        
+        if ($stmt) {
+            // Bind parameter (s = string)
+            $stmt->bind_param("s", $email);
+            
+            // Execute query
+            $stmt->execute();
+            
+            // Store result to check row count
+            $stmt->store_result();
+            
+            if ($stmt->num_rows === 1) {
+                // Bind result variables
+                $stmt->bind_result($user_id, $username, $user_email, $hashed_password, $role, $active, $customer_id);
+                $stmt->fetch();
+                
+                // ✅ Check if account is active
+                if (!$active) {
+                    $_SESSION['message'] = 'Your account has been deactivated. Please contact admin.';
+                    $_SESSION['message_type'] = 'danger';
+                } elseif (password_verify($password, $hashed_password)) {
+                    // ✅ LOGIN SUCCESSFUL - Set session variables
+                    $_SESSION['user_id'] = $user_id;
+                    $_SESSION['username'] = $username;
+                    $_SESSION['email'] = $user_email;
+                    $_SESSION['role'] = $role;
+                    $_SESSION['customer_id'] = $customer_id;
+                    
+                    // Set success message
+                    $_SESSION['message'] = 'Login successful! Welcome back, ' . htmlspecialchars($username) . '!';
+                    $_SESSION['message_type'] = 'success';
+                    
+                    // ✅ Check if there's a redirect URL stored (user tried to access protected page)
+                    if (isset($_SESSION['redirect_after_login']) && !empty($_SESSION['redirect_after_login'])) {
+                        $redirect_url = $_SESSION['redirect_after_login'];
+                        unset($_SESSION['redirect_after_login']); // Clear it after use
+                        header("Location: " . $redirect_url);
+                        exit();
+                    }
+                    
+                    // ✅ Default redirect based on role
+                    if ($role === 'admin') {
+                        header("Location: ../admin/dashboard.php");
+                    } else {
+                        header("Location: ../index.php");
+                    }
+                    exit();
+                } else {
+                    // Wrong password
+                    $_SESSION['message'] = 'Wrong email or password.';
+                    $_SESSION['message_type'] = 'danger';
+                }
             } else {
-                $_SESSION['message'] = 'Wrong email or password';
+                // User not found
+                $_SESSION['message'] = 'Wrong email or password.';
+                $_SESSION['message_type'] = 'danger';
             }
+            
+            // Close statement
+            $stmt->close();
         } else {
-            $_SESSION['message'] = 'Wrong email or password';
+            // Database error
+            $_SESSION['message'] = 'Database error. Please try again later.';
+            $_SESSION['message_type'] = 'danger';
+            error_log("Login prepare statement failed: " . $conn->error);
         }
-        $stmt->close();
     } else {
+        // Validation errors
         $_SESSION['message'] = implode('<br>', $errors);
+        $_SESSION['message_type'] = 'danger';
     }
 }
 
@@ -61,43 +123,51 @@ include("../includes/header.php");
 ?>
 
 <style>
-/* ✅ HIDE THE NAVIGATION HEADER */
-nav.navbar {
-    display: none !important;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* Background image for entire page */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+
+/* Background image for entire viewport */
 body {
-    background: url('../uploads/login-bg.jpeg') no-repeat center center;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background: url('../uploads/login-bg.jpeg') no-repeat center center fixed !important;
+    background-size: cover !important;
+    background-position: center center !important;
     position: relative;
     min-height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 /* Full-page overlay that covers everything */
 body::before {
     content: '';
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 0;
     pointer-events: none;
 }
 
-/* Ensure header stays above overlay */
+/* ✅ HIDE ALL HEADERS AND NAVIGATION */
 header,
 nav,
-.navbar {
-    position: relative;
-    z-index: 10;
+.navbar,
+nav.navbar {
+    display: none !important;
 }
 
+/* Main content container */
 /* Main content container */
 .main-content {
     position: relative;
@@ -136,12 +206,12 @@ nav,
     <div class="content">
         <div class="login-container">
             <?php include("../includes/alert.php"); ?>
-            <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST" id="loginForm">
+            <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST" id="loginForm" novalidate>
                 <h3 class="text-center mb-4">Login</h3>
                 <div class="mb-3">
                     <label class="form-label">Email address</label>
                     <input type="text" class="form-control" name="email" id="email" 
-                           value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                           value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
                     <small class="text-danger" id="emailError"></small>
                 </div>
 
@@ -178,7 +248,7 @@ document.getElementById('togglePassword').addEventListener('click', function () 
     }
 });
 
-// ✅ Client-side Form Validation
+// ✅ Client-side Form Validation (NO HTML5)
 document.getElementById('loginForm').addEventListener('submit', function (e) {
     let valid = true;
     document.getElementById('emailError').textContent = '';
@@ -204,3 +274,5 @@ document.getElementById('loginForm').addEventListener('submit', function (e) {
     if (!valid) e.preventDefault();
 });
 </script>
+
+<?php include("../includes/footer.php"); ?>

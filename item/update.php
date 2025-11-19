@@ -1,5 +1,13 @@
 <?php
 session_start();
+
+// Authentication check
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ../admin/login.php");
+    exit();
+}
+
 require('../includes/config.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -46,10 +54,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // GET CURRENT IMAGES
     // ==========================
     $stmt = $conn->prepare("SELECT image_path FROM item WHERE item_id = ?");
+    if (!$stmt) {
+        die("Prepare failed: " . $conn->error);
+    }
+    
     $stmt->bind_param("i", $item_id);
     $stmt->execute();
-    $stmt->bind_result($old_images_json);
-    $stmt->fetch();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows == 0) {
+        $stmt->close();
+        echo "<script>
+                alert('Item not found.');
+                window.location.href = 'index.php';
+              </script>";
+        exit();
+    }
+    
+    $row = $result->fetch_assoc();
+    $old_images_json = $row['image_path'];
     $stmt->close();
 
     $images = json_decode($old_images_json, true) ?: [];
@@ -74,30 +97,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ==========================
     if (!empty($_FILES['image_path']['name'][0])) {
         $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        $max_file_size = 5 * 1024 * 1024; // 5MB
         $target_dir = "../uploads/";
+
+        // Ensure directory exists
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0755, true);
+        }
 
         foreach ($_FILES['image_path']['name'] as $key => $filename) {
             $tmp_name = $_FILES['image_path']['tmp_name'][$key];
-            $file_type = $_FILES['image_path']['type'][$key];
             $error = $_FILES['image_path']['error'][$key];
+            $size = $_FILES['image_path']['size'][$key];
 
             if ($error === UPLOAD_ERR_OK) {
-                if (!in_array($file_type, $allowed_types)) {
+                // Validate file size
+                if ($size > $max_file_size) {
+                    $_SESSION['imageError'] = "Image too large. Maximum size is 5MB.";
+                    header("Location: edit.php?id=$item_id");
+                    exit();
+                }
+
+                // Validate MIME type
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime = finfo_file($finfo, $tmp_name);
+                finfo_close($finfo);
+
+                if (!in_array($mime, $allowed_types)) {
                     $_SESSION['imageError'] = 'Invalid image format. Only JPG, PNG, GIF allowed.';
                     header("Location: edit.php?id=$item_id");
                     exit();
                 }
 
-                $new_name = time() . "_" . rand(1000,9999) . "_" . basename($filename);
+                // Generate unique filename
+                $extension = pathinfo($filename, PATHINFO_EXTENSION);
+                $new_name = time() . "_" . rand(1000,9999) . "." . $extension;
                 $target_file = $target_dir . $new_name;
 
                 if (move_uploaded_file($tmp_name, $target_file)) {
-                    $images[] = "uploads/" . $new_name; // Add new image
+                    $images[] = "uploads/" . $new_name;
                 } else {
-                    $_SESSION['imageError'] = "Failed to upload image: $filename";
+                    $_SESSION['imageError'] = "Failed to upload image: " . htmlspecialchars($filename);
                     header("Location: edit.php?id=$item_id");
                     exit();
                 }
+            } elseif ($error !== UPLOAD_ERR_NO_FILE) {
+                $_SESSION['imageError'] = "Error uploading image: " . htmlspecialchars($filename);
+                header("Location: edit.php?id=$item_id");
+                exit();
             }
         }
     }
@@ -121,16 +168,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 category = ?, 
                                 image_path = ? 
                             WHERE item_id = ?");
-    $stmt->bind_param("sssddssi", $desc, $short_desc, $specs, $cost, $sell, $category, $images_json, $item_id);
+    
+    if (!$stmt) {
+        die("Prepare failed: " . $conn->error);
+    }
+
+    $cost_float = floatval($cost);
+    $sell_float = floatval($sell);
+    
+    $stmt->bind_param("sssddssi", $desc, $short_desc, $specs, $cost_float, $sell_float, $category, $images_json, $item_id);
     $result1 = $stmt->execute();
+    
+    if (!$result1) {
+        die("Error updating item: " . $stmt->error);
+    }
     $stmt->close();
 
     // ==========================
     // UPDATE STOCK TABLE
     // ==========================
     $stmt2 = $conn->prepare("UPDATE stock SET quantity = ? WHERE item_id = ?");
-    $stmt2->bind_param("ii", $qty, $item_id);
+    
+    if (!$stmt2) {
+        die("Prepare failed: " . $conn->error);
+    }
+
+    $qty_int = intval($qty);
+    $stmt2->bind_param("ii", $qty_int, $item_id);
     $result2 = $stmt2->execute();
+    
+    if (!$result2) {
+        die("Error updating stock: " . $stmt2->error);
+    }
     $stmt2->close();
 
     // ==========================
