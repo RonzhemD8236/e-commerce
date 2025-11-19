@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 19, 2025 at 02:56 PM
+-- Generation Time: Nov 19, 2025 at 05:01 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -147,7 +147,8 @@ INSERT INTO `orderinfo` (`orderinfo_id`, `customer_id`, `date_placed`, `date_shi
 (31, 78, '2025-11-19', NULL, 50.00, 'Pending', NULL, NULL, 'cod', 'delivery'),
 (32, 78, '2025-11-19', NULL, 50.00, 'Pending', NULL, NULL, 'cod', 'delivery'),
 (33, 78, '2025-11-19', NULL, 50.00, 'Pending', NULL, NULL, 'cod', 'delivery'),
-(34, 78, '2025-11-19', NULL, 50.00, 'Pending', NULL, NULL, 'cod', 'delivery');
+(34, 78, '2025-11-19', '2025-11-19', 50.00, 'Shipped', NULL, '2025-11-19 14:00:46', 'cod', 'delivery'),
+(35, 79, '2025-11-19', '2025-11-19', 50.00, 'Delivered', NULL, '2025-11-19 14:50:16', 'cod', 'delivery');
 
 -- --------------------------------------------------------
 
@@ -177,7 +178,8 @@ INSERT INTO `orderline` (`orderinfo_id`, `item_id`, `quantity`) VALUES
 (31, 31, 1),
 (32, 31, 1),
 (33, 31, 1),
-(34, 32, 1);
+(34, 32, 1),
+(35, 32, 1);
 
 -- --------------------------------------------------------
 
@@ -232,6 +234,8 @@ CREATE TABLE `order_transaction_details` (
 ,`available_stock` int(11)
 ,`username` varchar(255)
 ,`user_role` varchar(20)
+,`profile_img` varchar(255)
+,`customer_image_path` varchar(255)
 );
 
 -- --------------------------------------------------------
@@ -296,7 +300,7 @@ CREATE TABLE `stock` (
 --
 
 INSERT INTO `stock` (`item_id`, `quantity`) VALUES
-(32, 12);
+(32, 10);
 
 -- --------------------------------------------------------
 
@@ -358,7 +362,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `order_transaction_details`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `order_transaction_details`  AS SELECT `o`.`orderinfo_id` AS `orderinfo_id`, `o`.`date_placed` AS `date_placed`, `o`.`date_shipped` AS `date_shipped`, `o`.`shipping` AS `shipping`, `o`.`status` AS `order_status`, `o`.`payment_method` AS `payment_method`, `o`.`shipping_method` AS `shipping_method`, `c`.`customer_id` AS `customer_id`, concat(`c`.`fname`,' ',`c`.`lname`) AS `customer_name`, `c`.`email` AS `customer_email`, `c`.`phone` AS `customer_phone`, concat_ws(', ',`c`.`addressline`,`c`.`town`,`c`.`state`,`c`.`country`,`c`.`zipcode`) AS `full_address`, `i`.`item_id` AS `item_id`, `i`.`description` AS `item_name`, `i`.`short_description` AS `item_short_desc`, `i`.`category` AS `item_category`, `i`.`sell_price` AS `item_price`, `ol`.`quantity` AS `quantity`, `ol`.`quantity`* `i`.`sell_price` AS `subtotal`, `ol`.`quantity`* `i`.`sell_price` + `o`.`shipping` AS `line_total_with_shipping`, `s`.`quantity` AS `available_stock`, `u`.`username` AS `username`, `u`.`role` AS `user_role` FROM (((((`orderinfo` `o` join `customer` `c` on(`o`.`customer_id` = `c`.`customer_id`)) join `orderline` `ol` on(`o`.`orderinfo_id` = `ol`.`orderinfo_id`)) join `item` `i` on(`ol`.`item_id` = `i`.`item_id`)) left join `stock` `s` on(`i`.`item_id` = `s`.`item_id`)) left join `users` `u` on(`c`.`user_id` = `u`.`id`)) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `order_transaction_details`  AS SELECT `o`.`orderinfo_id` AS `orderinfo_id`, `o`.`date_placed` AS `date_placed`, `o`.`date_shipped` AS `date_shipped`, `o`.`shipping` AS `shipping`, `o`.`status` AS `order_status`, `o`.`payment_method` AS `payment_method`, `o`.`shipping_method` AS `shipping_method`, `c`.`customer_id` AS `customer_id`, concat(`c`.`fname`,' ',`c`.`lname`) AS `customer_name`, `c`.`email` AS `customer_email`, `c`.`phone` AS `customer_phone`, concat_ws(', ',`c`.`addressline`,`c`.`town`,`c`.`state`,`c`.`country`,`c`.`zipcode`) AS `full_address`, `i`.`item_id` AS `item_id`, `i`.`description` AS `item_name`, `i`.`short_description` AS `item_short_desc`, `i`.`category` AS `item_category`, `i`.`sell_price` AS `item_price`, `ol`.`quantity` AS `quantity`, `ol`.`quantity`* `i`.`sell_price` AS `subtotal`, `ol`.`quantity`* `i`.`sell_price` + `o`.`shipping` AS `line_total_with_shipping`, `s`.`quantity` AS `available_stock`, `u`.`username` AS `username`, `u`.`role` AS `user_role`, `u`.`profile_img` AS `profile_img`, `c`.`image_path` AS `customer_image_path` FROM (((((`orderinfo` `o` join `customer` `c` on(`o`.`customer_id` = `c`.`customer_id`)) join `orderline` `ol` on(`o`.`orderinfo_id` = `ol`.`orderinfo_id`)) join `item` `i` on(`ol`.`item_id` = `i`.`item_id`)) left join `stock` `s` on(`i`.`item_id` = `s`.`item_id`)) left join `users` `u` on(`c`.`user_id` = `u`.`id`)) ;
 
 -- --------------------------------------------------------
 
@@ -431,7 +435,7 @@ ALTER TABLE `item`
 -- AUTO_INCREMENT for table `orderinfo`
 --
 ALTER TABLE `orderinfo`
-  MODIFY `orderinfo_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `orderinfo_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `reviews`
