@@ -56,6 +56,8 @@ $orderCount = $result->num_rows;
             background-repeat: no-repeat;
             min-height: 100vh;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         body::before {
@@ -84,7 +86,7 @@ $orderCount = $result->num_rows;
             width: calc(100% - 200px);
             margin: 0 100px;
             padding: 40px 0;
-            min-height: calc(100vh - 200px);
+            flex: 1;
         }
 
         .page-header {
@@ -372,6 +374,11 @@ $orderCount = $result->num_rows;
 
         .info-item i {
             color: #333;
+        }
+
+        /* Ensure footer stays at bottom */
+        .footer {
+            margin-top: auto;
         }
 
         @media (max-width: 768px) {
