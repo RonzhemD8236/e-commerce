@@ -110,22 +110,81 @@ function canCustomerReview($conn, $customerId, $itemId) {
 /**
  * Filter inappropriate words from text
  */
+/**
+ * Filter inappropriate words from text (English and Filipino)
+ */
 function filterInappropriateWords($text) {
-    // List of words to filter (add more as needed)
+    // Comprehensive list of inappropriate words in English and Filipino
     $badWords = array(
-        'damn', 'hell', 'crap', 'stupid', 'idiot', 'dumb',
-        // Add more words to filter
+        // English profanity
+        'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'damn', 'hell', 
+        'crap', 'piss', 'dick', 'cock', 'pussy', 'cunt', 'slut', 'whore',
+        'fag', 'nigger', 'retard', 'retarded', 'motherfucker', 'bullshit',
+        
+        // English insults
+        'stupid', 'idiot', 'dumb', 'moron', 'imbecile', 'loser', 'trash',
+        
+        // Filipino profanity (Tagalog)
+        'putang ina', 'putangina', 'tangina', 'tngina', 'puta', 'gago', 
+        'gaga', 'tarantado', 'tanga', 'bobo', 'ulol', 'inutil', 'punyeta',
+        'leche', 'peste', 'hinayupak', 'hayop', 'animal', 'kupal', 
+        'kantot', 'kantutan', 'tamod', 'tite', 'bilat', 'puke', 'bayag',
+        'burat', 'jakol', 'pokpok', 'siraulo', 'tarantadong', 
+        
+        // Filipino insults
+        'walang kwenta', 'walang hiya', 'walanghiya', 'galing mo', 
+        'bastos', 'malandi', 'bruha', 'tarantada',
+        
+        // Bisaya/Cebuano profanity
+        'yawa', 'atay', 'pisti', 'buang', 'buanga', 'bilat', 
+        'bilata', 'puta', 'putang', 'lintian',
+        
+        // Common variations and leetspeak
+        'f*ck', 'sh*t', 'b*tch', 'a$$hole', 'fvck', 'fck', 'shyt',
+        'p*ta', 'g*go', 'tang*na', 'b*bo', 't*nga', 'p*k*',
+        
+        // Slang variations
+        'wtf', 'stfu', 'lmao', 'lol jk die', 'kys', 'ky$ ', 'di ka maganda',
+        'pangit', 'mukhang', 'ampangit'
     );
     
+    // Process each bad word
     foreach ($badWords as $word) {
-        $pattern = '/\b' . preg_quote($word, '/') . '\b/i';
+        // Create flexible regex pattern that handles:
+        // - Word boundaries
+        // - Case insensitivity
+        // - Common character substitutions (@ for a, 0 for o, $ for s, etc.)
+        // - Spaces within phrases
+        $pattern = createFlexiblePattern($word);
+        
+        // Count asterisks based on original word length
         $replacement = str_repeat('*', strlen($word));
+        
+        // Replace with case-insensitive matching
         $text = preg_replace($pattern, $replacement, $text);
     }
     
     return $text;
 }
 
+/**
+ * Create a flexible regex pattern for word matching
+ */
+function createFlexiblePattern($word) {
+    // Escape special regex characters
+    $word = preg_quote($word, '/');
+    
+    // Replace common character substitutions
+    $word = str_replace(array('a', 'e', 'i', 'o', 's', 't'), 
+                       array('[a@4]', '[e3]', '[i1!]', '[o0]', '[s$5]', '[t7]'), 
+                       $word);
+    
+    // Allow optional spaces between characters for multi-word phrases
+    $word = str_replace('\ ', '\s*', $word);
+    
+    // Create pattern with word boundaries (or start/end of string)
+    return '/\b' . $word . '\b/i';
+}
 /**
  * Validate review data
  */
