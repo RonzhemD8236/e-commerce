@@ -315,6 +315,7 @@ body::before {
 
 <div class="main-content">
 <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 30px;">
+    <div class="product-section">
     <div class="row" style="margin-bottom: 60px; align-items: flex-end;">
         <div class="col-md-6 pe-4 d-flex align-items-end">
            <div class="image-slider position-relative" style="width:100%; min-height:400px; height:auto; overflow:hidden; border-radius:10px; background:transparent;">
@@ -412,6 +413,8 @@ body::before {
             </div>
         </div>
     </div>
+    </div>
+    <!-- End Product Section - This maintains spacing from header -->
 
     <?php if (function_exists('getProductReviews')): ?>
     <div class="row" style="margin-top: 60px; margin-bottom: 100px;">
@@ -635,13 +638,34 @@ function toggleReviewForm() {
     var currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
     
     if (form.style.display === 'none') {
+        // Store current scroll position before showing form
+        var scrollBefore = window.pageYOffset || document.documentElement.scrollTop;
+        
         form.style.display = 'block';
-        // Maintain scroll position to preserve padding between header and product
-        window.scrollTo(0, currentScrollPosition);
+        
+        // Immediately restore scroll position to preserve padding between header and product
+        requestAnimationFrame(function() {
+            window.scrollTo({
+                top: scrollBefore,
+                behavior: 'auto' // Instant, no smooth scrolling
+            });
+            // Double-check after a brief moment
+            setTimeout(function() {
+                window.scrollTo({
+                    top: scrollBefore,
+                    behavior: 'auto'
+                });
+            }, 10);
+        });
     } else {
         form.style.display = 'none';
-        // Maintain scroll position when closing
-        window.scrollTo(0, currentScrollPosition);
+        // Maintain exact scroll position when closing
+        requestAnimationFrame(function() {
+            window.scrollTo({
+                top: currentScrollPosition,
+                behavior: 'auto'
+            });
+        });
     }
 }
 
