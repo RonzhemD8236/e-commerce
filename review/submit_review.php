@@ -8,11 +8,13 @@ if (session_status() === PHP_SESSION_NONE) {
 
 header('Content-Type: application/json');
 
-// Check if user is logged in - check both user_id and customer_id
-$isLoggedIn = isset($_SESSION['user_id']) || isset($_SESSION['customer_id']);
-
-if (!$isLoggedIn) {
-    echo json_encode(array('success' => false, 'message' => 'You must be logged in to submit a review.'));
+// ✅ AUTHENTICATION CHECK - Must be logged in
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    echo json_encode(array(
+        'success' => false, 
+        'message' => 'You must be logged in to submit a review.',
+        'redirect' => '/lensify/e-commerce/user/login.php'
+    ));
     exit;
 }
 
@@ -32,11 +34,15 @@ if (isset($_SESSION['customer_id'])) {
 }
 
 if ($customerId <= 0) {
-    echo json_encode(array('success' => false, 'message' => 'Invalid customer session. Please login again.'));
+    echo json_encode(array(
+        'success' => false, 
+        'message' => 'Invalid customer session. Please login again.',
+        'redirect' => '/lensify/e-commerce/user/login.php'
+    ));
     exit;
 }
 
-// Check if POST request
+// ✅ Check if POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(array('success' => false, 'message' => 'Invalid request method.'));
     exit;
@@ -67,16 +73,18 @@ if (!empty($errors)) {
     exit;
 }
 
-// Check if item exists
-$sql = "SELECT item_id FROM item WHERE item_id = ?";
-$stmt = mysqli_prepare($conn, $sql);
+// Check if item exists - PREPARED STATEMENT
+$stmt = mysqli_prepare($conn, "SELECT item_id FROM item WHERE item_id = ?");
 mysqli_stmt_bind_param($stmt, "i", $itemId);
 mysqli_stmt_execute($stmt);
 $checkItem = mysqli_stmt_get_result($stmt);
+
 if (!$checkItem || mysqli_num_rows($checkItem) == 0) {
+    mysqli_stmt_close($stmt);
     echo json_encode(array('success' => false, 'message' => 'Product not found.'));
     exit;
 }
+mysqli_stmt_close($stmt);
 
 // Check if customer can review this product
 $userOrder = canCustomerReview($conn, $customerId, $itemId);
@@ -91,7 +99,6 @@ if ($orderinfoId <= 0 && isset($userOrder['orderinfo_id'])) {
 }
 
 // Check if this is an update or new review
-// FIXED: Check if review_id is set and not empty (handles both 0 and legitimate IDs)
 if (!empty($reviewId)) {
     // Verify the review belongs to this customer
     if (!isReviewOwner($conn, $reviewId, $customerId)) {
@@ -107,15 +114,18 @@ if (!empty($reviewId)) {
         echo json_encode(array('success' => false, 'message' => 'Failed to update review. Please try again.'));
     }
 } else {
-    // Check if customer already reviewed this product (including review_id = 0)
-    $checkExisting = mysqli_query($conn, 
-        "SELECT review_id FROM reviews WHERE customer_id = $customerId AND item_id = $itemId"
-    );
+    // Check if customer already reviewed this product - PREPARED STATEMENT
+    $stmt = mysqli_prepare($conn, "SELECT review_id FROM reviews WHERE customer_id = ? AND item_id = ?");
+    mysqli_stmt_bind_param($stmt, "ii", $customerId, $itemId);
+    mysqli_stmt_execute($stmt);
+    $checkExisting = mysqli_stmt_get_result($stmt);
     
     if ($checkExisting && mysqli_num_rows($checkExisting) > 0) {
+        mysqli_stmt_close($stmt);
         echo json_encode(array('success' => false, 'message' => 'You have already reviewed this product. You can edit your existing review.'));
         exit;
     }
+    mysqli_stmt_close($stmt);
     
     $insertResult = insertReview($conn, $customerId, $itemId, $orderinfoId, $rating, $reviewTitle, $reviewText);
     
