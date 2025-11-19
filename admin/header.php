@@ -104,7 +104,7 @@ if (strpos($current_dir, '/admin') !== false) {
               <li><a class="dropdown-item" href="/lensify/e-commerce/admin/profile.php"><i class="bi bi-person-circle me-2"></i>My Profile</a></li>
               <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+              <li><a class="dropdown-item text-danger" href="/lensify/e-commerce/admin/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
             </ul>
           </li>
         </ul>

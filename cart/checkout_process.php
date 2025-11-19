@@ -12,14 +12,26 @@ require '../phpmailer/src/Exception.php';
 require '../phpmailer/src/PHPMailer.php';
 require '../phpmailer/src/SMTP.php';
 
-// ---------- LOGIN CHECK ----------
-if (!isset($_SESSION['user_id'])) {
-    die("❌ You must be logged in to checkout.");
+// ✅ AUTHENTICATION CHECK
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    $_SESSION['message'] = 'Please login to complete checkout.';
+    $_SESSION['message_type'] = 'warning';
+    header("Location: /lensify/e-commerce/user/login.php");
+    exit();
 }
 
-// ---------- CART CHECK ----------
+// ✅ CART CHECK
 if (!isset($_SESSION["cart_products"]) || count($_SESSION["cart_products"]) === 0) {
-    die("❌ Your cart is empty.");
+    $_SESSION['message'] = 'Your cart is empty.';
+    $_SESSION['message_type'] = 'warning';
+    header("Location: /lensify/e-commerce/index.php");
+    exit();
+}
+
+// ✅ POST REQUEST CHECK
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: checkout.php");
+    exit();
 }
 
 // ---------- GET POST DATA ----------

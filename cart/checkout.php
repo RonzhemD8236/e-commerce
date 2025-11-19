@@ -1,25 +1,42 @@
 <?php
 session_start();
-include('../includes/header.php');
 include('../includes/config.php');
 
-// ✅ Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    die("<h2>❌ You must be logged in to checkout.</h2>");
+// ✅ AUTHENTICATION CHECK - Redirect if not logged in
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    $_SESSION['message'] = 'Please login to proceed with checkout.';
+    $_SESSION['message_type'] = 'warning';
+    header("Location: /lensify/e-commerce/user/login.php");
+    exit();
 }
 
 // ✅ Check if cart has items
 if (!isset($_SESSION['cart_products']) || count($_SESSION['cart_products']) === 0) {
-    die("<h2>❌ Your cart is empty.</h2>");
+    $_SESSION['message'] = 'Your cart is empty. Add items before checkout.';
+    $_SESSION['message_type'] = 'warning';
+    header("Location: /lensify/e-commerce/index.php");
+    exit();
 }
 
-// Fetch customer info using correct columns
+include('../includes/header.php');
+
+// Fetch customer info using correct columns - PREPARED STATEMENT
 $stmt = $conn->prepare("SELECT customer_id, fname, lname, phone, addressline FROM customer WHERE user_id = ? LIMIT 1");
-if (!$stmt) die("Prepare failed: " . $conn->error);
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
 $result = $stmt->get_result();
-if ($result->num_rows === 0) die("❌ Customer not found.");
+
+if ($result->num_rows === 0) {
+    $_SESSION['message'] = 'Customer profile not found. Please complete your profile first.';
+    $_SESSION['message_type'] = 'danger';
+    header("Location: /lensify/e-commerce/user/profile.php");
+    exit();
+}
+
 $customer = $result->fetch_assoc();
 $customer_id = $customer['customer_id'];
 $customer_name = $customer['fname'] . ' ' . $customer['lname'];
@@ -322,7 +339,9 @@ $default_shipping = 50; // default delivery fee
         <h1>Checkout</h1>
     </div>
 
-    <form method="POST" action="checkout_process.php" id="checkoutForm">
+    <?php include("../includes/alert.php"); ?>
+
+    <form method="POST" action="checkout_process.php" id="checkoutForm" novalidate>
         <div class="checkout-layout">
             <!-- Main Section -->
             <div class="main-section">

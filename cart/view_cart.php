@@ -1,7 +1,17 @@
 <?php
 session_start();
-include('../includes/header.php');
 include('../includes/config.php');
+
+// ✅ AUTHENTICATION CHECK - Redirect if not logged in
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    $_SESSION['message'] = 'Please login to view your cart.';
+    $_SESSION['message_type'] = 'warning';
+    header("Location: /lensify/e-commerce/user/login.php");
+    exit();
+}
+
+include('../includes/header.php');
 ?>
 
 <style>
@@ -269,6 +279,8 @@ include('../includes/config.php');
     </div>
 
     <div class="cart-content">
+        <?php include("../includes/alert.php"); ?>
+        
         <form method="POST" action="cart_update.php">
             <table class="cart-table">
                 <thead>
@@ -295,7 +307,7 @@ include('../includes/config.php');
                         $subtotal = $qty * $price;
                         $total += $subtotal;
 
-                        // Get current stock from DB
+                        // Get current stock from DB - PREPARED STATEMENT
                         $stmt = $conn->prepare("SELECT quantity FROM stock WHERE item_id = ?");
                         $stmt->bind_param("i", $id);
                         $stmt->execute();

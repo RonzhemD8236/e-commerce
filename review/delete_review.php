@@ -8,11 +8,13 @@ if (session_status() === PHP_SESSION_NONE) {
 
 header('Content-Type: application/json');
 
-// Check if user is logged in - check both user_id and customer_id
-$isLoggedIn = isset($_SESSION['user_id']) || isset($_SESSION['customer_id']);
-
-if (!$isLoggedIn) {
-    echo json_encode(array('success' => false, 'message' => 'You must be logged in to delete a review.'));
+// ✅ AUTHENTICATION CHECK - Must be logged in
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    echo json_encode(array(
+        'success' => false, 
+        'message' => 'You must be logged in to delete a review.',
+        'redirect' => '/lensify/e-commerce/user/login.php'
+    ));
     exit;
 }
 
@@ -32,11 +34,15 @@ if (isset($_SESSION['customer_id'])) {
 }
 
 if ($customerId <= 0) {
-    echo json_encode(array('success' => false, 'message' => 'Invalid customer session. Please login again.'));
+    echo json_encode(array(
+        'success' => false, 
+        'message' => 'Invalid customer session. Please login again.',
+        'redirect' => '/lensify/e-commerce/user/login.php'
+    ));
     exit;
 }
 
-// Check if POST request
+// ✅ Check if POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(array('success' => false, 'message' => 'Invalid request method.'));
     exit;
