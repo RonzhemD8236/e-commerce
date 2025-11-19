@@ -12,18 +12,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 include('header.php'); // Admin header
 include('../includes/config.php');
 
-<<<<<<< Updated upstream
-// Secure query with prepared statement
-$sql = "SELECT * FROM order_summary ORDER BY orderinfo_id DESC";
-$stmt = mysqli_prepare($conn, $sql);
-
-if (!$stmt) {
-    die("Database error: " . mysqli_error($conn));
-}
-
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-=======
 // ---------- UPDATED SQL: include payment_method and shipping_method ----------
 $sql = "SELECT 
             o.orderinfo_id AS orderId, 
@@ -41,7 +29,6 @@ $sql = "SELECT
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $result = $stmt->get_result();
->>>>>>> Stashed changes
 $itemCount = mysqli_num_rows($result);
 
 ?>
@@ -468,28 +455,11 @@ $itemCount = mysqli_num_rows($result);
             <?php
             if (mysqli_num_rows($result) > 0) {
                 while ($row = mysqli_fetch_assoc($result)) {
-<<<<<<< Updated upstream
-                   $orderId = intval($row['orderinfo_id']);
-                    $total = floatval($row['grand_total']);
-                    $status = htmlspecialchars($row['order_status']);
-                    $paymentMethod = htmlspecialchars($row['payment_method'] ?? 'N/A');
-                    $shippingMethod = htmlspecialchars($row['shipping_method'] ?? 'N/A');
-                    $createdAt = htmlspecialchars($row['date_placed']);
-
-                    
-                    $statusLower = strtolower($status);
-                    echo "<tr class='order-row' data-status='" . $statusLower . "'>";
-                    echo "<td>" . $orderId . "</td>";
-                    echo "<td><strong>₱" . number_format($total, 2) . "</strong></td>";
-                    echo "<td>" . $paymentMethod . "</td>";
-                    echo "<td>" . $shippingMethod . "</td>";
-=======
                     echo "<tr class='order-row' data-status='" . strtolower($row['status']) . "'>";
                     echo "<td>" . htmlspecialchars($row['orderId']) . "</td>";
                     echo "<td><strong>₱" . number_format($row['total'], 2) . "</strong></td>";
                     echo "<td>" . htmlspecialchars($row['payment_method']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['shipping_method']) . "</td>";
->>>>>>> Stashed changes
                     
                     // Status badge
                     $statusLower = strtolower($row['status']);
