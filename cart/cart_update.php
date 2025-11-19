@@ -1,5 +1,3 @@
-
-
 <?php
 session_start();
 include('../includes/config.php');
@@ -20,10 +18,14 @@ if (isset($_POST['type']) && $_POST['type'] === 'add') {
     $id = intval($_POST['item_id']);
     $qty = intval($_POST['item_qty']);
 
-    // Get current stock
-    $sql = "SELECT quantity FROM stock WHERE item_id = $id";
-    $res = mysqli_query($conn, $sql);
-    $row = mysqli_fetch_assoc($res);
+    // Get current stock - PREPARED STATEMENT
+    $stmt = $conn->prepare("SELECT quantity FROM stock WHERE item_id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    
     $stock = intval($row['quantity']);
 
     if ($qty > $stock) {
@@ -32,21 +34,23 @@ if (isset($_POST['type']) && $_POST['type'] === 'add') {
         exit;
     }
 
-    // Deduct stock
-    mysqli_query($conn, "UPDATE stock SET quantity = quantity - $qty WHERE item_id = $id");
+    // Deduct stock - PREPARED STATEMENT
+    $stmt = $conn->prepare("UPDATE stock SET quantity = quantity - ? WHERE item_id = ?");
+    $stmt->bind_param("ii", $qty, $id);
+    $stmt->execute();
+    $stmt->close();
 
     // Add to session cart
-// Add to session cart
-if (!isset($_SESSION['cart_products'][$id])) {
-    $_SESSION['cart_products'][$id] = [
-        "item_id" => $id,  // ← ADD THIS LINE
-        "item_name" => $_POST['item_name'],
-        "item_price" => $_POST['item_price'],
-        "item_qty" => $qty
-    ];
-} else {
-    $_SESSION['cart_products'][$id]['item_qty'] += $qty;
-}
+    if (!isset($_SESSION['cart_products'][$id])) {
+        $_SESSION['cart_products'][$id] = [
+            "item_id" => $id,
+            "item_name" => $_POST['item_name'],
+            "item_price" => $_POST['item_price'],
+            "item_qty" => $qty
+        ];
+    } else {
+        $_SESSION['cart_products'][$id]['item_qty'] += $qty;
+    }
 
     // Return updated stock
     $newStock = $stock - $qty;
@@ -70,25 +74,43 @@ if (isset($_POST['update_cart'])) {
 
             $oldQty = $_SESSION['cart_products'][$id]['item_qty'];
 
-            // Quantity lowered → return stock
+            // Quantity lowered → return stock - PREPARED STATEMENT
             if ($newQty < $oldQty) {
                 $returnQty = $oldQty - $newQty;
-                mysqli_query($conn, "UPDATE stock SET quantity = quantity + $returnQty WHERE item_id = $id");
+                
+                $stmt = $conn->prepare("UPDATE stock SET quantity = quantity + ? WHERE item_id = ?");
+                $stmt->bind_param("ii", $returnQty, $id);
+                $stmt->execute();
+                $stmt->close();
             }
 
             // Quantity increased → check stock
             if ($newQty > $oldQty) {
                 $needed = $newQty - $oldQty;
 
-                $res = mysqli_query($conn, "SELECT quantity FROM stock WHERE item_id = $id");
-                $row = mysqli_fetch_assoc($res);
+                // Check available stock - PREPARED STATEMENT
+                $stmt = $conn->prepare("SELECT quantity FROM stock WHERE item_id = ?");
+                $stmt->bind_param("i", $id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $row = $result->fetch_assoc();
+                $stmt->close();
 
                 if ($row['quantity'] >= $needed) {
-                    mysqli_query($conn, "UPDATE stock SET quantity = quantity - $needed WHERE item_id = $id");
+                    // Deduct needed stock - PREPARED STATEMENT
+                    $stmt = $conn->prepare("UPDATE stock SET quantity = quantity - ? WHERE item_id = ?");
+                    $stmt->bind_param("ii", $needed, $id);
+                    $stmt->execute();
+                    $stmt->close();
                 } else {
                     // Max allowed is oldQty + available
                     $newQty = $oldQty + $row['quantity'];
-                    mysqli_query($conn, "UPDATE stock SET quantity = 0 WHERE item_id = $id");
+                    
+                    // Set stock to 0 - PREPARED STATEMENT
+                    $stmt = $conn->prepare("UPDATE stock SET quantity = 0 WHERE item_id = ?");
+                    $stmt->bind_param("i", $id);
+                    $stmt->execute();
+                    $stmt->close();
                 }
             }
 
@@ -103,7 +125,11 @@ if (isset($_POST['update_cart'])) {
 
             $qtyToReturn = $_SESSION['cart_products'][$remove_id]['item_qty'];
 
-            mysqli_query($conn, "UPDATE stock SET quantity = quantity + $qtyToReturn WHERE item_id = $remove_id");
+            // Return stock - PREPARED STATEMENT
+            $stmt = $conn->prepare("UPDATE stock SET quantity = quantity + ? WHERE item_id = ?");
+            $stmt->bind_param("ii", $qtyToReturn, $remove_id);
+            $stmt->execute();
+            $stmt->close();
 
             unset($_SESSION['cart_products'][$remove_id]);
         }
@@ -114,5 +140,4 @@ if (isset($_POST['update_cart'])) {
     exit;
 }
 
-?>
 ?>

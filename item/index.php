@@ -7,17 +7,25 @@ include('../includes/config.php');
 $keyword = isset($_GET['search']) ? strtolower(trim($_GET['search'])) : '';
 
 // Query items
+// Query items
 if ($keyword) {
     $sql = "SELECT * FROM item LEFT JOIN stock USING (item_id)
-            WHERE LOWER(description) LIKE '%{$keyword}%' 
-               OR LOWER(short_description) LIKE '%{$keyword}%'
-               OR LOWER(specifications) LIKE '%{$keyword}%'
-               OR LOWER(category) LIKE '%{$keyword}%'";
+            WHERE LOWER(description) LIKE ? 
+               OR LOWER(short_description) LIKE ?
+               OR LOWER(specifications) LIKE ?
+               OR LOWER(category) LIKE ?";
+    
+    $stmt = mysqli_prepare($conn, $sql);
+    $searchParam = "%{$keyword}%";
+    mysqli_stmt_bind_param($stmt, "ssss", $searchParam, $searchParam, $searchParam, $searchParam);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 } else {
     $sql = "SELECT * FROM item LEFT JOIN stock USING (item_id)";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 }
-
-$result = mysqli_query($conn, $sql);
 $itemCount = mysqli_num_rows($result);
 ?>
 
@@ -119,3 +127,7 @@ $itemCount = mysqli_num_rows($result);
 </body>
 
 <?php include('../includes/footer.php'); ?>
+
+
+
+

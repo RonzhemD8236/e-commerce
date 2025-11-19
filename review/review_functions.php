@@ -7,8 +7,11 @@
 function getCustomerIdFromUserId($conn, $userId) {
     $userId = intval($userId);
     
-    $sql = "SELECT customer_id FROM customer WHERE user_id = $userId LIMIT 1";
-    $result = mysqli_query($conn, $sql);
+    $sql = "SELECT customer_id FROM customer WHERE user_id = ? LIMIT 1";
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $userId);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
     
     if ($result && mysqli_num_rows($result) > 0) {
         $row = mysqli_fetch_assoc($result);
@@ -24,23 +27,26 @@ function getCustomerIdFromUserId($conn, $userId) {
 function getProductReviews($conn, $itemId) {
     $itemId = intval($itemId);
     
-    $sql = "SELECT 
-                r.review_id,
-                r.customer_id,
-                r.rating,
-                r.review_title,
-                r.review_text,
-                r.is_verified_purchase,
-                r.created_at,
-                r.updated_at,
-                CONCAT(c.fname, ' ', c.lname) AS customer_name
-            FROM reviews r
-            INNER JOIN customer c ON r.customer_id = c.customer_id
-            WHERE r.item_id = $itemId
-            AND r.is_approved = 1
-            ORDER BY r.created_at DESC";
-    
-    $result = mysqli_query($conn, $sql);
+            $sql = "SELECT 
+                    r.review_id,
+                    r.customer_id,
+                    r.rating,
+                    r.review_title,
+                    r.review_text,
+                    r.is_verified_purchase,
+                    r.created_at,
+                    r.updated_at,
+                    CONCAT(c.fname, ' ', c.lname) AS customer_name
+                FROM reviews r
+                INNER JOIN customer c ON r.customer_id = c.customer_id
+                WHERE r.item_id = ?
+                AND r.is_approved = 1
+                ORDER BY r.created_at DESC";
+
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $itemId);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
     
     if (!$result) {
         return array();
@@ -60,14 +66,17 @@ function getProductReviews($conn, $itemId) {
 function getAverageRating($conn, $itemId) {
     $itemId = intval($itemId);
     
-    $sql = "SELECT 
+        $sql = "SELECT 
                 AVG(rating) AS avg_rating,
                 COUNT(*) AS total_reviews
             FROM reviews
-            WHERE item_id = $itemId
+            WHERE item_id = ?
             AND is_approved = 1";
-    
-    $result = mysqli_query($conn, $sql);
+
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $itemId);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
     
     if (!$result) {
         return array('avg_rating' => 0, 'total_reviews' => 0);
@@ -89,16 +98,19 @@ function canCustomerReview($conn, $customerId, $itemId) {
     
     // Check if customer has a completed/delivered order with this item
     // Adjusted to match your actual database structure
-    $sql = "SELECT oi.orderinfo_id, oi.date_placed
+        $sql = "SELECT oi.orderinfo_id, oi.date_placed
             FROM orderinfo oi
             INNER JOIN orderline ol ON oi.orderinfo_id = ol.orderinfo_id
-            WHERE oi.customer_id = $customerId
-            AND ol.item_id = $itemId
+            WHERE oi.customer_id = ?
+            AND ol.item_id = ?
             AND (oi.status = 'Delivered' OR oi.status = 'Completed' OR oi.status = 'delivered' OR oi.status = 'completed')
             ORDER BY oi.date_placed DESC
             LIMIT 1";
-    
-    $result = mysqli_query($conn, $sql);
+
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $customerId, $itemId);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
     
     if (!$result || mysqli_num_rows($result) == 0) {
         return false;
@@ -225,19 +237,21 @@ function insertReview($conn, $customerId, $itemId, $orderinfoId, $rating, $revie
     $itemId = intval($itemId);
     $orderinfoId = intval($orderinfoId);
     $rating = intval($rating);
-    $reviewTitle = mysqli_real_escape_string($conn, trim($reviewTitle));
-    $reviewText = mysqli_real_escape_string($conn, trim($reviewText));
-    
+    $reviewTitle = trim($reviewTitle);
+    $reviewText = trim($reviewText);
+
     // Filter inappropriate words
     $reviewTitle = filterInappropriateWords($reviewTitle);
     $reviewText = filterInappropriateWords($reviewText);
-    
+
     $sql = "INSERT INTO reviews 
             (customer_id, item_id, orderinfo_id, rating, review_title, review_text, is_verified_purchase, is_approved, created_at, updated_at)
             VALUES 
-            ($customerId, $itemId, $orderinfoId, $rating, '$reviewTitle', '$reviewText', 1, 1, NOW(), NOW())";
-    
-    return mysqli_query($conn, $sql);
+            (?, ?, ?, ?, ?, ?, 1, 1, NOW(), NOW())";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "iiiiss", $customerId, $itemId, $orderinfoId, $rating, $reviewTitle, $reviewText);
+    return mysqli_stmt_execute($stmt);
 }
 
 /**
@@ -247,22 +261,24 @@ function updateReview($conn, $reviewId, $customerId, $rating, $reviewTitle, $rev
     $reviewId = intval($reviewId);
     $customerId = intval($customerId);
     $rating = intval($rating);
-    $reviewTitle = mysqli_real_escape_string($conn, trim($reviewTitle));
-    $reviewText = mysqli_real_escape_string($conn, trim($reviewText));
-    
+    $reviewTitle = trim($reviewTitle);
+    $reviewText = trim($reviewText);
+
     // Filter inappropriate words
     $reviewTitle = filterInappropriateWords($reviewTitle);
     $reviewText = filterInappropriateWords($reviewText);
-    
+
     $sql = "UPDATE reviews 
-            SET rating = $rating,
-                review_title = '$reviewTitle',
-                review_text = '$reviewText',
+            SET rating = ?,
+                review_title = ?,
+                review_text = ?,
                 updated_at = NOW()
-            WHERE review_id = $reviewId
-            AND customer_id = $customerId";
-    
-    return mysqli_query($conn, $sql);
+            WHERE review_id = ?
+            AND customer_id = ?";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "issii", $rating, $reviewTitle, $reviewText, $reviewId, $customerId);
+    return mysqli_stmt_execute($stmt);
 }
 
 /**
@@ -273,10 +289,12 @@ function deleteReview($conn, $reviewId, $customerId) {
     $customerId = intval($customerId);
     
     $sql = "DELETE FROM reviews 
-            WHERE review_id = $reviewId
-            AND customer_id = $customerId";
-    
-    return mysqli_query($conn, $sql);
+        WHERE review_id = ?
+        AND customer_id = ?";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $reviewId, $customerId);
+    return mysqli_stmt_execute($stmt);
 }
 
 /**
@@ -287,10 +305,13 @@ function isReviewOwner($conn, $reviewId, $customerId) {
     $customerId = intval($customerId);
     
     $sql = "SELECT review_id FROM reviews 
-            WHERE review_id = $reviewId 
-            AND customer_id = $customerId";
-    
-    $result = mysqli_query($conn, $sql);
+        WHERE review_id = ? 
+        AND customer_id = ?";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $reviewId, $customerId);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
     
     return $result && mysqli_num_rows($result) > 0;
 }
