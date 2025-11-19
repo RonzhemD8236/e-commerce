@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// ✅ Authentication Check - Admin Only
+// ✅ Authentication Check
 // Authentication: Admin Only
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
@@ -9,128 +9,163 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
+// ✅ Validate orderinfo_id parameter BEFORE including header (so we can redirect)
+$orderId = 0;
 
-include("../includes/config.php");
+// Check GET parameters
+if (isset($_GET['orderinfo_id']) && !empty($_GET['orderinfo_id'])) {
+    $orderId = (int)$_GET['orderinfo_id'];
+} elseif (isset($_GET['orderId']) && !empty($_GET['orderId'])) {
+    $orderId = (int)$_GET['orderId'];
+} elseif (isset($_GET['id']) && !empty($_GET['id'])) {
+    $orderId = (int)$_GET['id'];
+} elseif (isset($_SESSION['orderId']) && !empty($_SESSION['orderId'])) {
+    $orderId = (int)$_SESSION['orderId'];
+}
 
-// Import PHPMailer classes
+// Also check POST in case it's a form submission
+if ($orderId === 0 && isset($_POST['orderinfo_id']) && !empty($_POST['orderinfo_id'])) {
+    $orderId = (int)$_POST['orderinfo_id'];
+} elseif ($orderId === 0 && isset($_POST['orderId']) && !empty($_POST['orderId'])) {
+    $orderId = (int)$_POST['orderId'];
+}
+
+if ($orderId === 0 || $orderId < 1) {
+    // User-friendly error message with redirect option
+    $_SESSION['message'] = 'Invalid or missing order ID. Please select an order from the orders list.';
+    $_SESSION['message_type'] = 'danger';
+    header("Location: orders.php");
+    exit();
+}
+
+// Now include config (but not header yet, in case we need to redirect)
+include('../includes/config.php');
+
+// Include PHPMailer files (must be before POST processing so function can use them)
+require '../phpmailer/src/Exception.php';
+require '../phpmailer/src/PHPMailer.php';
+require '../phpmailer/src/SMTP.php';
+
+// Import PHPMailer classes after requiring the files
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require '../PHPMailer/src/Exception.php';
-require '../PHPMailer/src/PHPMailer.php';
-require '../PHPMailer/src/SMTP.php';
-
-// Check if form data exists
-if (!isset($_POST['status']) || !isset($_POST['orderId'])) {
-    $_SESSION['message'] = 'Missing required data';
-    $_SESSION['message_type'] = 'danger';
-    header("Location: orders.php");
-    exit();
-}
-
-$status = $_POST['status'];
-$orderId = intval($_POST['orderId']);
-
-// Map lowercase values to proper case matching database ENUM
-$statusMap = [
-    'pending' => 'Pending',
-    'processing' => 'Processing',
-    'shipped' => 'Shipped',
-    'delivered' => 'Delivered',
-    'cancelled' => 'Canceled'
-];
-
-// Convert to proper case
-$status = isset($statusMap[strtolower($status)]) ? $statusMap[strtolower($status)] : null;
-
-// Validate status value
-$validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Canceled'];
-if (!$status || !in_array($status, $validStatuses)) {
-    $_SESSION['message'] = 'Invalid status value: ' . htmlspecialchars($_POST['status']);
-    $_SESSION['message_type'] = 'danger';
-    header("Location: orders.php");
-    exit();
-}
-
-// Check if order exists and get customer email
-$checkSql = "SELECT o.orderinfo_id, c.email, c.fname, c.lname 
-             FROM orderinfo o
-             INNER JOIN customer c USING(customer_id)
-             WHERE o.orderinfo_id = ?";
-$checkStmt = mysqli_prepare($conn, $checkSql);
-
-if (!$checkStmt) {
-    $_SESSION['message'] = 'Database error: ' . mysqli_error($conn);
-    $_SESSION['message_type'] = 'danger';
-    header("Location: orders.php");
-    exit();
-}
-
-mysqli_stmt_bind_param($checkStmt, "i", $orderId);
-mysqli_stmt_execute($checkStmt);
-$checkResult = mysqli_stmt_get_result($checkStmt);
-
-if (mysqli_num_rows($checkResult) === 0) {
-    $_SESSION['message'] = 'Order not found';
-    $_SESSION['message_type'] = 'danger';
+// ✅ PROCESS POST REQUEST - Update Order Status
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && isset($_POST['orderId'])) {
+    $status = $_POST['status'];
+    $orderId = (int)$_POST['orderId'];
+    
+    // Map lowercase values to proper case matching database ENUM
+    $statusMap = [
+        'pending' => 'Pending',
+        'processing' => 'Processing',
+        'shipped' => 'Shipped',
+        'delivered' => 'Delivered',
+        'cancelled' => 'Canceled',
+        'canceled' => 'Canceled'
+    ];
+    
+    // Convert to proper case
+    $status = isset($statusMap[strtolower($status)]) ? $statusMap[strtolower($status)] : null;
+    
+    // Validate status value
+    $validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Canceled'];
+    if (!$status || !in_array($status, $validStatuses)) {
+        $_SESSION['message'] = 'Invalid status value: ' . htmlspecialchars($_POST['status']);
+        $_SESSION['message_type'] = 'danger';
+        header("Location: orders.php");
+        exit();
+    }
+    
+    // Check if order exists and get customer email
+    $checkSql = "SELECT o.orderinfo_id, c.email, c.fname, c.lname 
+                 FROM orderinfo o
+                 INNER JOIN customer c USING(customer_id)
+                 WHERE o.orderinfo_id = ?";
+    $checkStmt = mysqli_prepare($conn, $checkSql);
+    
+    if (!$checkStmt) {
+        $_SESSION['message'] = 'Database error: ' . mysqli_error($conn);
+        $_SESSION['message_type'] = 'danger';
+        header("Location: orders.php");
+        exit();
+    }
+    
+    mysqli_stmt_bind_param($checkStmt, "i", $orderId);
+    mysqli_stmt_execute($checkStmt);
+    $checkResult = mysqli_stmt_get_result($checkStmt);
+    
+    if (mysqli_num_rows($checkResult) === 0) {
+        $_SESSION['message'] = 'Order not found';
+        $_SESSION['message_type'] = 'danger';
+        mysqli_stmt_close($checkStmt);
+        header("Location: orders.php");
+        exit();
+    }
+    
+    $orderData = mysqli_fetch_assoc($checkResult);
+    $customerEmail = $orderData['email'];
+    $customerName = $orderData['fname'] . ' ' . $orderData['lname'];
     mysqli_stmt_close($checkStmt);
-    header("Location: orders.php");
-    exit();
-}
-
-$orderData = mysqli_fetch_assoc($checkResult);
-$customerEmail = $orderData['email'];
-$customerName = $orderData['fname'] . ' ' . $orderData['lname'];
-mysqli_stmt_close($checkStmt);
-
-// Update the order status
-$sql = "UPDATE orderinfo SET status = ?, updated_at = NOW() WHERE orderinfo_id = ?";
-$stmt = mysqli_prepare($conn, $sql);
-
-if (!$stmt) {
-    $_SESSION['message'] = 'Database error: ' . mysqli_error($conn);
-    $_SESSION['message_type'] = 'danger';
-    header("Location: orders.php");
-    exit();
-}
-
-mysqli_stmt_bind_param($stmt, "si", $status, $orderId);
-
-if (mysqli_stmt_execute($stmt)) {
-    // Update date_shipped for Shipped and Delivered statuses
-    if ($status === 'Delivered' || $status === 'Shipped') {
-        $updateShipDate = "UPDATE orderinfo 
-                          SET date_shipped = CURDATE() 
-                          WHERE orderinfo_id = ? AND date_shipped IS NULL";
-        $shipStmt = mysqli_prepare($conn, $updateShipDate);
-        
-        if ($shipStmt) {
-            mysqli_stmt_bind_param($shipStmt, "i", $orderId);
-            mysqli_stmt_execute($shipStmt);
-            mysqli_stmt_close($shipStmt);
+    
+    // Update the order status
+    $sql = "UPDATE orderinfo SET status = ?, updated_at = NOW() WHERE orderinfo_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    
+    if (!$stmt) {
+        $_SESSION['message'] = 'Database error: ' . mysqli_error($conn);
+        $_SESSION['message_type'] = 'danger';
+        header("Location: orders.php");
+        exit();
+    }
+    
+    mysqli_stmt_bind_param($stmt, "si", $status, $orderId);
+    
+    if (mysqli_stmt_execute($stmt)) {
+        // Update date_shipped for Shipped and Delivered statuses
+        if ($status === 'Delivered' || $status === 'Shipped') {
+            $updateShipDate = "UPDATE orderinfo 
+                              SET date_shipped = CURDATE() 
+                              WHERE orderinfo_id = ? AND date_shipped IS NULL";
+            $shipStmt = mysqli_prepare($conn, $updateShipDate);
+            
+            if ($shipStmt) {
+                mysqli_stmt_bind_param($shipStmt, "i", $orderId);
+                mysqli_stmt_execute($shipStmt);
+                mysqli_stmt_close($shipStmt);
+            }
         }
-    }
-    
-    // Send email notification
-    $emailSent = sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $customerName);
-    
-    if ($emailSent) {
-        $_SESSION['message'] = "Order #$orderId status updated to '$status' and email sent successfully";
-        $_SESSION['message_type'] = 'success';
+        
+        // ✅ ALWAYS send email notification to customer for EVERY status update
+        // This ensures customers are notified whenever their order status changes
+        $emailSent = sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $customerName);
+        
+        if ($emailSent) {
+            // ✅ GREEN: Both status update and email sent successfully
+            $_SESSION['message'] = "✅ Order #$orderId status updated to '$status' and email sent successfully to customer";
+            $_SESSION['message_type'] = 'success';
+        } else {
+            // ⚠️ YELLOW: Status updated but email failed
+            $_SESSION['message'] = "⚠️ Order #$orderId status updated to '$status' but email failed to send. Please check email configuration.";
+            $_SESSION['message_type'] = 'warning';
+            // Log the error for debugging
+            error_log("Failed to send order status email for order #$orderId to $customerEmail");
+        }
     } else {
-        $_SESSION['message'] = "Order #$orderId status updated to '$status' but email failed to send";
-        $_SESSION['message_type'] = 'warning';
+        // ❌ RED: Both status update and email failed
+        $_SESSION['message'] = '❌ Failed to update order status and email notification: ' . mysqli_error($conn);
+        $_SESSION['message_type'] = 'danger';
     }
-} else {
-    $_SESSION['message'] = 'Error updating order: ' . mysqli_error($conn);
-    $_SESSION['message_type'] = 'danger';
+    
+    mysqli_stmt_close($stmt);
+    mysqli_close($conn);
+    
+    header("Location: orders.php");
+    exit();
 }
 
-mysqli_stmt_close($stmt);
-mysqli_close($conn);
-
-header("Location: orders.php");
-exit();
+// Include header only if we're displaying the page (not redirecting)
+include('../admin/header.php');
 
 /**
  * Send order status update email to customer
@@ -230,7 +265,9 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
             return false;
         }
         
-        $orderDate = date('F j, Y g:i A', strtotime($deliveryInfo['created_at']));
+        // Use current real-time date
+        date_default_timezone_set('Asia/Manila');
+        $orderDate = date('F j, Y g:i A', time());
         $shippingMethod = 'Standard Delivery';
         $paymentMethod = 'Cash on Delivery';
         $deliveryName = htmlspecialchars($deliveryInfo['fname'] . ' ' . $deliveryInfo['lname']);
@@ -325,7 +362,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
                 
                 <!-- Footer -->
                 <div style='background: #2a2a2a; padding: 20px; text-align: center;'>
-                    <p style='margin: 0; color: #999; font-size: 13px;'>© 2025 Lensify Store. All rights reserved.</p>
+                    <p style='margin: 0; color: #999; font-size: 13px;'>© " . date('Y') . " Lensify Store. All rights reserved.</p>
                 </div>
             </div>
         </body>
@@ -341,6 +378,9 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         $mail->Password = 'eaac622c51900b';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 2525;
+        
+        // Set message date to current real-time
+        $mail->MessageDate = date('D, j M Y H:i:s O');
         
         $mail->setFrom('noreply@lensify.com', 'Lensify');
         $mail->addAddress($customerEmail, $customerName);
@@ -358,4 +398,372 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         return false;
     }
 }
+
+$_SESSION['orderId'] = $orderId;
+
+// ✅ Query using order_transaction_details view (PREPARED STATEMENT)
+$sql = "SELECT * FROM order_transaction_details WHERE orderinfo_id = ?";
+
+$stmt = mysqli_prepare($conn, $sql);
+if (!$stmt) {
+    // If prepared statement fails, try alternative query without view
+    error_log("Prepared statement failed: " . mysqli_error($conn));
+    
+    // Fallback: Use JOIN query directly (in case view doesn't exist)
+    $orderIdEscaped = (int)$orderId;
+    $sql = "SELECT 
+                o.orderinfo_id,
+                o.date_placed,
+                o.date_shipped,
+                o.shipping,
+                o.status AS order_status,
+                o.payment_method,
+                o.shipping_method,
+                c.customer_id,
+                CONCAT(c.fname, ' ', c.lname) AS customer_name,
+                c.email AS customer_email,
+                c.phone AS customer_phone,
+                CONCAT_WS(', ', c.addressline, c.town, c.state, c.country, c.zipcode) AS full_address,
+                i.item_id,
+                i.description AS item_name,
+                i.short_description AS item_short_desc,
+                i.category AS item_category,
+                i.sell_price AS item_price,
+                ol.quantity,
+                ol.quantity * i.sell_price AS subtotal,
+                s.quantity AS available_stock,
+                u.username,
+                u.role AS user_role,
+                u.profile_img,
+                c.image_path AS customer_image_path
+            FROM orderinfo o
+            INNER JOIN customer c ON o.customer_id = c.customer_id
+            INNER JOIN orderline ol ON o.orderinfo_id = ol.orderinfo_id
+            INNER JOIN item i ON ol.item_id = i.item_id
+            LEFT JOIN stock s ON i.item_id = s.item_id
+            LEFT JOIN users u ON c.user_id = u.id
+            WHERE o.orderinfo_id = $orderIdEscaped";
+    
+    $result = mysqli_query($conn, $sql);
+    
+    if (!$result) {
+        die("Error: Database query failed. " . mysqli_error($conn));
+    }
+} else {
+    mysqli_stmt_bind_param($stmt, "i", $orderId);
+    if (!mysqli_stmt_execute($stmt)) {
+        mysqli_stmt_close($stmt);
+        die("Error: Failed to execute statement. " . mysqli_error($conn));
+    }
+    $result = mysqli_stmt_get_result($stmt);
+    
+    if (!$result) {
+        mysqli_stmt_close($stmt);
+        die("Error: Failed to get result set. " . mysqli_error($conn));
+    }
+}
+
+// Get all order items
+$orderItems = [];
+$customer = null;
+while ($row = mysqli_fetch_assoc($result)) {
+    if ($customer === null) {
+        // Store customer and order info from first row
+        $customer = $row;
+    }
+    $orderItems[] = $row;
+}
+
+// Close statement if it was created
+if (isset($stmt) && $stmt !== false && is_object($stmt)) {
+    mysqli_stmt_close($stmt);
+}
+
+if (!$customer) {
+    die("Error: Order not found.");
+}
+
+// ✅ Set profile picture path - check both profile_img and customer_image_path
+$profilePicture = "../uploads/default-profile.png"; // Default
+
+if (!empty($customer['profile_img']) && file_exists("../uploads/" . $customer['profile_img'])) {
+    $profilePicture = "../uploads/" . $customer['profile_img'];
+} elseif (!empty($customer['customer_image_path']) && file_exists("../uploads/" . $customer['customer_image_path'])) {
+    $profilePicture = "../uploads/" . $customer['customer_image_path'];
+}
+
+// ✅ Calculate status badge color
+$statusColors = [
+    'Processing' => 'warning',
+    'Delivered' => 'success',
+    'Canceled' => 'danger',
+    'Pending' => 'secondary',
+    'Shipped' => 'info'
+];
+$badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
+?>
+
+<style>
+    .order-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 10px 10px 0 0;
+        color: white;
+        margin-bottom: 0;
+    }
+    
+    .order-card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .profile-image {
+        width: 90px;
+        height: 90px;
+        object-fit: cover;
+        border: 4px solid #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .info-section {
+        background: #ffffff;
+        padding: 2rem;
+    }
+    
+    .info-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-value {
+        color: #212529;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .items-table {
+        background: white;
+    }
+    
+    .items-table thead {
+        background: #f8f9fa;
+    }
+    
+    .items-table thead th {
+        font-weight: 600;
+        color: #495057;
+        text-transform: uppercase;
+        font-size: 0.813rem;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+        border: none;
+    }
+    
+    .items-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-color: #e9ecef;
+    }
+    
+    .items-table tfoot {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    .items-table tfoot td {
+        padding: 1.25rem 1rem;
+        font-size: 1.125rem;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-radius: 50px;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-back {
+        background: #6c757d;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-back:hover {
+        background: #5a6268;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .info-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #e7f3ff;
+        color: #0066cc;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+</style>
+
+<div class="container my-5">
+    <!-- Order Header -->
+    <div class="order-card">
+        <div class="order-header d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1">Order #<?= str_pad($customer['orderinfo_id'], 4, '0', STR_PAD_LEFT) ?></h2>
+                <p class="mb-0 opacity-75">Placed on <?= date('F j, Y', strtotime($customer['date_placed'])) ?></p>
+            </div>
+            <span class="status-badge bg-<?= $badgeColor ?>"><?= htmlspecialchars($customer['order_status']) ?></span>
+        </div>
+        
+        <div class="info-section">
+            <div class="row">
+                <!-- Customer Information -->
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <h5 class="section-title">Customer Information</h5>
+                    <div class="d-flex align-items-start">
+                        <img src="<?= htmlspecialchars($profilePicture) ?>" 
+                             alt="Customer Profile" 
+                             class="rounded-circle profile-image me-3"
+                             onerror="this.src='../uploads/default-profile.png'">
+                        <div class="flex-grow-1">
+                            <div class="info-label">Full Name</div>
+                            <div class="info-value">
+                                <?= htmlspecialchars($customer['customer_name']) ?>
+                                <?php if (!empty($customer['username'])): ?>
+                                    <span class="info-badge">@<?= htmlspecialchars($customer['username']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <div class="info-label">Email Address</div>
+                            <div class="info-value"><?= htmlspecialchars($customer['customer_email']) ?></div>
+                            
+                            <div class="info-label">Contact Number</div>
+                            <div class="info-value"><?= htmlspecialchars($customer['customer_phone']) ?></div>
+                            
+                            <div class="info-label">Shipping Address</div>
+                            <div class="info-value">
+                                <?= nl2br(htmlspecialchars($customer['full_address'])) ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Information -->
+                <div class="col-lg-6">
+                    <h5 class="section-title">Order Information</h5>
+                    
+                    <div class="info-label">Order ID</div>
+                    <div class="info-value">#<?= str_pad($customer['orderinfo_id'], 4, '0', STR_PAD_LEFT) ?></div>
+                    
+                    <div class="info-label">Date Placed</div>
+                    <div class="info-value"><?= date('F j, Y', strtotime($customer['date_placed'])) ?></div>
+                    
+                    <div class="info-label">Date Shipped</div>
+                    <div class="info-value">
+                        <?= $customer['date_shipped'] ? date('F j, Y', strtotime($customer['date_shipped'])) : '<span class="text-muted">Not yet shipped</span>' ?>
+                    </div>
+                    
+                    <div class="info-label">Payment Method</div>
+                    <div class="info-value"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $customer['payment_method']))) ?></div>
+                    
+                    <div class="info-label">Shipping Method</div>
+                    <div class="info-value"><?= htmlspecialchars(ucwords($customer['shipping_method'])) ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="order-card">
+        <div class="info-section">
+            <h5 class="section-title">Order Items</h5>
+            
+            <div class="table-responsive">
+                <table class="table items-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Item Description</th>
+                            <th>Category</th>
+                            <th class="text-center" style="width: 100px;">Quantity</th>
+                            <th class="text-end" style="width: 130px;">Unit Price</th>
+                            <th class="text-end" style="width: 130px;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $itemsSubtotal = 0;
+                        foreach ($orderItems as $item) {
+                            $itemsSubtotal += $item['subtotal'];
+                            echo "<tr>";
+                            echo "<td>";
+                            echo "<strong>" . htmlspecialchars($item['item_name']) . "</strong>";
+                            if (!empty($item['item_short_desc'])) {
+                                echo "<br><small class='text-muted'>" . htmlspecialchars($item['item_short_desc']) . "</small>";
+                            }
+                            echo "</td>";
+                            echo "<td><span class='badge bg-light text-dark'>" . htmlspecialchars($item['item_category']) . "</span></td>";
+                            echo "<td class='text-center'>";
+                            echo $item['quantity'];
+                            if (!empty($item['available_stock'])) {
+                                echo "<br><small class='text-muted'>Stock: " . $item['available_stock'] . "</small>";
+                            }
+                            echo "</td>";
+                            echo "<td class='text-end'>₱" . number_format($item['item_price'], 2) . "</td>";
+                            echo "<td class='text-end'><strong>₱" . number_format($item['subtotal'], 2) . "</strong></td>";
+                            echo "</tr>";
+                        }
+                        ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-end">Subtotal:</td>
+                            <td class="text-end">₱<?= number_format($itemsSubtotal, 2) ?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end">Shipping Fee:</td>
+                            <td class="text-end">₱<?= number_format($customer['shipping'], 2) ?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
+                            <td class="text-end"><strong>₱<?= number_format($itemsSubtotal + $customer['shipping'], 2) ?></strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-4">
+        <a href="orders.php" class="btn btn-back">
+            <i class="bi bi-arrow-left me-2"></i>Back to Orders
+        </a>
+    </div>
+</div>
+
+<?php
+include('../includes/footer.php');
 ?>

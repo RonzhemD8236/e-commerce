@@ -156,10 +156,17 @@ body::before {
 }
 
 .main-content {
-    padding-top: 100px;
+    padding-top: 150px;
+    margin-top: 20px;
     min-height: 100vh;
     position: relative;
     z-index: 1;
+}
+
+/* Ensure product section maintains its position when review form opens */
+.product-section {
+    position: relative;
+    z-index: 2;
 }
 
 .product-container {
@@ -233,6 +240,8 @@ body::before {
     box-shadow: 0 20px 60px rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
+    display: flex;
+    flex-direction: column;
 }
 
 .review-item {
@@ -240,11 +249,33 @@ body::before {
     border: 1px solid #333;
     border-radius: 12px;
     color: #ffffff;
+    display: flex;
+    flex-direction: column;
+}
+
+.review-item .card-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
 .review-item:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(255, 255, 255, 0.05);
+}
+
+#reviewsList {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
+}
+
+.review-item .card-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
 }
 
 .reviews-section .form-control {
@@ -283,10 +314,10 @@ body::before {
 </style>
 
 <div class="main-content">
-<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px;">
-    <div class="row" style="margin-bottom: 60px;">
-        <div class="col-md-6 pe-4">
-           <div class="image-slider position-relative" style="width:100%; height:400px; overflow:hidden; border-radius:10px; background:transparent;">
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 30px;">
+    <div class="row" style="margin-bottom: 60px; align-items: flex-end;">
+        <div class="col-md-6 pe-4 d-flex align-items-end">
+           <div class="image-slider position-relative" style="width:100%; min-height:400px; height:auto; overflow:hidden; border-radius:10px; background:transparent;">
                 <?php if (!empty($images)): ?>
                     <?php foreach ($images as $index => $img): ?>
                         <img src="<?php echo htmlspecialchars($img); ?>" 
@@ -318,7 +349,7 @@ body::before {
             </div>
         </div>
 
-        <div class="col-md-6 ps-4 d-flex align-items-center">
+        <div class="col-md-6 ps-4 d-flex align-items-end">
             <div style="width: 100%;">
                 <h2 style="font-size: 1.75rem; margin-bottom: 15px;"><?php echo htmlspecialchars($row['description']); ?></h2>
             
@@ -384,9 +415,11 @@ body::before {
 
     <?php if (function_exists('getProductReviews')): ?>
     <div class="row" style="margin-top: 60px; margin-bottom: 100px;">
-        <div class="col-12">
-            <h3>Customer Reviews</h3>
-            <hr>
+        <div class="col-12 d-flex flex-column">
+            <div class="mt-auto">
+                <h3>Customer Reviews</h3>
+                <hr>
+            </div>
             
             <?php 
             $isUserLoggedIn = isset($_SESSION['customer_id']) || isset($_SESSION['user_id']);
@@ -394,9 +427,11 @@ body::before {
             
             <?php if ($isUserLoggedIn): ?>
                 <?php if ($canReview): ?>
-                    <button class="btn btn-primary mb-4" onclick="toggleReviewForm()">
-                        <?php echo $userExistingReview ? 'Edit Your Review' : 'Write a Review'; ?>
-                    </button>
+                    <div class="mt-auto">
+                        <button class="btn btn-primary mb-4" onclick="toggleReviewForm()">
+                            <?php echo $userExistingReview ? 'Edit Your Review' : 'Write a Review'; ?>
+                        </button>
+                    </div>
                     
                     <div id="reviewFormContainer" style="display:none; margin-bottom: 100px;" class="card mb-4">
                         <div class="card-body" style="padding: 30px;">
@@ -457,7 +492,7 @@ body::before {
                     <?php foreach ($reviews as $review): ?>
                         <div class="card mb-3 review-item">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
                                         <h5 class="card-title"><?php echo htmlspecialchars($review['review_title']); ?></h5>
                                         <div class="star-rating mb-2" style="color: #ffc107;">
@@ -467,13 +502,13 @@ body::before {
                                         </div>
                                     </div>
                                     <?php if (isset($_SESSION['customer_id']) && $_SESSION['customer_id'] == $review['customer_id']): ?>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteReview(<?php echo $review['review_id']; ?>)">Delete</button>
+                                        <button class="btn btn-sm btn-outline-danger align-self-start" onclick="deleteReview(<?php echo $review['review_id']; ?>)">Delete</button>
                                     <?php elseif (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $review['customer_id']): ?>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteReview(<?php echo $review['review_id']; ?>)">Delete</button>
+                                        <button class="btn btn-sm btn-outline-danger align-self-start" onclick="deleteReview(<?php echo $review['review_id']; ?>)">Delete</button>
                                     <?php endif; ?>
                                 </div>
-                                <p class="card-text"><?php echo nl2br(htmlspecialchars($review['review_text'])); ?></p>
-                                <div class="text-muted small">
+                                <p class="card-text flex-grow-1"><?php echo nl2br(htmlspecialchars($review['review_text'])); ?></p>
+                                <div class="text-muted small mt-auto">
                                     <strong><?php echo htmlspecialchars($review['customer_name']); ?></strong>
                                     <?php if ($review['is_verified_purchase']): ?>
                                         <span class="badge bg-success ms-2">Verified Purchase</span>
@@ -597,26 +632,16 @@ function submitCart() {
 <?php if (function_exists('getProductReviews')): ?>
 function toggleReviewForm() {
     var form = document.getElementById('reviewFormContainer');
+    var currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
     
     if (form.style.display === 'none') {
         form.style.display = 'block';
-        setTimeout(function() {
-            var formPosition = form.getBoundingClientRect().top + window.pageYOffset;
-            window.scrollTo({
-                top: formPosition - 100,
-                behavior: 'smooth'
-            });
-        }, 100);
+        // Maintain scroll position to preserve padding between header and product
+        window.scrollTo(0, currentScrollPosition);
     } else {
         form.style.display = 'none';
-        var reviewsTitle = document.querySelector('h3');
-        if (reviewsTitle && reviewsTitle.textContent.includes('Customer Reviews')) {
-            var titlePosition = reviewsTitle.getBoundingClientRect().top + window.pageYOffset;
-            window.scrollTo({
-                top: titlePosition - 100,
-                behavior: 'smooth'
-            });
-        }
+        // Maintain scroll position when closing
+        window.scrollTo(0, currentScrollPosition);
     }
 }
 

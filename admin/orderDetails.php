@@ -9,14 +9,38 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
+// ✅ Validate orderinfo_id parameter BEFORE including header (so we can redirect)
+$orderId = 0;
+
+// Check GET parameters
+if (isset($_GET['orderinfo_id']) && !empty($_GET['orderinfo_id'])) {
+    $orderId = (int)$_GET['orderinfo_id'];
+} elseif (isset($_GET['orderId']) && !empty($_GET['orderId'])) {
+    $orderId = (int)$_GET['orderId'];
+} elseif (isset($_GET['id']) && !empty($_GET['id'])) {
+    $orderId = (int)$_GET['id'];
+} elseif (isset($_SESSION['orderId']) && !empty($_SESSION['orderId'])) {
+    $orderId = (int)$_SESSION['orderId'];
+}
+
+// Also check POST in case it's a form submission
+if ($orderId === 0 && isset($_POST['orderinfo_id']) && !empty($_POST['orderinfo_id'])) {
+    $orderId = (int)$_POST['orderinfo_id'];
+} elseif ($orderId === 0 && isset($_POST['orderId']) && !empty($_POST['orderId'])) {
+    $orderId = (int)$_POST['orderId'];
+}
+
+if ($orderId === 0 || $orderId < 1) {
+    // User-friendly error message with redirect option
+    $_SESSION['message'] = 'Invalid or missing order ID. Please select an order from the orders list.';
+    $_SESSION['message_type'] = 'danger';
+    header("Location: orders.php");
+    exit();
+}
+
+// Now include header and config after validation
 include('../admin/header.php');
 include('../includes/config.php');
-
-// ✅ Validate orderinfo_id parameter
-$orderId = isset($_GET['orderinfo_id']) ? (int)$_GET['orderinfo_id'] : 0;
-if ($orderId === 0) {
-    die("Error: Invalid or missing orderinfo_id.");
-}
 
 $_SESSION['orderId'] = $orderId;
 
@@ -24,9 +48,63 @@ $_SESSION['orderId'] = $orderId;
 $sql = "SELECT * FROM order_transaction_details WHERE orderinfo_id = ?";
 
 $stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $orderId);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
+if (!$stmt) {
+    // If prepared statement fails, try alternative query without view
+    error_log("Prepared statement failed: " . mysqli_error($conn));
+    
+    // Fallback: Use JOIN query directly (in case view doesn't exist)
+    $orderIdEscaped = (int)$orderId;
+    $sql = "SELECT 
+                o.orderinfo_id,
+                o.date_placed,
+                o.date_shipped,
+                o.shipping,
+                o.status AS order_status,
+                o.payment_method,
+                o.shipping_method,
+                c.customer_id,
+                CONCAT(c.fname, ' ', c.lname) AS customer_name,
+                c.email AS customer_email,
+                c.phone AS customer_phone,
+                CONCAT_WS(', ', c.addressline, c.town, c.state, c.country, c.zipcode) AS full_address,
+                i.item_id,
+                i.description AS item_name,
+                i.short_description AS item_short_desc,
+                i.category AS item_category,
+                i.sell_price AS item_price,
+                ol.quantity,
+                ol.quantity * i.sell_price AS subtotal,
+                s.quantity AS available_stock,
+                u.username,
+                u.role AS user_role,
+                u.profile_img,
+                c.image_path AS customer_image_path
+            FROM orderinfo o
+            INNER JOIN customer c ON o.customer_id = c.customer_id
+            INNER JOIN orderline ol ON o.orderinfo_id = ol.orderinfo_id
+            INNER JOIN item i ON ol.item_id = i.item_id
+            LEFT JOIN stock s ON i.item_id = s.item_id
+            LEFT JOIN users u ON c.user_id = u.id
+            WHERE o.orderinfo_id = $orderIdEscaped";
+    
+    $result = mysqli_query($conn, $sql);
+    
+    if (!$result) {
+        die("Error: Database query failed. " . mysqli_error($conn));
+    }
+} else {
+    mysqli_stmt_bind_param($stmt, "i", $orderId);
+    if (!mysqli_stmt_execute($stmt)) {
+        mysqli_stmt_close($stmt);
+        die("Error: Failed to execute statement. " . mysqli_error($conn));
+    }
+    $result = mysqli_stmt_get_result($stmt);
+    
+    if (!$result) {
+        mysqli_stmt_close($stmt);
+        die("Error: Failed to get result set. " . mysqli_error($conn));
+    }
+}
 
 // Get all order items
 $orderItems = [];
@@ -38,7 +116,11 @@ while ($row = mysqli_fetch_assoc($result)) {
     }
     $orderItems[] = $row;
 }
-mysqli_stmt_close($stmt);
+
+// Close statement if it was created
+if (isset($stmt) && $stmt !== false && is_object($stmt)) {
+    mysqli_stmt_close($stmt);
+}
 
 if (!$customer) {
     die("Error: Order not found.");

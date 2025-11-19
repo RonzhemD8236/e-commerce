@@ -131,6 +131,9 @@ try {
     mysqli_commit($conn);
 
     // ---------- SEND EMAIL RECEIPT ----------
+    // Set timezone for real-time date/time
+    date_default_timezone_set('Asia/Manila'); // Adjust to your timezone if needed
+    
     $mail = new PHPMailer(true);
     $mail->CharSet = 'UTF-8'; // ✅ Add this line
     
@@ -143,6 +146,9 @@ try {
         $mail->Password   = 'eaac622c51900b'; // Replace with your Mailtrap password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 2525; // Mailtrap port
+        
+        // Set message date to current real-time
+        $mail->MessageDate = date('D, j M Y H:i:s O');
 
         // Recipients
         $mail->setFrom('noreply@lensify.com', 'Lensify Store');
@@ -180,7 +186,7 @@ try {
                 <div style='padding: 30px;'>
                     <div style='background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #bb86fc;'>
                         <h2 style='margin: 0 0 15px 0; color: #8b5cf6; font-size: 18px;'>Order #$orderinfo_id</h2>
-                        <p style='margin: 5px 0; color: #666;'><strong>Date:</strong> " . date('F j, Y g:i A') . "</p>
+                        <p style='margin: 5px 0; color: #666;'><strong>Date:</strong> " . date('F j, Y g:i A', time()) . "</p>
                         <p style='margin: 5px 0; color: #666;'><strong>Status:</strong> <span style='color: #f59e0b; font-weight: 600;'>Pending</span></p>
                     </div>
                     
@@ -246,7 +252,7 @@ try {
         // Plain text alternative
         $mail->AltBody = "Order Confirmation #$orderinfo_id\n\n" .
                          "Thank you for your purchase, {$customer_name}!\n\n" .
-                         "Order Date: " . date('F j, Y g:i A') . "\n" .
+                         "Order Date: " . date('F j, Y g:i A', time()) . "\n" .
                          "Total Amount: ₱" . number_format($grand_total, 2) . "\n\n" .
                          "We'll send you updates about your order.";
 

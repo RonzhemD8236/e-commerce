@@ -14,6 +14,7 @@ include('../includes/config.php');
 
 // ---------- UPDATED SQL: include payment_method and shipping_method ----------
 $sql = "SELECT 
+            o.orderinfo_id,
             o.orderinfo_id AS orderId, 
             SUM(i.sell_price * ol.quantity) AS total, 
             o.status,
@@ -479,13 +480,38 @@ $itemCount = mysqli_num_rows($result);
                     echo "<td><span class='status-badge {$statusClass}'>{$statusText}</span></td>";
                     echo "<td>" . date('Y-m-d H:i:s', strtotime($row['created_at'])) . "</td>";
                     
-                    // Actions
-                    echo "<td>
-                            <div class='action-buttons'>
-                                <a href='orderDetails.php?orderinfo_id={$row['orderId']}' class='btn-view'>View</a>
-                                <button class='btn-update' onclick='openUpdateModal({$row['orderId']}, \"" . htmlspecialchars($row['status']) . "\")'>Update</button>
-                            </div>
-                          </td>";
+                    // Actions - ensure orderId is valid before creating link
+                    // Check for both camelCase and lowercase column names (MySQL case sensitivity)
+                    $orderIdValue = 0;
+                    if (isset($row['orderId'])) {
+                        $orderIdValue = (int)$row['orderId'];
+                    } elseif (isset($row['orderid'])) {
+                        $orderIdValue = (int)$row['orderid'];
+                    } elseif (isset($row['orderinfo_id'])) {
+                        $orderIdValue = (int)$row['orderinfo_id'];
+                    }
+                    
+                    if ($orderIdValue > 0) {
+                        echo "<td>
+                                <div class='action-buttons'>
+                                    <a href='orderDetails.php?orderinfo_id=" . urlencode($orderIdValue) . "' class='btn-view'>View</a>
+                                    <button class='btn-update' onclick='openUpdateModal({$orderIdValue}, \"" . htmlspecialchars($row['status']) . "\")'>Update</button>
+                                </div>
+                              </td>";
+                    } else {
+                        // Fallback: try to get orderinfo_id directly from the row
+                        $orderIdValue = isset($row['orderinfo_id']) ? (int)$row['orderinfo_id'] : 0;
+                        if ($orderIdValue > 0) {
+                            echo "<td>
+                                    <div class='action-buttons'>
+                                        <a href='orderDetails.php?orderinfo_id=" . urlencode($orderIdValue) . "' class='btn-view'>View</a>
+                                        <button class='btn-update' onclick='openUpdateModal({$orderIdValue}, \"" . htmlspecialchars($row['status']) . "\")'>Update</button>
+                                    </div>
+                                  </td>";
+                        } else {
+                            echo "<td><span class='text-muted'>N/A</span></td>";
+                        }
+                    }
                     
                     echo "</tr>";
                 }
