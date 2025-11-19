@@ -4,8 +4,9 @@ include("includes/header.php");
 include("includes/config.php");
 
 // Fetch first 3 featured products
+// Changed i.title to i.description since the table uses 'description' for product name
 $sql = "
-    SELECT i.item_id, i.title, i.short_description, i.sell_price, i.image_path, s.quantity
+    SELECT i.item_id, i.description, i.short_description, i.sell_price, i.image_path, s.quantity
     FROM item i
     LEFT JOIN stock s ON i.item_id = s.item_id
     WHERE i.deleted_at IS NULL
@@ -221,7 +222,8 @@ $products = $conn->query($sql);
 
         <?php while ($row = $products->fetch_assoc()): 
             $id = $row['item_id'];
-            $title = htmlspecialchars($row['title']);
+            // Changed from 'title' to 'description'
+            $title = htmlspecialchars($row['description']);
             $short = htmlspecialchars($row['short_description']);
             $price = number_format($row['sell_price'], 2);
             $stock = (int)($row['quantity'] ?? 0);

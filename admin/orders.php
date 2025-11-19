@@ -176,6 +176,16 @@ $itemCount = mysqli_num_rows($result);
     color: #991b1b;
 }
 
+.status-processing {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-shipped {
+    background-color: #e0e7ff;
+    color: #4338ca;
+}
+
 /* Action Buttons */
 .action-buttons {
     display: flex;
@@ -235,6 +245,137 @@ $itemCount = mysqli_num_rows($result);
     color: white;
 }
 
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s;
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: slideDown 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #1f2937;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-modal:hover {
+    color: #1f2937;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-group select {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: white;
+}
+
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 25px;
+}
+
+.btn-cancel {
+    padding: 10px 20px;
+    background-color: #e5e7eb;
+    color: #374151;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.btn-cancel:hover {
+    background-color: #d1d5db;
+}
+
+.btn-submit {
+    padding: 10px 20px;
+    background-color: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.btn-submit:hover {
+    background-color: #5568d3;
+}
+
 /* Footer Spacing */
 .page-wrapper {
     min-height: calc(100vh - 200px);
@@ -258,7 +399,7 @@ $itemCount = mysqli_num_rows($result);
                 placeholder="Search by order ID..." 
             >
         </div>
-        <a href="add_order.php" class="btn-add-order">Add New Order</a>
+        <div class="btn-add-order" style="cursor: default;">Total Orders: <?php echo $itemCount; ?></div>
     </div>
 
     <?php include("../includes/alert.php"); ?>
@@ -268,11 +409,20 @@ $itemCount = mysqli_num_rows($result);
         <button class="order-tab active" data-status="all">
             All Orders
         </button>
-        <button class="order-tab" data-status="Pending">
+        <button class="order-tab" data-status="pending">
             Pending
         </button>
-        <button class="order-tab" data-status="Delivered">
+        <button class="order-tab" data-status="processing">
+            Processing
+        </button>
+        <button class="order-tab" data-status="shipped">
+            Shipped
+        </button>
+        <button class="order-tab" data-status="delivered">
             Delivered
+        </button>
+        <button class="order-tab" data-status="cancelled">
+            Cancelled
         </button>
     </div>
 
@@ -294,22 +444,25 @@ $itemCount = mysqli_num_rows($result);
             <?php
             if (mysqli_num_rows($result) > 0) {
                 while ($row = mysqli_fetch_assoc($result)) {
-                    echo "<tr class='order-row' data-status='{$row['status']}'>";
+                    echo "<tr class='order-row' data-status='" . strtolower($row['status']) . "'>";
                     echo "<td>" . htmlspecialchars($row['orderId']) . "</td>";
                     echo "<td><strong>₱" . number_format($row['total'], 2) . "</strong></td>";
                     echo "<td>" . htmlspecialchars($row['payment_method']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['shipping_method']) . "</td>";
                     
                     // Status badge
+                    $statusLower = strtolower($row['status']);
                     $statusClass = 'status-pending';
-                    $statusText = 'Pending';
+                    $statusText = ucfirst($statusLower);
                     
-                    if ($row['status'] === 'Delivered') {
+                    if ($statusLower === 'delivered') {
                         $statusClass = 'status-delivered';
-                        $statusText = 'Delivered';
-                    } elseif ($row['status'] === 'Cancelled') {
+                    } elseif ($statusLower === 'cancelled') {
                         $statusClass = 'status-cancelled';
-                        $statusText = 'Cancelled';
+                    } elseif ($statusLower === 'processing') {
+                        $statusClass = 'status-processing';
+                    } elseif ($statusLower === 'shipped') {
+                        $statusClass = 'status-shipped';
                     }
                     
                     echo "<td><span class='status-badge {$statusClass}'>{$statusText}</span></td>";
@@ -319,7 +472,7 @@ $itemCount = mysqli_num_rows($result);
                     echo "<td>
                             <div class='action-buttons'>
                                 <a href='orderDetails.php?orderinfo_id={$row['orderId']}' class='btn-view'>View</a>
-                                <a href='update_order.php?orderinfo_id={$row['orderId']}' class='btn-update'>Update</a>
+                                <button class='btn-update' onclick='openUpdateModal({$row['orderId']}, \"" . htmlspecialchars($row['status']) . "\")'>Update</button>
                             </div>
                           </td>";
                     
@@ -338,8 +491,57 @@ $itemCount = mysqli_num_rows($result);
     </div>
 </div>
 
+<!-- Update Order Modal -->
+<div id="updateModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Update Order Status</h2>
+            <button class="close-modal" onclick="closeUpdateModal()">&times;</button>
+        </div>
+        
+        <form method="POST" action="updateorder.php">
+            <input type="hidden" name="orderId" id="modalOrderId">
+            
+            <div class="form-group">
+                <label for="modalStatus">Order Status</label>
+                <select name="status" id="modalStatus" required>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeUpdateModal()">Cancel</button>
+                <button type="submit" class="btn-submit">Update Order</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-// Tab filtering
+// Modal Functions
+function openUpdateModal(orderId, currentStatus) {
+    document.getElementById('modalOrderId').value = orderId;
+    document.getElementById('modalStatus').value = currentStatus.toLowerCase();
+    document.getElementById('updateModal').classList.add('show');
+}
+
+function closeUpdateModal() {
+    document.getElementById('updateModal').classList.remove('show');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('updateModal');
+    if (event.target === modal) {
+        closeUpdateModal();
+    }
+}
+
+// Tab filtering - FIXED VERSION
 document.querySelectorAll('.order-tab').forEach(tab => {
     tab.addEventListener('click', function() {
         // Update active tab styling
@@ -349,9 +551,10 @@ document.querySelectorAll('.order-tab').forEach(tab => {
         this.classList.add('active');
         
         // Filter rows
-        const status = this.dataset.status;
+        const status = this.dataset.status.toLowerCase();
         document.querySelectorAll('.order-row').forEach(row => {
-            if (status === 'all' || row.dataset.status === status) {
+            const rowStatus = row.dataset.status.toLowerCase();
+            if (status === 'all' || rowStatus === status) {
                 row.style.display = '';
             } else {
                 row.style.display = 'none';

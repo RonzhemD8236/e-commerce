@@ -83,11 +83,10 @@ if (strpos($current_dir, '/admin') !== false) {
 
       <div class="collapse navbar-collapse" id="navbarAdmin">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="dashboard.php">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="/lensify/e-commerce/admin/dashboard.php">Dashboard</a></li>
           <li class="nav-item"><a class="nav-link" href="/lensify/e-commerce/admin/index.php">Users</a></li>
           <li class="nav-item"><a class="nav-link" href="/lensify/e-commerce/item/index.php">Products</a></li>
           <li class="nav-item"><a class="nav-link" href="/lensify/e-commerce/admin/orders.php">Orders</a></li>
-          <li class="nav-item"><a class="nav-link" href="reports.php">Reports</a></li>
         </ul>
 
         <!-- ✅ Profile / Logout -->
