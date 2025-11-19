@@ -3,6 +3,25 @@ session_start();
 include('./includes/header.php');
 include('./includes/config.php');
 
+// Debug background image path
+echo "<!-- DEBUG: Checking background image path -->";
+$bgPath = __DIR__ . '/uploads/login-bg.jpeg';
+echo "<!-- Full path: $bgPath -->";
+echo "<!-- File exists: " . (file_exists($bgPath) ? 'YES' : 'NO') . " -->";
+echo "<!-- Current directory: " . __DIR__ . " -->";
+
+// List all files in uploads directory
+if (is_dir(__DIR__ . '/uploads')) {
+    $files = scandir(__DIR__ . '/uploads');
+    echo "<!-- Files in uploads: " . implode(', ', $files) . " -->";
+}
+
+// Determine the correct base URL
+$scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'];
+$baseUrl = $scheme . '://' . $host . '/lensify/e-commerce/';
+echo "<!-- Base URL: $baseUrl -->";
+
 // Include review functions
 if (file_exists('./review/review_functions.php')) {
     include('./review/review_functions.php');
@@ -37,53 +56,43 @@ if (!$result || mysqli_num_rows($result) == 0) {
 
 $row = mysqli_fetch_assoc($result);
 
-// Handle images - FIXED VERSION
+// Handle images
 $images = array();
 
 if (!empty($row['image_path'])) {
-    // Remove any slashes
     $cleanPath = stripslashes($row['image_path']);
-    
-    // Try to decode as JSON
     $decoded = json_decode($cleanPath, true);
     
     if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-        // It's a valid JSON array
         $images = $decoded;
     } else {
-        // Not JSON, treat as single path
         $images = array($cleanPath);
     }
 }
 
-// Process images to create absolute URLs
-$processedImages = array();
-$baseUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/lensify/e-commerce/';
+if (empty($images)) {
+    $images = array('https://via.placeholder.com/400x300?text=No+Image');
+}
 
+// Process each image to create full URLs
+$processedImages = array();
 foreach ($images as $img) {
-    $img = trim($img);
-    
-    if (empty($img)) {
+    if (empty(trim($img))) {
         continue;
     }
     
-    // If already a full URL, use as is
     if (strpos($img, 'http://') === 0 || strpos($img, 'https://') === 0) {
         $processedImages[] = $img;
         continue;
     }
     
-    // Remove leading slashes
     $img = ltrim($img, '/');
-    
-    // Create full URL
     $fullUrl = $baseUrl . $img;
     $processedImages[] = $fullUrl;
 }
 
-// If no valid images, use placeholder
 if (empty($processedImages)) {
-    $processedImages = array('https://via.placeholder.com/400x300?text=No+Image');
+    $processedImages = array('https://via.placeholder.com/400x300?text=Image+Not+Found');
 }
 
 $images = $processedImages;
@@ -133,49 +142,35 @@ if (function_exists('getProductReviews')) {
 
 <style>
 body {
-    background-image: url('uploads/homepage.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    color: #f8f9fa;
+    background: #000000; /* solid black background */
+    color: #ffffff; /* default text color white */
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
 }
 
+/* Optional overlay removed since background is already black */
+body::after,
 body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -2;
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: -1;
+    display: none;
 }
 
 .main-content {
     padding-top: 100px;
     min-height: 100vh;
+    position: relative;
+    z-index: 1;
 }
 
 .product-container {
-    background: rgba(0, 0, 0, 0.16);
-    backdrop-filter: blur(20px);
+    background: rgba(0, 0, 0, 0.85); /* dark container */
+    backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 60px rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 40px;
-    color: #f8f9fa;
+    color: #ffffff; /* white text */
 }
 
 .product-container h2,
@@ -186,123 +181,139 @@ body::after {
 .product-container strong,
 .product-container span,
 .product-container li {
-    color: #f8f9fa;
+    color: #ffffff;
 }
 
 .image-slider {
-    background: #000 !important;
-    border: 2px solid #333 !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 15px !important;
     overflow: hidden;
-    position: relative;
-}
-
-.slider-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    position: absolute;
-    top: 0;
-    left: 0;
-    transition: opacity 0.5s ease;
 }
 
 .slider-btn {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
     transition: all 0.3s ease;
-    border: none;
-    color: white;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    font-size: 18px;
-    z-index: 10;
 }
 
 .slider-btn:hover {
-    background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%) !important;
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.25) !important;
 }
 
 .image-counter {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
-    color: #f8f9fa !important;
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-size: 14px;
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
 }
 
 .btn-success,
 .btn-primary {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+    background: #222222 !important;
+    color: #ffffff !important;
     border: none !important;
     padding: 12px 30px;
     border-radius: 10px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-    color: #f8f9fa !important;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
 }
 
 .btn-success:hover,
 .btn-primary:hover {
-    background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%) !important;
+    background: #444444 !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 6px 25px rgba(255, 255, 255, 0.15);
 }
 
 .reviews-section {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
+    background: rgba(30, 30, 30, 0.9);
+    backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #1a1a1a;
+    box-shadow: 0 20px 60px rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
 }
 
 .review-item {
-    background: #f8f9fa;
-    border: 1px solid #e0e0e0;
+    background: #1a1a1a;
+    border: 1px solid #333;
     border-radius: 12px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    color: #1a1a1a;
+    color: #ffffff;
 }
 
 .review-item:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.05);
 }
+
+.reviews-section .form-control {
+    color: #ffffff;
+    background: #000000;
+    border-color: #555;
+}
+
+.reviews-section .form-control:focus {
+    color: #ffffff;
+    background: #000000;
+    border-color: #ffc107;
+    box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2);
+}
+
+.star-rating,
+.star-input .star {
+    color: #ffc107;
+}
+
+.alert {
+    border-radius: 12px;
+    border: none;
+    backdrop-filter: blur(10px);
+    color: #ffffff;
+    background: rgba(50, 50, 50, 0.9);
+}
+
+.main-content,
+.container,
+.row {
+    background: transparent !important;
+}
+
+
 </style>
 
 <div class="main-content">
 <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px;">
     <div class="row" style="margin-bottom: 60px;">
         <div class="col-md-6 pe-4">
-            <div class="image-slider" style="width:100%; height:400px;">
-                <?php foreach ($images as $index => $img): ?>
-                    <img src="<?php echo htmlspecialchars($img); ?>" 
-                         class="slider-image" 
-                         alt="Product Image <?php echo $index + 1; ?>"
-                         style="opacity:<?php echo $index === 0 ? 1 : 0; ?>;"
-                         data-index="<?php echo $index; ?>">
-                <?php endforeach; ?>
-                
-                <?php if (count($images) > 1): ?>
-                    <button class="slider-btn" onclick="changeSlide(-1)" 
-                            style="position:absolute; left:10px; top:50%; transform:translateY(-50%);">
-                        &#8249;
-                    </button>
-                    <button class="slider-btn" onclick="changeSlide(1)" 
-                            style="position:absolute; right:10px; top:50%; transform:translateY(-50%);">
-                        &#8250;
-                    </button>
+           <div class="image-slider position-relative" style="width:100%; height:400px; overflow:hidden; border-radius:10px; background:transparent;">
+                <?php if (!empty($images)): ?>
+                    <?php foreach ($images as $index => $img): ?>
+                        <img src="<?php echo htmlspecialchars($img); ?>" 
+                             class="slider-image" 
+                             alt="Product Image <?php echo $index + 1; ?>"
+                             style="width:100%; height:100%; object-fit:contain; position:absolute; top:0; left:0; transition: opacity 0.5s ease; opacity:<?php echo $index === 0 ? 1 : 0; ?>;"
+                             onerror="this.style.display='none';">
+                    <?php endforeach; ?>
                     
-                    <div class="image-counter" 
-                         style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%);">
-                        <span id="currentImageNum">1</span> / <?php echo count($images); ?>
+                    <?php if (count($images) > 1): ?>
+                        <button class="slider-btn prev-btn" onclick="changeSlide(-1)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; font-size:18px; z-index:10;">
+                            &lsaquo;
+                        </button>
+                        <button class="slider-btn next-btn" onclick="changeSlide(1)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; font-size:18px; z-index:10;">
+                            &rsaquo;
+                        </button>
+                        
+                        <div class="image-counter" style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.6); color:white; padding:5px 15px; border-radius:20px; font-size:14px; z-index:10;">
+                            <span id="currentImageNum">1</span> / <?php echo count($images); ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="no-image-text" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:none; text-align:center; color:#999;">
+                        <p>Image not available</p>
                     </div>
+                <?php else: ?>
+                    <p style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">No images available</p>
                 <?php endif; ?>
             </div>
         </div>
@@ -361,7 +372,7 @@ body::after {
                 <div class="mb-2">
                     <label style="font-size: 14px;">Quantity:</label>
                     <input type="number" name="item_qty" id="quantity"
-                           value="1" class="form-control" style="width:100px; font-size: 14px;" min="1" max="<?php echo $stock; ?>">
+                           value="1" class="form-control" style="width:100px; font-size: 14px;">
                 </div>
 
                 <button type="button" onclick="submitCart()" class="btn btn-success">Add to Cart</button>
@@ -484,26 +495,34 @@ body::after {
 </div>
 </div>
 
-<script>
+<script type="text/javascript">
 var currentSlide = 0;
-var totalSlides = <?php echo count($images); ?>;
+var imgs = document.querySelectorAll('.slider-image');
+var visibleImages = [];
+for (var i = 0; i < imgs.length; i++) {
+    if (imgs[i].style.display !== 'none') {
+        visibleImages.push(imgs[i]);
+    }
+}
 
 function showSlide(n) {
-    var slides = document.querySelectorAll('.slider-image');
-    
-    if (n >= totalSlides) currentSlide = 0;
-    if (n < 0) currentSlide = totalSlides - 1;
-    
-    for (var i = 0; i < slides.length; i++) {
-        slides[i].style.opacity = '0';
+    if (visibleImages.length === 0) {
+        var fallback = document.querySelector('.no-image-text');
+        if (fallback) fallback.style.display = 'block';
+        return;
     }
     
-    slides[currentSlide].style.opacity = '1';
+    for (var i = 0; i < visibleImages.length; i++) {
+        visibleImages[i].style.opacity = 0;
+    }
+    
+    if (n >= visibleImages.length) currentSlide = 0;
+    if (n < 0) currentSlide = visibleImages.length - 1;
+    
+    visibleImages[currentSlide].style.opacity = 1;
     
     var counter = document.getElementById('currentImageNum');
-    if (counter) {
-        counter.textContent = currentSlide + 1;
-    }
+    if (counter) counter.textContent = currentSlide + 1;
 }
 
 function changeSlide(direction) {
@@ -511,7 +530,19 @@ function changeSlide(direction) {
     showSlide(currentSlide);
 }
 
-showSlide(0);
+if (visibleImages.length > 0) {
+    showSlide(0);
+}
+
+var sliderBtns = document.querySelectorAll('.slider-btn');
+for (var i = 0; i < sliderBtns.length; i++) {
+    sliderBtns[i].onmouseover = function() {
+        this.style.background = 'rgba(0,0,0,0.8)';
+    };
+    sliderBtns[i].onmouseout = function() {
+        this.style.background = 'rgba(0,0,0,0.5)';
+    };
+}
 
 <?php if ($inStock): ?>
 function submitCart() {
@@ -543,7 +574,7 @@ function submitCart() {
                     stockSpan.textContent = data.newStock;
                     qtyInput.max = data.newStock;
                     if (data.newStock == 0) {
-                        qtyInput.remove();
+                        if (qtyInput) qtyInput.remove();
                         var submitBtn = document.querySelector("#addToCartForm button");
                         if (submitBtn) submitBtn.remove();
                         stockSpan.outerHTML = '<span style="color:red; font-size:24px; font-weight:bold;">OUT OF STOCK</span>';
@@ -578,6 +609,14 @@ function toggleReviewForm() {
         }, 100);
     } else {
         form.style.display = 'none';
+        var reviewsTitle = document.querySelector('h3');
+        if (reviewsTitle && reviewsTitle.textContent.includes('Customer Reviews')) {
+            var titlePosition = reviewsTitle.getBoundingClientRect().top + window.pageYOffset;
+            window.scrollTo({
+                top: titlePosition - 100,
+                behavior: 'smooth'
+            });
+        }
     }
 }
 
