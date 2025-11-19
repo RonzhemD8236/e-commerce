@@ -51,10 +51,13 @@ $itemCount = $result->num_rows;
 ?>
 
 <style>
-/* Hero Banner */
 .hero-banner {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.85) 100%),
-                url('https://images.unsplash.com/photo-1526406915894-7bcd65f60845?w=1200&h=400&fit=crop') center/cover;
+    background: linear-gradient(
+                    135deg,
+                    rgba(102, 126, 234, 0.6) 0%,  /* #667eea with 60% opacity */
+                    rgba(118, 75, 162, 0.6) 100% /* #764ba2 with 60% opacity */
+                ),
+                url('https://i.pinimg.com/1200x/31/7d/27/317d272366bd3ebba9a022262f0fe81e.jpg') center/cover;
     color: white;
     padding: 60px 40px;
     border-radius: 12px;
@@ -62,6 +65,7 @@ $itemCount = $result->num_rows;
     position: relative;
     overflow: hidden;
 }
+
 
 .hero-banner h1 {
     font-size: 2.5rem;

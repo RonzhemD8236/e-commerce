@@ -1,97 +1,99 @@
 <?php
 session_start();
-include('header.php'); // Admin header
+include('header.php');
 include('../includes/config.php');
 
-// ✅ Restrict to logged-in admins
-//if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-  //  header("Location: ../user/login.php");
-    //exit();
-//}
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ../admin/login.php");
+    exit();
+}
 
 // Fetch Key Metrics
-// Total Users
 $stmt = $conn->prepare("SELECT COUNT(*) as total_users FROM users WHERE role='customer'");
 $stmt->execute();
 $totalUsers = $stmt->get_result()->fetch_assoc()['total_users'] ?? 0;
 
-// Total Orders
 $stmt = $conn->prepare("SELECT COUNT(*) as total_orders FROM orderinfo");
 $stmt->execute();
 $totalOrders = $stmt->get_result()->fetch_assoc()['total_orders'] ?? 0;
 
-// Total Products
 $stmt = $conn->prepare("SELECT COUNT(*) as total_products FROM item");
 $stmt->execute();
 $totalProducts = $stmt->get_result()->fetch_assoc()['total_products'] ?? 0;
 
-// Total Revenue
-$stmt = $conn->prepare("SELECT SUM(ol.quantity * i.sell_price) as total_revenue 
-                        FROM orderline ol
-                        JOIN item i ON ol.item_id = i.item_id");
+$stmt = $conn->prepare("
+    SELECT SUM(ol.quantity * i.sell_price) as total_revenue 
+    FROM orderline ol
+    JOIN item i ON ol.item_id = i.item_id
+");
 $stmt->execute();
 $totalRevenue = $stmt->get_result()->fetch_assoc()['total_revenue'] ?? 0;
 
-// Recent Products
-$stmt = $conn->prepare("SELECT item_id, description, sell_price, image_path 
-                        FROM item ORDER BY item_id DESC LIMIT 6");
-$stmt->execute();
-$productsQuery = $stmt->get_result();
+// Fetch recent stuff
+$ordersQuery = $conn->query("SELECT * FROM pending_orders_detail ORDER BY date_placed DESC LIMIT 6");
+$stockQuery = $conn->query("
+    SELECT i.item_id, i.description, s.quantity
+    FROM item i
+    JOIN stock s ON i.item_id = s.item_id
+    WHERE s.quantity <= 5
+    ORDER BY s.quantity ASC
+    LIMIT 6
+");
 ?>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
-/* Hero Banner */
+/* GLOBAL STYLE */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f9fafb;
+    color: #1f2937;
+}
+
+/* HERO BANNER */
 .hero-banner {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.85) 100%),
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%),
                 url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=400&fit=crop') center/cover;
     color: white;
     padding: 60px 40px;
     border-radius: 12px;
-    margin-bottom: 30px;
-    position: relative;
-    overflow: hidden;
+    margin-bottom: 40px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
-
 .hero-banner h1 {
     font-size: 2.5rem;
     font-weight: 700;
-    margin-bottom: 15px;
 }
-
 .hero-banner p {
     font-size: 1.1rem;
     opacity: 0.95;
-    max-width: 800px;
 }
 
-/* Metric Cards */
+/* METRIC CARDS */
 .metric-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
     gap: 20px;
     margin-bottom: 40px;
 }
-
 .metric-card {
     background: white;
     border-radius: 12px;
     padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: 0.2s;
 }
-
 .metric-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
-
 .metric-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     margin-bottom: 12px;
 }
-
 .metric-card-title {
     font-size: 0.875rem;
     font-weight: 600;
@@ -100,179 +102,142 @@ $productsQuery = $stmt->get_result();
     letter-spacing: 0.05em;
 }
 
+/* GRADIENT CARD ICONS */
 .metric-card-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    font-size: 1.5rem;
+    padding: 12px;
+    border-radius: 10px;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+}
+
+.icon-primary {
+    background: linear-gradient(135deg, #a78bfa, #7c3aed);
+}
+.icon-success {
+    background: linear-gradient(135deg, #6ee7b7, #10b981);
+}
+.icon-warning {
+    background: linear-gradient(135deg, #fcd34d, #f59e0b);
+}
+.icon-danger {
+    background: linear-gradient(135deg, #fca5a5, #ef4444);
 }
 
 .metric-card-value {
     font-size: 2rem;
     font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 4px;
 }
-
 .metric-card-change {
     font-size: 0.875rem;
-    color: #10b981;
+    color:  #4f46e5;
 }
 
-/* Icon colors */
-.icon-primary {
-    background-color: #dbeafe;
-    color: #3b82f6;
-}
-
-.icon-success {
-    background-color: #d1fae5;
-    color: #10b981;
-}
-
-.icon-warning {
-    background-color: #fef3c7;
-    color: #f59e0b;
-}
-
-.icon-danger {
-    background-color: #fee2e2;
-    color: #ef4444;
-}
-
-/* Section Header */
+/* SECTION HEADER */
 .section-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     margin-bottom: 24px;
 }
-
 .section-header h2 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #1f2937;
-    margin: 0;
 }
-
 .btn-view-all {
     padding: 8px 16px;
-    background-color: #667eea;
+    background-color: #4f46e5;
     color: white;
-    border: none;
     border-radius: 6px;
-    font-weight: 500;
     text-decoration: none;
-    display: inline-block;
-    transition: background-color 0.2s;
+}
+.btn-view-all:hover { background-color: #3730a3; }
+
+/* LIST / NOTIFICATION CARDS */
+.list-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    transition: 0.2s;
+}
+.list-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+.list-card-left {
+    display: flex;
+    flex-direction: column;
+}
+.list-subtext {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+/* GRADIENT ICONS FOR LIST */
+.list-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+    .icon-blue {
+        background: linear-gradient(135deg, #60a5fa, #2563eb);
+    }
+    .icon-red {
+        background: linear-gradient(135deg, #f87171, #dc2626);
+    }
+    .icon-yellow {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+
+    .small-btn {
+        padding: 6px 14px;
+        border-radius: 10px !important;
+        font-size: 0.85rem;
+    }
+        .btn-view-all {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    color: gray; /* Indigo text */
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .btn-view-all:hover {
-    background-color: #5568d3;
-    color: white;
+    color: #3730a3; /* Darker hover */
 }
 
-/* Product Grid */
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
-    margin-bottom: 40px;
-}
-
-.product-card {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.product-card-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    background-color: #f3f4f6;
-}
-
-.product-card-body {
-    padding: 16px;
-}
-
-.product-card-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 8px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-}
-
-.product-card-price {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #667eea;
-    margin-bottom: 12px;
-}
-
-.btn-manage {
-    width: 100%;
-    padding: 8px 16px;
-    background-color: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-    transition: background-color 0.2s;
-}
-
-.btn-manage:hover {
-    background-color: #2563eb;
-    color: white;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #6b7280;
-}
-
-.empty-state-icon {
-    font-size: 3rem;
-    margin-bottom: 16px;
-    opacity: 0.5;
-}
-
-.empty-state-text {
-    font-size: 1.125rem;
-    margin-bottom: 8px;
-}
 </style>
 
+
 <div class="container-fluid px-4 py-4">
-    <!-- Hero Banner -->
+
+    <!-- HERO -->
     <div class="hero-banner">
         <h1>Dashboard Overview</h1>
-        <p>Welcome back! Here's a quick overview of your e-commerce store performance and recent activities.</p>
+        <p>Welcome back! Here's a quick overview of your store performance.</p>
     </div>
 
-    <!-- Key Metrics -->
+    <!-- METRICS -->
     <div class="metric-cards">
+
         <div class="metric-card">
             <div class="metric-card-header">
                 <span class="metric-card-title">Total Users</span>
@@ -310,9 +275,55 @@ $productsQuery = $stmt->get_result();
         </div>
     </div>
 
+    <!-- RECENT + STOCK -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
 
+        <!-- RECENT ORDERS -->
+        <div>
+            <div class="section-header">
+                <h2>Recent Orders</h2>
+                <a href="orders.php" class="btn-view-all">View All</a>
+            </div>
+
+            <?php while($order = $ordersQuery->fetch_assoc()): ?>
+            <div class="list-card">
+                <div class="list-icon icon-blue">📦</div>
+
+                <div class="list-card-left">
+                    <strong><?= htmlspecialchars($order['customer_name']) ?></strong>
+                    <div class="list-subtext">
+                        Items: <?= number_format($order['items_count']) ?> •
+                        Total: ₱<?= number_format($order['total_amount'], 2) ?>
+                    </div>
+                </div>
+
+                <i class="fa-solid fa-chevron-right" style="color:#9ca3af;"></i>
+            </div>
+            <?php endwhile; ?>
+        </div>
+
+        <!-- LOW STOCK -->
+        <div>
+            <div class="section-header">
+                <h2>Low Stock Inventory</h2>
+                <a href="../item/index.php" class="btn-view-all">View All</a>
+            </div>
+
+            <?php while($stock = $stockQuery->fetch_assoc()): ?>
+            <div class="list-card">
+                <div class="list-icon icon-red">⚠️</div>
+
+                <div class="list-card-left">
+                    <strong><?= htmlspecialchars($stock['description']) ?></strong>
+                    <div class="list-subtext">Stock: <?= $stock['quantity'] ?></div>
+                </div>
+
+                <a href="edit_product.php?id=<?= $stock['item_id'] ?>" class="btn-manage small-btn">Restock</a>
+            </div>
+            <?php endwhile; ?>
+        </div>
+
+    </div>
 </div>
 
-<?php
-include('../includes/footer.php');
-?>
+<?php include('../includes/footer.php'); ?>

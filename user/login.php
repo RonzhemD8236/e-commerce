@@ -129,76 +129,7 @@ include("../includes/header.php");
     box-sizing: border-box;
 }
 
-body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-}
 
-/* Background image for entire viewport */
-body {
-    background: url('../uploads/login-bg.jpeg') no-repeat center center fixed !important;
-    background-size: cover !important;
-    background-position: center center !important;
-    position: relative;
-    min-height: 100vh;
-    overflow-x: hidden;
-}
-
-/* Full-page overlay that covers everything */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 0;
-    pointer-events: none;
-}
-
-/* ✅ HIDE ALL HEADERS AND NAVIGATION */
-header,
-nav,
-.navbar,
-nav.navbar {
-    display: none !important;
-}
-
-/* Main content container */
-/* Main content container */
-.main-content {
-    position: relative;
-    z-index: 1;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 2rem;
-}
-
-/* ✅ Semi-transparent login container */
-.login-container {
-    background-color: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-/* ✅ Black sign in button */
-.btn-signin {
-    background-color: #000000 !important;
-    border-color: #000000 !important;
-    color: white !important;
-}
-
-.btn-signin:hover {
-    background-color: #333333 !important;
-    border-color: #333333 !important;
-}
 </style>
 
 <!-- ✅ Login Form -->

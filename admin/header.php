@@ -43,36 +43,52 @@ if (strpos($current_dir, '/admin') !== false) {
   
   <title>Admin Dashboard - Lensify</title>
 
-  <style>
-    .profile-img {
-      width: 35px;
-      height: 35px;
-      object-fit: cover;
-      border-radius: 50%;
-      margin-right: 8px;
-    }
-    .navbar {
-      background-color: white!important;
-    }
-    .navbar .nav-link, .navbar .navbar-brand {
-      color: #000 !important;
-    }
-    .navbar .nav-link:hover, .navbar .dropdown-item:hover {
-      color: red !important;
-    }
-    .dropdown-menu {
-      background-color: #fff;
-      border-radius: 10px;
-    }
-  </style>
+ <style>
+  .profile-img {
+    width: 35px;
+    height: 35px;
+    object-fit: cover;
+    border-radius: 25%;
+    margin-right: 8px;
+  }
+
+  .navbar {
+    background-color: white !important;
+  }
+
+  /* Navbar links and brand */
+  .navbar .nav-link,
+  .navbar .navbar-brand {
+    color: #000 !important;
+    transition: color 0.3s ease, transform 0.3s ease; /* smooth color and slight movement */
+  }
+
+  /* Hover effect */
+  .navbar .nav-link:hover,
+  .navbar .navbar-brand:hover {
+    color: #2563eb !important; /* your desired blue */
+    transform: translateY(-2px); /* subtle lift animation */
+  }
+
+  .dropdown-menu {
+    background-color: #fff;
+    border-radius: 10px;
+  }
+
+  .navbar .dropdown-item:hover {
+    color: #2563eb !important; /* hover color for dropdown items */
+    transition: color 0.3s ease;
+  }
+</style>
+
 </head>
 
 <body>
   <!-- ✅ Admin Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="index.php">
-    Admin Panel
+      <a class="navbar-brand fw-bold" href="dashboard.php">
+      Lensify
       </a>
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -102,7 +118,6 @@ if (strpos($current_dir, '/admin') !== false) {
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="/lensify/e-commerce/admin/profile.php"><i class="bi bi-person-circle me-2"></i>My Profile</a></li>
-              <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a></li>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item text-danger" href="/lensify/e-commerce/admin/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
             </ul>
