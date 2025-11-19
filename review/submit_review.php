@@ -16,25 +16,16 @@ if (!$isLoggedIn) {
     exit;
 }
 
-// Get customer ID from session (try both possible session keys)
-$customerId = isset($_SESSION['customer_id']) ? intval($_SESSION['customer_id']) : (isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0);
-
-if ($customerId <= 0) {
-    echo json_encode(array('success' => false, 'message' => 'Invalid customer session. Please login again.'));
-    exit;
-}
-
 include('../includes/config.php');
-include('../review_functions.php');
+include('./review_functions.php');
 
 // Get customer ID - check session or lookup from user_id
 if (isset($_SESSION['customer_id'])) {
     $customerId = intval($_SESSION['customer_id']);
 } elseif (isset($_SESSION['user_id'])) {
-    // Look up customer_id from user_id
     $customerId = getCustomerIdFromUserId($conn, $_SESSION['user_id']);
     if ($customerId > 0) {
-        $_SESSION['customer_id'] = $customerId; // Store for future use
+        $_SESSION['customer_id'] = $customerId;
     }
 } else {
     $customerId = 0;
@@ -97,22 +88,20 @@ if ($orderinfoId <= 0 && isset($userOrder['orderinfo_id'])) {
 
 // Check if this is an update or new review
 if ($reviewId > 0) {
-    // ===== EDITING EXISTING REVIEW =====
-    
     // Verify the review belongs to this customer
     if (!isReviewOwner($conn, $reviewId, $customerId)) {
         echo json_encode(array('success' => false, 'message' => 'You can only edit your own reviews.'));
         exit;
     }
     
-    if (updateReview($conn, $reviewId, $customerId, $rating, $reviewTitle, $reviewText)) {
+    $updateResult = updateReview($conn, $reviewId, $customerId, $rating, $reviewTitle, $reviewText);
+    
+    if ($updateResult) {
         echo json_encode(array('success' => true, 'message' => 'Review updated successfully!'));
     } else {
         echo json_encode(array('success' => false, 'message' => 'Failed to update review. Please try again.'));
     }
 } else {
-    // Insert new review
-    
     // Check if customer already reviewed this product
     $checkExisting = mysqli_query($conn, 
         "SELECT review_id FROM reviews WHERE customer_id = $customerId AND item_id = $itemId"
@@ -123,7 +112,9 @@ if ($reviewId > 0) {
         exit;
     }
     
-    if (insertReview($conn, $customerId, $itemId, $orderinfoId, $rating, $reviewTitle, $reviewText)) {
+    $insertResult = insertReview($conn, $customerId, $itemId, $orderinfoId, $rating, $reviewTitle, $reviewText);
+    
+    if ($insertResult) {
         echo json_encode(array('success' => true, 'message' => 'Review submitted successfully! Thank you for your feedback.'));
     } else {
         echo json_encode(array('success' => false, 'message' => 'Failed to submit review. Please try again.'));

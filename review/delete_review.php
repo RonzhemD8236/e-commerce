@@ -16,16 +16,25 @@ if (!$isLoggedIn) {
     exit;
 }
 
-// Get customer ID from session (try both possible session keys)
-$customerId = isset($_SESSION['customer_id']) ? intval($_SESSION['customer_id']) : (isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0);
+include('../includes/config.php');
+include('./review_functions.php');
+
+// Get customer ID - check session or lookup from user_id
+if (isset($_SESSION['customer_id'])) {
+    $customerId = intval($_SESSION['customer_id']);
+} elseif (isset($_SESSION['user_id'])) {
+    $customerId = getCustomerIdFromUserId($conn, $_SESSION['user_id']);
+    if ($customerId > 0) {
+        $_SESSION['customer_id'] = $customerId;
+    }
+} else {
+    $customerId = 0;
+}
 
 if ($customerId <= 0) {
     echo json_encode(array('success' => false, 'message' => 'Invalid customer session. Please login again.'));
     exit;
 }
-
-include('../includes/config.php');
-include('./review_functions.php');
 
 // Check if POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
