@@ -83,8 +83,12 @@ $result = mysqli_stmt_get_result($stmt);
 <style>
 /* Hero Banner */
 .hero-banner {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.85) 100%),
-                url('https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=400&fit=crop') center/cover;
+    background: linear-gradient(
+                    135deg,
+                    rgba(102, 126, 234, 0.6) 0%,  /* #667eea with 60% opacity */
+                    rgba(118, 75, 162, 0.6) 100% /* #764ba2 with 60% opacity */
+                ),
+                url('https://i.pinimg.com/1200x/f1/00/bc/f100bcb2fa356c07568d4d53ce2f78fa.jpg') center/cover;
     color: white;
     padding: 60px 40px;
     border-radius: 12px;
@@ -386,12 +390,14 @@ body {
                     <?php if ($roleFilter): ?>
                         <input type="hidden" name="role" value="<?= htmlspecialchars($roleFilter) ?>">
                     <?php endif; ?>
-                    <input 
+                        <input 
                         type="text" 
+                        id="searchUser"
                         name="search" 
                         placeholder="Search by name, username, or email..." 
                         value="<?= htmlspecialchars($searchQuery) ?>"
                     >
+
                 </form>
             </div>
             <a href="create.php" class="btn-add-user">Add New User</a>
@@ -509,3 +515,22 @@ body {
 mysqli_stmt_close($stmt);
 include('../includes/footer.php'); 
 ?>
+<script>
+// Predictive search for Users
+document.getElementById('searchUser').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+
+    document.querySelectorAll('.users-table tbody tr').forEach(row => {
+        // Grab relevant columns: Name, Email, Username
+        const name = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+        const email = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+        const username = row.querySelector('td:nth-child(2)').textContent.toLowerCase(); // same as name for customers
+
+        if (name.includes(searchTerm) || email.includes(searchTerm) || username.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+</script>

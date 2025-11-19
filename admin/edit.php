@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 }
 
 include('../includes/config.php');
-include('../includes/header.php');
+include('../admin/header.php');
 
 $id = $_GET['id'];
 
@@ -36,38 +36,39 @@ if ($user['role'] === 'customer') {
 // Use profile name if available, otherwise fallback to username
 $nameValue = !empty($profileName) ? $profileName : $user['username'];
 ?>
-
 <style>
- /* Wrapper to break free from Bootstrap container restrictions */
+/* Wrapper to center card */
 .edit-user-wrapper {
     width: 100%;
     display: flex;
     justify-content: center;
-    padding: 20px;
+    padding: 40px 20px;
+    background-color: #f4f6f8; /* light page background */
 }
 
-/* Main container for the card */
+/* Main card container */
 .edit-user-container {
-    max-width: 900px !important;  /* Force 900px on desktop */
+    max-width: 1300px; /* slightly narrower for two-column form */
     width: 100%;
     margin: 0 auto;
-    padding: 0 20px;
 }
 
 /* Card styling */
 .edit-user-card {
-    background: #fff;
+    background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     overflow: hidden;
+    transition: all 0.3s ease;
 }
 
-/* Header */
+/* Card header with left-to-right purple gradient */
 .card-header-custom {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-    text-align: center;
-    padding: 30px;
+    padding: 2rem;
+    border-radius: 10px 10px 0 0;
+    color: white;
+    margin-bottom: 0;
 }
 
 .card-header-custom h2 {
@@ -77,52 +78,58 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
 }
 
 .card-header-custom p {
-    margin-top: 8px;
+    margin-top: 5px;
     font-size: 14px;
     opacity: 0.9;
 }
 
 /* Card body */
 .card-body-custom {
-    padding: 40px;
+    padding: 25px 25px;
 }
 
-/* Form elements */
+/* Two-column form grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 20px;
+}
+
 .form-group-custom {
-    margin-bottom: 25px;
+    margin-bottom: 0; /* spacing handled by grid gap */
 }
 
 .form-label-custom {
     display: block;
-    font-weight: 600;
-    color: #2d3748;
-    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 5px;
     font-size: 14px;
 }
 
 .form-control-custom,
 .form-select-custom {
     width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
+    padding: 10px 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
     font-size: 15px;
-    background-color: #f7fafc;
-    transition: all 0.3s ease;
+    background-color: #f9fafb;
+    transition: all 0.2s ease;
 }
 
 .form-control-custom:focus,
 .form-select-custom:focus {
     outline: none;
-    border-color: #667eea;
-    background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #7f00ff;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(127, 0, 255, 0.15);
 }
 
 .password-hint {
     font-size: 12px;
-    color: #718096;
-    margin-top: 5px;
+    color: #6b7280;
+    margin-top: 4px;
     font-style: italic;
 }
 
@@ -130,53 +137,48 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
 .button-group {
     display: flex;
     gap: 12px;
-    margin-top: 35px;
-    padding-top: 20px;
-    border-top: 1px solid #e2e8f0;
+    margin-top: 30px;
+    flex-wrap: wrap;
 }
 
 .btn-custom {
     flex: 1;
-    padding: 14px 24px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     text-align: center;
+    transition: all 0.2s ease;
 }
 
 .btn-primary-custom {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
+    color: #ffffff;
 }
 
 .btn-primary-custom:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(127, 0, 255, 0.25);
 }
 
 .btn-secondary-custom {
-    background-color: #e2e8f0;
-    color: #4a5568;
+    background-color: #e5e7eb;
+    color: #374151;
 }
 
 .btn-secondary-custom:hover {
-    background-color: #cbd5e0;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: #d1d5db;
+    transform: translateY(-1px);
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-    .edit-user-container {
-        width: 80%;
-    }
-}
-
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .card-body-custom {
-        padding: 25px;
+    .form-grid {
+        grid-template-columns: 1fr; /* stack fields on small screens */
+        gap: 20px 0;
     }
 
     .button-group {
@@ -187,7 +189,6 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
         width: 100%;
     }
 }
-
 </style>
 
 <div class="edit-user-wrapper">
@@ -201,45 +202,47 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
                 <form action="update.php" method="POST">
                     <input type="hidden" name="id" value="<?= $user['id'] ?>">
 
-                    <div class="form-group-custom">
-                        <label class="form-label-custom">Full Name / Username</label>
-                        <input type="text" name="name" class="form-control-custom" 
-                               value="<?= htmlspecialchars($nameValue) ?>" required 
-                               placeholder="Enter full name">
-                    </div>
+                    <div class="form-grid">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Username</label>
+                            <input type="text" name="name" class="form-control-custom" 
+                                   value="<?= htmlspecialchars($nameValue) ?>" required 
+                                   placeholder="Enter full name">
+                        </div>
 
-                    <div class="form-group-custom">
-                        <label class="form-label-custom">Email Address</label>
-                        <input type="email" name="email" class="form-control-custom" 
-                               value="<?= htmlspecialchars($user['email']) ?>" required 
-                               placeholder="user@example.com">
-                    </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Email Address</label>
+                            <input type="email" name="email" class="form-control-custom" 
+                                   value="<?= htmlspecialchars($user['email']) ?>" required 
+                                   placeholder="user@example.com">
+                        </div>
 
-                    <div class="form-group-custom">
-                        <label class="form-label-custom">Password</label>
-                        <input type="password" name="password" class="form-control-custom" 
-                               placeholder="Enter new password">
-                        <div class="password-hint">Leave blank to keep current password</div>
-                    </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">User Role</label>
+                            <select name="role" class="form-select-custom">
+                                <option value="admin" <?= $user['role']=='admin'?'selected':'' ?>>
+                                    Administrator
+                                </option>
+                                <option value="customer" <?= $user['role']=='customer'?'selected':'' ?>>
+                                    Customer
+                                </option>
+                            </select>
+                        </div>
 
-                    <div class="form-group-custom">
-                        <label class="form-label-custom">User Role</label>
-                        <select name="role" class="form-select-custom">
-                            <option value="admin" <?= $user['role']=='admin'?'selected':'' ?>>
-                                👑 Administrator
-                            </option>
-                            <option value="customer" <?= $user['role']=='customer'?'selected':'' ?>>
-                                👤 Customer
-                            </option>
-                        </select>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Password</label>
+                            <input type="password" name="password" class="form-control-custom" 
+                                   placeholder="Enter new password">
+                            <div class="password-hint">Leave blank to keep current password</div>
+                        </div>
                     </div>
 
                     <div class="button-group">
                         <button type="submit" class="btn-custom btn-primary-custom" name="submit">
-                            💾 Update User
+                            Update User
                         </button>
                         <a href="index.php" class="btn-custom btn-secondary-custom">
-                            ↩️ Cancel
+                            Cancel
                         </a>
                     </div>
                 </form>
@@ -247,6 +250,5 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
         </div>
     </div>
 </div>
-
 
 <?php include('../includes/footer.php'); ?>

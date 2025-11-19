@@ -3,7 +3,7 @@ session_start();
 
 // ✅ Redirect if already logged in (BEFORE any output)
 if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
-    header("Location: index.php");
+    header("Location: dashboard.php");
     exit();
 }
 
@@ -45,7 +45,7 @@ if (isset($_POST['submit'])) {
                 $_SESSION['email'] = $user_email;
                 $_SESSION['user_id'] = $user_id;
                 $_SESSION['role'] = $role;
-                header("Location: index.php");
+                header("Location: dashboard.php");
                 exit();
             } else {
                 $_SESSION['message'] = 'Wrong email or password.';
@@ -76,7 +76,7 @@ if (isset($_POST['submit'])) {
 
     <style type="text/css">
         body {
-            background: url('../uploads/login-bg.jpeg') no-repeat center center;
+            background: url('https://i.pinimg.com/1200x/67/4c/03/674c034624b2c27e3a19a33d1ccbe608.jpg') no-repeat center center;
             background-size: cover;
             position: relative;
             min-height: 100vh;
