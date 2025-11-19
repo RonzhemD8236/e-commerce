@@ -25,8 +25,19 @@ $customer_id = (int)$customer['customer_id'];
 $customer_name = $customer['fname'] . ' ' . $customer['lname'];
 $stmt->close();
 
-// ---------- FETCH USER'S ORDERS (FIXED) ----------
-$stmt = $conn->prepare("SELECT o.orderinfo_id AS orderId, o.date_placed, o.shipping, o.status, o.payment_method, o.shipping_method FROM orderinfo o WHERE o.customer_id = ? ORDER BY o.date_placed DESC");
+// ---------- FETCH USER'S ORDERS USING VIEW ----------
+$stmt = $conn->prepare("
+    SELECT DISTINCT 
+        orderinfo_id,
+        date_placed,
+        shipping,
+        order_status,
+        payment_method,
+        shipping_method
+    FROM order_transaction_details 
+    WHERE customer_id = ? 
+    ORDER BY date_placed DESC
+");
 $stmt->bind_param("i", $customer_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -450,14 +461,24 @@ $orderCount = $result->num_rows;
         <?php else: ?>
             <?php 
             while ($order = $result->fetch_assoc()) {
-                $orderId = (int)$order['orderId'];
+                $orderId = (int)$order['orderinfo_id'];
                 
-                // Fetch items for this order
-                $itemsStmt = $conn->prepare("SELECT i.description AS item_name, i.image_path, i.sell_price, ol.quantity FROM orderline ol INNER JOIN item i USING (item_id) WHERE ol.orderinfo_id = ?");
+                // Fetch items for this order using VIEW
+                $itemsStmt = $conn->prepare("
+                    SELECT 
+                        item_name,
+                        item_price,
+                        quantity,
+                        subtotal
+                    FROM order_transaction_details 
+                    WHERE orderinfo_id = ?
+                ");
                 $itemsStmt->bind_param("i", $orderId);
                 $itemsStmt->execute();
                 $itemsResult = $itemsStmt->get_result();
-                $subtotal = 0;
+                
+                // Calculate order totals
+                $orderSubtotal = 0;
             ?>
                 <div class="order-card">
                     <div class="order-header">
@@ -470,31 +491,38 @@ $orderCount = $result->num_rows;
                                 <?= date('F j, Y - g:i A', strtotime($order['date_placed'])) ?>
                             </div>
                         </div>
-                        <div class="status-badge status-<?= strtolower($order['status']) ?>">
-                            <?= htmlspecialchars($order['status']) ?>
+                        <div class="status-badge status-<?= strtolower($order['order_status']) ?>">
+                            <?= htmlspecialchars($order['order_status']) ?>
                         </div>
                     </div>
 
                     <div class="order-items">
                         <?php while ($item = $itemsResult->fetch_assoc()): 
-                            $itemTotal = $item['sell_price'] * $item['quantity'];
-                            $subtotal += $itemTotal;
+                            $orderSubtotal += $item['subtotal'];
+                            
+                            // Note: The view doesn't include image_path, so we need to fetch it separately
+                            // or modify the view to include it
+                            $imageStmt = $conn->prepare("SELECT image_path FROM item WHERE description = ? LIMIT 1");
+                            $imageStmt->bind_param("s", $item['item_name']);
+                            $imageStmt->execute();
+                            $imageResult = $imageStmt->get_result();
+                            $imageData = $imageResult->fetch_assoc();
+                            $imageStmt->close();
                             
                             // Get first image from JSON array
-                            $firstImage = '../uploads/default.png'; // Default fallback
+                            $firstImage = '../uploads/default.png';
                             
-                            $images = json_decode($item['image_path'], true);
-                            if (is_array($images) && !empty($images)) {
-                                // Take the first image from the array
-                                $firstImage = $images[0];
-                                
-                                // Add ../ if path doesn't start with it
-                                if (strpos($firstImage, '../') !== 0 && strpos($firstImage, 'uploads/') === 0) {
-                                    $firstImage = '../' . $firstImage;
+                            if ($imageData && $imageData['image_path']) {
+                                $images = json_decode($imageData['image_path'], true);
+                                if (is_array($images) && !empty($images)) {
+                                    $firstImage = $images[0];
+                                    
+                                    if (strpos($firstImage, '../') !== 0 && strpos($firstImage, 'uploads/') === 0) {
+                                        $firstImage = '../' . $firstImage;
+                                    }
                                 }
                             }
                             
-                            // Verify file exists, otherwise use default
                             if (!file_exists($firstImage)) {
                                 $firstImage = '../uploads/default.png';
                             }
@@ -513,7 +541,7 @@ $orderCount = $result->num_rows;
                                     </div>
                                 </div>
                                 <div class="item-price">
-                                    ₱<?= number_format($itemTotal, 2) ?>
+                                    ₱<?= number_format($item['subtotal'], 2) ?>
                                 </div>
                             </div>
                         <?php endwhile; 
@@ -524,7 +552,7 @@ $orderCount = $result->num_rows;
                     <div class="order-summary">
                         <div class="summary-row">
                             <span>Subtotal</span>
-                            <span>₱<?= number_format($subtotal, 2) ?></span>
+                            <span>₱<?= number_format($orderSubtotal, 2) ?></span>
                         </div>
                         <div class="summary-row">
                             <span>Shipping Fee</span>
@@ -532,7 +560,7 @@ $orderCount = $result->num_rows;
                         </div>
                         <div class="summary-row total">
                             <span>Total</span>
-                            <span>₱<?= number_format($subtotal + $order['shipping'], 2) ?></span>
+                            <span>₱<?= number_format($orderSubtotal + $order['shipping'], 2) ?></span>
                         </div>
                     </div>
 
