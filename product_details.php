@@ -216,6 +216,30 @@ body::before {
     color: #ffffff !important;
 }
 
+
+/* Fix for review button click */
+.btn-primary {
+    position: relative;
+    z-index: 999 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.main-content::before {
+    pointer-events: none !important;
+}
+
+.product-section {
+    position: relative;
+    z-index: 2;
+}
+
+/* Make sure reviews section is also clickable */
+.row {
+    position: relative;
+    z-index: 2;
+}
+
 .btn-success,
 .btn-primary {
     background: #222222 !important;
@@ -437,6 +461,8 @@ body::before {
                         <button class="btn btn-primary mb-4" onclick="toggleReviewForm()">
                             <?php echo $userExistingReview ? 'Edit Your Review' : 'Write a Review'; ?>
                         </button>
+
+                        
                     </div>
                     
                     <div id="reviewFormContainer" style="display:none; margin-bottom: 100px;" class="card mb-4">
@@ -537,6 +563,7 @@ body::before {
 </div>
 
 <script type="text/javascript">
+// ========== IMAGE SLIDER CODE (Keep existing) ==========
 var currentSlide = 0;
 var imgs = document.querySelectorAll('.slider-image');
 var visibleImages = [];
@@ -585,6 +612,7 @@ for (var i = 0; i < sliderBtns.length; i++) {
     };
 }
 
+// ========== ADD TO CART CODE (Keep existing) ==========
 <?php if ($inStock): ?>
 function submitCart() {
     var form = document.getElementById("addToCartForm");
@@ -635,124 +663,137 @@ function submitCart() {
 }
 <?php endif; ?>
 
+// ========== REVIEW FUNCTIONALITY (New fixed code) ==========
 <?php if (function_exists('getProductReviews')): ?>
+
+// ========== Review Form Toggle ==========
 function toggleReviewForm() {
     var form = document.getElementById('reviewFormContainer');
-    var currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
     
-    if (form.style.display === 'none') {
-
-        var scrollBefore = window.pageYOffset || document.documentElement.scrollTop;
-        
+    if (!form) {
+        console.error('Review form container not found');
+        return;
+    }
+    
+    if (form.style.display === 'none' || form.style.display === '') {
         form.style.display = 'block';
-        
-        requestAnimationFrame(function() {
-            window.scrollTo({
-                top: scrollBefore,
-                behavior: 'auto' 
-            });
-
-            setTimeout(function() {
-                window.scrollTo({
-                    top: scrollBefore,
-                    behavior: 'auto'
-                });
-            }, 10);
-        });
+        console.log('Review form opened');
     } else {
         form.style.display = 'none';
-
-        requestAnimationFrame(function() {
-            window.scrollTo({
-                top: currentScrollPosition,
-                behavior: 'auto'
-            });
-        });
+        console.log('Review form closed');
     }
 }
 
-var stars = document.querySelectorAll('#starRating .star');
-var ratingInput = document.getElementById('ratingValue');
-
-<?php if ($userExistingReview): ?>
-updateStars(<?php echo $userExistingReview['rating']; ?>);
-<?php endif; ?>
-
-for (var i = 0; i < stars.length; i++) {
-    stars[i].onclick = function() {
-        var rating = this.getAttribute('data-rating');
-        ratingInput.value = rating;
-        updateStars(rating);
-    };
+// ========== Star Rating System ==========
+document.addEventListener('DOMContentLoaded', function() {
+    var stars = document.querySelectorAll('#starRating .star');
+    var ratingInput = document.getElementById('ratingValue');
     
-    stars[i].onmouseover = function() {
-        var rating = this.getAttribute('data-rating');
-        highlightStars(rating);
-    };
-}
-
-document.getElementById('starRating').onmouseout = function() {
-    updateStars(ratingInput.value);
-};
+    if (!stars.length) {
+        console.log('Star rating not available (user may not be able to review)');
+        return;
+    }
+    
+    // Initialize existing rating if editing
+    var existingRating = ratingInput ? ratingInput.value : 0;
+    if (existingRating > 0) {
+        updateStars(existingRating);
+    }
+    
+    // Add click handlers
+    stars.forEach(function(star) {
+        star.addEventListener('click', function() {
+            var rating = this.getAttribute('data-rating');
+            ratingInput.value = rating;
+            updateStars(rating);
+            console.log('Rating selected:', rating);
+        });
+        
+        star.addEventListener('mouseover', function() {
+            var rating = this.getAttribute('data-rating');
+            highlightStars(rating);
+        });
+    });
+    
+    // Reset stars on mouseout
+    var starRating = document.getElementById('starRating');
+    if (starRating) {
+        starRating.addEventListener('mouseout', function() {
+            updateStars(ratingInput.value || 0);
+        });
+    }
+});
 
 function highlightStars(rating) {
     var stars = document.querySelectorAll('#starRating .star');
-    for (var i = 0; i < stars.length; i++) {
-        var index = i + 1;
-        if (index <= rating) {
-            stars[i].style.color = '#ffc107';
-            stars[i].innerHTML = '&#9733;';
+    stars.forEach(function(star, index) {
+        if ((index + 1) <= rating) {
+            star.style.color = '#ffc107';
+            star.innerHTML = '&#9733;';
         } else {
-            stars[i].style.color = '#ddd';
-            stars[i].innerHTML = '&#9734;';
+            star.style.color = '#ddd';
+            star.innerHTML = '&#9734;';
         }
-    }
+    });
 }
 
 function updateStars(rating) {
     highlightStars(rating);
 }
 
-<?php if ($canReview): ?>
+// ========== Submit Review ==========
 function submitReview() {
-    if (!ratingInput.value) {
+    var ratingInput = document.getElementById('ratingValue');
+    var form = document.getElementById('reviewForm');
+    
+    if (!form) {
+        alert('Review form not found');
+        return;
+    }
+    
+    if (!ratingInput || !ratingInput.value) {
         alert('Please select a rating.');
         return;
     }
     
-    var form = document.getElementById('reviewForm');
-    var reviewTitle = form.querySelector('[name="review_title"]').value.trim();
-    var reviewText = form.querySelector('[name="review_text"]').value.trim();
+    var reviewTitle = form.querySelector('[name="review_title"]');
+    var reviewText = form.querySelector('[name="review_text"]');
     
-    if (!reviewTitle) {
+    if (!reviewTitle || !reviewTitle.value.trim()) {
         alert('Please enter a review title.');
         return;
     }
     
-    if (reviewTitle.length > 200) {
+    if (reviewTitle.value.trim().length > 200) {
         alert('Review title must be 200 characters or less.');
         return;
     }
     
-    if (!reviewText) {
+    if (!reviewText || !reviewText.value.trim()) {
         alert('Please enter your review text.');
         return;
     }
     
-    if (reviewText.length < 10) {
+    if (reviewText.value.trim().length < 10) {
         alert('Review must be at least 10 characters long.');
         return;
     }
     
-    if (reviewText.length > 2000) {
+    if (reviewText.value.trim().length > 2000) {
         alert('Review must be 2000 characters or less.');
         return;
     }
     
+    console.log('Submitting review...');
+    
     var formData = new FormData(form);
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "review/submit_review.php", true);
+    
     xhr.onload = function() {
+        console.log('Response status:', xhr.status);
+        console.log('Response text:', xhr.responseText);
+        
         if (xhr.status === 200) {
             try {
                 var data = JSON.parse(xhr.responseText);
@@ -760,27 +801,41 @@ function submitReview() {
                     alert(data.message);
                     location.reload();
                 } else {
-                    alert(data.message);
+                    alert(data.message || 'Error submitting review');
                 }
             } catch(e) {
+                console.error('Parse error:', e);
+                console.log('Raw response:', xhr.responseText);
                 alert('Error submitting review. Please try again.');
             }
+        } else {
+            alert('Server error. Please try again.');
         }
     };
+    
     xhr.onerror = function() {
-        alert('Error submitting review. Please try again.');
+        console.error('XHR error');
+        alert('Error submitting review. Please check your connection.');
     };
+    
     xhr.send(formData);
 }
-<?php endif; ?>
 
+// ========== Delete Review ==========
 function deleteReview(reviewId) {
-    if (!confirm('Are you sure you want to delete your review?')) return;
+    if (!confirm('Are you sure you want to delete your review?')) {
+        return;
+    }
+    
+    console.log('Deleting review:', reviewId);
     
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "review/delete_review.php", true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    
     xhr.onload = function() {
+        console.log('Delete response:', xhr.responseText);
+        
         if (xhr.status === 200) {
             try {
                 var data = JSON.parse(xhr.responseText);
@@ -788,16 +843,22 @@ function deleteReview(reviewId) {
                     alert(data.message);
                     location.reload();
                 } else {
-                    alert(data.message);
+                    alert(data.message || 'Error deleting review');
                 }
             } catch(e) {
+                console.error('Parse error:', e);
                 alert('Error deleting review.');
             }
+        } else {
+            alert('Server error. Please try again.');
         }
     };
+    
     xhr.onerror = function() {
-        alert('Error deleting review.');
+        console.error('XHR error');
+        alert('Error deleting review. Please check your connection.');
     };
+    
     xhr.send('review_id=' + reviewId);
 }
 <?php endif; ?>
