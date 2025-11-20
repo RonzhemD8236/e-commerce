@@ -1,5 +1,5 @@
 <?php
-// review_functions.php - Functions for handling product reviews (IMPROVED)
+ 
 
 /**
  * Get customer_id from user_id if needed
@@ -22,9 +22,6 @@ function getCustomerIdFromUserId($conn, $userId) {
     return 0;
 }
 
-/**
- * Get all reviews for a specific product
- */
 function getProductReviews($conn, $itemId) {
     $itemId = intval($itemId);
     
@@ -62,9 +59,6 @@ function getProductReviews($conn, $itemId) {
     return $reviews;
 }
 
-/**
- * Get average rating and total review count for a product
- */
 function getAverageRating($conn, $itemId) {
     $itemId = intval($itemId);
     
@@ -93,9 +87,6 @@ function getAverageRating($conn, $itemId) {
     );
 }
 
-/**
- * Check if a customer can review a product (must have purchased and received it)
- */
 function canCustomerReview($conn, $customerId, $itemId) {
     $customerId = intval($customerId);
     $itemId = intval($itemId);
@@ -123,39 +114,36 @@ function canCustomerReview($conn, $customerId, $itemId) {
     return $row;
 }
 
-/**
- * Filter inappropriate words from text (English and Filipino)
- */
 function filterInappropriateWords($text) {
     $badWords = array(
-        // English profanity
+        
         'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'damn', 'hell', 
         'crap', 'piss', 'dick', 'cock', 'pussy', 'cunt', 'slut', 'whore',
         'fag', 'nigger', 'retard', 'retarded', 'motherfucker', 'bullshit',
         
-        // English insults
+        
         'stupid', 'idiot', 'dumb', 'moron', 'imbecile', 'loser', 'trash',
         
-        // Filipino profanity (Tagalog)
+        
         'putang ina', 'putangina', 'tangina', 'tngina', 'puta', 'gago', 
         'gaga', 'tarantado', 'tanga', 'bobo', 'ulol', 'inutil', 'punyeta',
         'leche', 'peste', 'hinayupak', 'hayop', 'animal', 'kupal', 
         'kantot', 'kantutan', 'tamod', 'tite', 'bilat', 'puke', 'bayag',
         'burat', 'jakol', 'pokpok', 'siraulo', 'tarantadong', 
         
-        // Filipino insults
+        
         'walang kwenta', 'walang hiya', 'walanghiya', 'galing mo', 
         'bastos', 'malandi', 'bruha', 'tarantada',
         
-        // Bisaya/Cebuano profanity
+        
         'yawa', 'atay', 'pisti', 'buang', 'buanga', 'bilat', 
         'bilata', 'puta', 'putang', 'lintian',
         
-        // Common variations and leetspeak
+        
         'f*ck', 'sh*t', 'b*tch', 'a$$hole', 'fvck', 'fck', 'shyt',
         'p*ta', 'g*go', 'tang*na', 'b*bo', 't*nga', 'p*k*',
         
-        // Slang variations
+        
         'wtf', 'stfu', 'lmao', 'lol jk die', 'kys', 'ky$ ', 'di ka maganda',
         'pangit', 'mukhang', 'ampangit'
     );
@@ -169,9 +157,6 @@ function filterInappropriateWords($text) {
     return $text;
 }
 
-/**
- * Create a flexible regex pattern for word matching
- */
 function createFlexiblePattern($word) {
     $word = preg_quote($word, '/');
     
@@ -184,9 +169,6 @@ function createFlexiblePattern($word) {
     return '/\b' . $word . '\b/i';
 }
 
-/**
- * Validate review data
- */
 function validateReviewData($data) {
     $errors = array();
     
@@ -213,16 +195,13 @@ function validateReviewData($data) {
     return $errors;
 }
 
-/**
- * Insert a new review
- */
 function insertReview($conn, $customerId, $itemId, $orderinfoId, $rating, $reviewTitle, $reviewText) {
     $customerId = intval($customerId);
     $itemId = intval($itemId);
     $orderinfoId = intval($orderinfoId);
     $rating = intval($rating);
     
-    // Filter inappropriate words
+    
     $reviewTitle = filterInappropriateWords(trim($reviewTitle));
     $reviewText = filterInappropriateWords(trim($reviewText));
     
@@ -238,15 +217,11 @@ function insertReview($conn, $customerId, $itemId, $orderinfoId, $rating, $revie
     return $result;
 }
 
-/**
- * Update an existing review
- */
 function updateReview($conn, $reviewId, $customerId, $rating, $reviewTitle, $reviewText) {
     $reviewId = intval($reviewId);
     $customerId = intval($customerId);
     $rating = intval($rating);
     
-    // Filter inappropriate words
     $reviewTitle = filterInappropriateWords(trim($reviewTitle));
     $reviewText = filterInappropriateWords(trim($reviewText));
     
@@ -276,7 +251,7 @@ function deleteReview($conn, $reviewId, $customerId) {
     $reviewId = intval($reviewId);
     $customerId = intval($customerId);
     
-    // First verify the review exists
+    
     $checkStmt = mysqli_prepare($conn, "SELECT review_id FROM reviews WHERE review_id = ? AND customer_id = ?");
     mysqli_stmt_bind_param($checkStmt, "ii", $reviewId, $customerId);
     mysqli_stmt_execute($checkStmt);
@@ -289,7 +264,7 @@ function deleteReview($conn, $reviewId, $customerId) {
     }
     mysqli_stmt_close($checkStmt);
     
-    // Now delete
+    
     $stmt = mysqli_prepare($conn, "DELETE FROM reviews WHERE review_id = ? AND customer_id = ?");
     
     if (!$stmt) {

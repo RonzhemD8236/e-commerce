@@ -1,14 +1,14 @@
 <?php
-// submit_review.php - Handle review submission and updates
+ 
 
-// Start session if not already started
+ 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 header('Content-Type: application/json');
 
-// ✅ AUTHENTICATION CHECK - Must be logged in
+ 
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     echo json_encode(array(
         'success' => false, 
@@ -21,7 +21,7 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
 include('../includes/config.php');
 include('./review_functions.php');
 
-// Get customer ID - check session or lookup from user_id
+ 
 if (isset($_SESSION['customer_id'])) {
     $customerId = intval($_SESSION['customer_id']);
 } elseif (isset($_SESSION['user_id'])) {
@@ -42,7 +42,7 @@ if ($customerId <= 0) {
     exit;
 }
 
-// ✅ Check if POST request
+ 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(array('success' => false, 'message' => 'Invalid request method.'));
     exit;
@@ -55,13 +55,13 @@ $reviewTitle = isset($_POST['review_title']) ? trim($_POST['review_title']) : ''
 $reviewText = isset($_POST['review_text']) ? trim($_POST['review_text']) : '';
 $reviewId = isset($_POST['review_id']) ? intval($_POST['review_id']) : 0;
 
-// Basic validation
+ 
 if ($itemId <= 0) {
     echo json_encode(array('success' => false, 'message' => 'Invalid product ID.'));
     exit;
 }
 
-// Validate data
+ 
 $errors = validateReviewData(array(
     'rating' => $rating,
     'review_title' => $reviewTitle,
@@ -73,7 +73,7 @@ if (!empty($errors)) {
     exit;
 }
 
-// Check if item exists - PREPARED STATEMENT
+ 
 $stmt = mysqli_prepare($conn, "SELECT item_id FROM item WHERE item_id = ?");
 mysqli_stmt_bind_param($stmt, "i", $itemId);
 mysqli_stmt_execute($stmt);
@@ -86,21 +86,21 @@ if (!$checkItem || mysqli_num_rows($checkItem) == 0) {
 }
 mysqli_stmt_close($stmt);
 
-// Check if customer can review this product
+ 
 $userOrder = canCustomerReview($conn, $customerId, $itemId);
 if (!$userOrder) {
     echo json_encode(array('success' => false, 'message' => 'You can only review products you have purchased and received. Your order status must be Delivered or Completed.'));
     exit;
 }
 
-// If orderinfo_id wasn't provided in POST, get it from the user's order
+ 
 if ($orderinfoId <= 0 && isset($userOrder['orderinfo_id'])) {
     $orderinfoId = intval($userOrder['orderinfo_id']);
 }
 
-// Check if this is an update or new review
+ 
 if (!empty($reviewId)) {
-    // Verify the review belongs to this customer
+    
     if (!isReviewOwner($conn, $reviewId, $customerId)) {
         echo json_encode(array('success' => false, 'message' => 'You can only edit your own reviews.'));
         exit;
@@ -114,7 +114,7 @@ if (!empty($reviewId)) {
         echo json_encode(array('success' => false, 'message' => 'Failed to update review. Please try again.'));
     }
 } else {
-    // Check if customer already reviewed this product - PREPARED STATEMENT
+    
     $stmt = mysqli_prepare($conn, "SELECT review_id FROM reviews WHERE customer_id = ? AND item_id = ?");
     mysqli_stmt_bind_param($stmt, "ii", $customerId, $itemId);
     mysqli_stmt_execute($stmt);

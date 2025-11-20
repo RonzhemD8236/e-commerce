@@ -1,23 +1,22 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ./user/login.php");
+    exit();
+}
 include('./includes/header.php');
 include('./includes/config.php');
 
-echo "<!-- DEBUG: Checking background image path -->";
 $bgPath = __DIR__ . '/uploads/login-bg.jpeg';
-echo "<!-- Full path: $bgPath -->";
-echo "<!-- File exists: " . (file_exists($bgPath) ? 'YES' : 'NO') . " -->";
-echo "<!-- Current directory: " . __DIR__ . " -->";
 
 if (is_dir(__DIR__ . '/uploads')) {
     $files = scandir(__DIR__ . '/uploads');
-    echo "<!-- Files in uploads: " . implode(', ', $files) . " -->";
 }
 
 $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'];
 $baseUrl = $scheme . '://' . $host . '/lensify/e-commerce/';
-echo "<!-- Base URL: $baseUrl -->";
 
 if (file_exists('./review/review_functions.php')) {
     include('./review/review_functions.php');
@@ -132,15 +131,74 @@ if (function_exists('getProductReviews')) {
 ?>
 
 <style>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
 body {
-    background: #000000; /* solid black background */
-    color: #ffffff; /* default text color white */
+    background: #000000;  
+    color: #ffffff;  
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
 }
 
-/* Optional overlay removed since background is already black */
 body::after,
 body::before {
     display: none;
@@ -166,21 +224,41 @@ body::before {
     z-index: 0;
 }
 
-/* Ensure product section maintains its position when review form opens */
 .product-section {
     position: relative;
     z-index: 2;
+    animation: fadeIn 0.6s ease;
 }
 
 .product-container {
-    background: rgba(0, 0, 0, 0.85); /* dark container */
+    background: rgba(0, 0, 0, 0.85);  
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 40px;
     box-shadow: 0 20px 60px rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 40px;
-    color: #ffffff; /* white text */
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+
+.product-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 20px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.product-container:hover::before {
+    opacity: 0.3;
 }
 
 .product-container h2,
@@ -199,25 +277,58 @@ body::before {
     border: 2px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 15px !important;
     overflow: hidden;
+    position: relative;
+    animation: slideInLeft 0.8s ease;
+}
+
+.image-slider::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 15px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.image-slider:hover::before {
+    opacity: 0.5;
+}
+
+.slider-image {
+    transition: transform 0.5s ease, opacity 0.5s ease !important;
+}
+
+.image-slider:hover .slider-image {
+    transform: scale(1.05);
 }
 
 .slider-btn {
-    background: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(102, 126, 234, 0.3) !important;
     color: #ffffff !important;
     transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
 }
 
 .slider-btn:hover {
-    background: rgba(255, 255, 255, 0.25) !important;
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    transform: scale(1.1);
 }
 
 .image-counter {
-    background: rgba(255, 255, 255, 0.15) !important;
+    background: rgba(102, 126, 234, 0.4) !important;
     color: #ffffff !important;
+    backdrop-filter: blur(10px);
 }
 
+.product-info-section {
+    animation: slideInRight 0.8s ease;
+}
 
-/* Fix for review button click */
 .btn-primary {
     position: relative;
     z-index: 999 !important;
@@ -229,12 +340,6 @@ body::before {
     pointer-events: none !important;
 }
 
-.product-section {
-    position: relative;
-    z-index: 2;
-}
-
-/* Make sure reviews section is also clickable */
 .row {
     position: relative;
     z-index: 2;
@@ -242,21 +347,131 @@ body::before {
 
 .btn-success,
 .btn-primary {
-    background: #222222 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: #ffffff !important;
     border: none !important;
     padding: 12px 30px;
     border-radius: 10px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-success::before,
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-success:hover::before,
+.btn-primary:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .btn-success:hover,
 .btn-primary:hover {
-    background: #444444 !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(255, 255, 255, 0.15);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+}
+
+.stock-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    animation: pulse 2s infinite;
+}
+
+.stock-badge.in-stock {
+    background: linear-gradient(135deg, #4caf50, #45a049);
+    color: white;
+}
+
+.stock-badge.low-stock {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+}
+
+.stock-badge.out-stock {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: white;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.qty-btn {
+    background: rgba(102, 126, 234, 0.3);
+    border: none;
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.qty-btn:hover {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    transform: scale(1.1);
+}
+
+.qty-input {
+    width: 80px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    color: white;
+    padding: 8px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.qty-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.product-price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 20px 0;
+    animation: float 3s ease-in-out infinite;
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    margin-bottom: 20px;
 }
 
 .reviews-section {
@@ -269,6 +484,7 @@ body::before {
     color: #ffffff;
     display: flex;
     flex-direction: column;
+    animation: fadeIn 0.8s ease 0.2s both;
 }
 
 .review-item {
@@ -278,6 +494,27 @@ body::before {
     color: #ffffff;
     display: flex;
     flex-direction: column;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.review-item::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 12px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.review-item:hover::before {
+    opacity: 0.5;
 }
 
 .review-item .card-body {
@@ -287,8 +524,8 @@ body::before {
 }
 
 .review-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.05);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
 
 #reviewsList {
@@ -308,19 +545,25 @@ body::before {
 .reviews-section .form-control {
     color: #ffffff;
     background: #000000;
-    border-color: #555;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
 }
 
 .reviews-section .form-control:focus {
     color: #ffffff;
     background: #000000;
-    border-color: #ffc107;
-    box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2);
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
 }
 
 .star-rating,
 .star-input .star {
     color: #ffc107;
+    transition: all 0.2s ease;
+}
+
+.star-input .star:hover {
+    transform: scale(1.2);
 }
 
 .alert {
@@ -328,7 +571,8 @@ body::before {
     border: none;
     backdrop-filter: blur(10px);
     color: #ffffff;
-    background: rgba(50, 50, 50, 0.9);
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid rgba(102, 126, 234, 0.4);
 }
 
 .main-content,
@@ -337,52 +581,189 @@ body::before {
     background: transparent !important;
 }
 
+#reviewFormContainer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: rgba(30, 30, 30, 0.98);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(102, 126, 234, 0.5);
+    animation: fadeIn 0.3s ease;
+}
 
+#reviewFormContainer::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: -1;
+    backdrop-filter: blur(5px);
+}
+
+#reviewFormContainer .card-body {
+    padding: 30px;
+    color: #ffffff;
+}
+
+#reviewFormContainer .form-control {
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+#reviewFormContainer .form-control:focus {
+    background: #000000;
+    color: #ffffff;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+.review-form-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(102, 126, 234, 0.3);
+    border: none;
+    color: #ffffff;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    transition: all 0.3s ease;
+}
+
+.review-form-close:hover {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    transform: rotate(90deg);
+}
+
+.verified-badge {
+    background: linear-gradient(135deg, #4caf50, #45a049);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.verified-badge::before {
+    content: '✓';
+    font-weight: bold;
+}
+
+.thumbnail-grid {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.thumbnail {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    opacity: 0.6;
+}
+
+.thumbnail:hover,
+.thumbnail.active {
+    border-color: #667eea;
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+    .product-container {
+        padding: 20px;
+    }
+    
+    .product-price {
+        font-size: 2rem;
+    }
+    
+    .quantity-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
 </style>
 
 <div class="main-content">
-<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 30px;">
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 400px;">
     <div class="product-section">
     <div class="row" style="margin-bottom: 60px; align-items: flex-end;">
         <div class="col-md-6 pe-4 d-flex align-items-end">
-           <div class="image-slider position-relative" style="width:100%; min-height:400px; height:auto; overflow:hidden; border-radius:10px; background:transparent;">
-                <?php if (!empty($images)): ?>
+           <div style="width: 100%;">
+               <div class="image-slider position-relative" style="width:100%; min-height:400px; height:auto; overflow:hidden; border-radius:10px; background:transparent;">
+                    <?php if (!empty($images)): ?>
+                        <?php foreach ($images as $index => $img): ?>
+                            <img src="<?php echo htmlspecialchars($img); ?>" 
+                                 class="slider-image" 
+                                 alt="Product Image <?php echo $index + 1; ?>"
+                                 style="width:100%; height:100%; object-fit:contain; position:absolute; top:0; left:0; transition: opacity 0.5s ease; opacity:<?php echo $index === 0 ? 1 : 0; ?>;"
+                                 onerror="this.style.display='none';">
+                        <?php endforeach; ?>
+                        
+                        <?php if (count($images) > 1): ?>
+                            <button class="slider-btn prev-btn" onclick="changeSlide(-1)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; font-size:18px; z-index:10;">
+                                &lsaquo;
+                            </button>
+                            <button class="slider-btn next-btn" onclick="changeSlide(1)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; font-size:18px; z-index:10;">
+                                &rsaquo;
+                            </button>
+                            
+                            <div class="image-counter" style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.6); color:white; padding:5px 15px; border-radius:20px; font-size:14px; z-index:10;">
+                                <span id="currentImageNum">1</span> / <?php echo count($images); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <div class="no-image-text" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:none; text-align:center; color:#999;">
+                            <p>Image not available</p>
+                        </div>
+                    <?php else: ?>
+                        <p style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">No images available</p>
+                    <?php endif; ?>
+                </div>
+                
+                <?php if (count($images) > 1): ?>
+                <div class="thumbnail-grid">
                     <?php foreach ($images as $index => $img): ?>
                         <img src="<?php echo htmlspecialchars($img); ?>" 
-                             class="slider-image" 
-                             alt="Product Image <?php echo $index + 1; ?>"
-                             style="width:100%; height:100%; object-fit:contain; position:absolute; top:0; left:0; transition: opacity 0.5s ease; opacity:<?php echo $index === 0 ? 1 : 0; ?>;"
+                             class="thumbnail <?php echo $index === 0 ? 'active' : ''; ?>" 
+                             onclick="goToSlide(<?php echo $index; ?>)"
+                             alt="Thumbnail <?php echo $index + 1; ?>"
                              onerror="this.style.display='none';">
                     <?php endforeach; ?>
-                    
-                    <?php if (count($images) > 1): ?>
-                        <button class="slider-btn prev-btn" onclick="changeSlide(-1)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; font-size:18px; z-index:10;">
-                            &lsaquo;
-                        </button>
-                        <button class="slider-btn next-btn" onclick="changeSlide(1)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; font-size:18px; z-index:10;">
-                            &rsaquo;
-                        </button>
-                        
-                        <div class="image-counter" style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.6); color:white; padding:5px 15px; border-radius:20px; font-size:14px; z-index:10;">
-                            <span id="currentImageNum">1</span> / <?php echo count($images); ?>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <div class="no-image-text" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:none; text-align:center; color:#999;">
-                        <p>Image not available</p>
-                    </div>
-                <?php else: ?>
-                    <p style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">No images available</p>
+                </div>
                 <?php endif; ?>
-            </div>
+           </div>
         </div>
 
         <div class="col-md-6 ps-4 d-flex align-items-end">
-            <div style="width: 100%;">
+            <div class="product-info-section" style="width: 100%;">
                 <h2 style="font-size: 1.75rem; margin-bottom: 15px;"><?php echo htmlspecialchars($row['description']); ?></h2>
             
             <?php if ($totalReviews > 0): ?>
-            <div class="mb-2">
+            <div class="rating-display">
                 <div class="d-flex align-items-center">
                     <div class="star-rating" style="font-size: 18px; color: #ffc107;">
                         <?php for($i = 1; $i <= 5; $i++): ?>
@@ -411,13 +792,17 @@ body::before {
                 <p style="margin-bottom: 15px; font-size: 14px;"><strong>Specifications:</strong><br><?php echo nl2br(htmlspecialchars($row['specifications'])); ?></p>
             <?php endif; ?>
 
-            <h4 class="text-success" style="margin-bottom: 15px; font-size: 1.5rem;">&#8369;<?php echo number_format($row['sell_price'], 2); ?></h4>
+            <div class="product-price">&#8369;<?php echo number_format($row['sell_price'], 2); ?></div>
 
-            <p style="margin-bottom: 15px; font-size: 14px;"><strong>Available Stock:</strong>
+            <p style="margin-bottom: 15px; font-size: 14px;"><strong>Stock Status:</strong>
                 <?php if ($inStock): ?>
-                    <span id="availableStock"><?php echo $stock; ?></span>
+                    <?php if ($stock <= 5): ?>
+                        <span class="stock-badge low-stock">Low Stock: <?php echo $stock; ?> left</span>
+                    <?php else: ?>
+                        <span class="stock-badge in-stock" id="availableStock">In Stock: <?php echo $stock; ?> available</span>
+                    <?php endif; ?>
                 <?php else: ?>
-                    <span style="color:red; font-size:24px; font-weight:bold;">OUT OF STOCK</span>
+                    <span class="stock-badge out-stock">OUT OF STOCK</span>
                 <?php endif; ?>
             </p>
 
@@ -428,10 +813,11 @@ body::before {
                 <input type="hidden" name="item_name" value="<?php echo htmlspecialchars($row['description']); ?>">
                 <input type="hidden" name="item_price" value="<?php echo $row['sell_price']; ?>">
 
-                <div class="mb-2">
-                    <label style="font-size: 14px;">Quantity:</label>
-                    <input type="number" name="item_qty" id="quantity"
-                           value="1" class="form-control" style="width:100px; font-size: 14px;">
+                <div class="quantity-selector">
+                    <label style="font-size: 14px; font-weight: 600;">Quantity:</label>
+                    <button type="button" class="qty-btn" onclick="decreaseQty()">-</button>
+                    <input type="number" name="item_qty" id="quantity" value="1" min="1" max="<?php echo $stock; ?>" class="qty-input">
+                    <button type="button" class="qty-btn" onclick="increaseQty()">+</button>
                 </div>
                 <br>
                 <button type="button" onclick="submitCart()" class="btn btn-success">Add to Cart</button>
@@ -441,7 +827,6 @@ body::before {
         </div>
     </div>
     </div>
-    <!-- End Product Section - This maintains spacing from header -->
 
     <?php if (function_exists('getProductReviews')): ?>
     <div class="row" style="margin-top: 60px; margin-bottom: 100px;">
@@ -461,11 +846,10 @@ body::before {
                         <button class="btn btn-primary mb-4" onclick="toggleReviewForm()">
                             <?php echo $userExistingReview ? 'Edit Your Review' : 'Write a Review'; ?>
                         </button>
-
-                        
                     </div>
                     
                     <div id="reviewFormContainer" style="display:none; margin-bottom: 100px;" class="card mb-4">
+                        <button class="review-form-close" onclick="toggleReviewForm()">&times;</button>
                         <div class="card-body" style="padding: 30px;">
                             <h5 style="margin-bottom: 25px;"><?php echo $userExistingReview ? 'Edit Your Review' : 'Write Your Review'; ?></h5>
                             <form id="reviewForm" onsubmit="return false;">
@@ -513,7 +897,7 @@ body::before {
                 <?php endif; ?>
             <?php else: ?>
                 <div class="alert alert-warning">
-                    Please <a href="/lensify/e-commerce/user/login.php">login</a> to write a review.
+                    Please <a href="/lensify/e-commerce/user/login.php" style="color: #667eea; font-weight: 600;">login</a> to write a review.
                 </div>
             <?php endif; ?>
             
@@ -543,7 +927,7 @@ body::before {
                                 <div class="text-muted small mt-auto">
                                     <strong><?php echo htmlspecialchars($review['customer_name']); ?></strong>
                                     <?php if ($review['is_verified_purchase']): ?>
-                                        <span class="badge bg-success ms-2">Verified Purchase</span>
+                                        <span class="verified-badge ms-2">Verified Purchase</span>
                                     <?php endif; ?>
                                     <br>
                                     <?php echo date('F j, Y', strtotime($review['created_at'])); ?>
@@ -563,7 +947,6 @@ body::before {
 </div>
 
 <script type="text/javascript">
-// ========== IMAGE SLIDER CODE (Keep existing) ==========
 var currentSlide = 0;
 var imgs = document.querySelectorAll('.slider-image');
 var visibleImages = [];
@@ -591,10 +974,24 @@ function showSlide(n) {
     
     var counter = document.getElementById('currentImageNum');
     if (counter) counter.textContent = currentSlide + 1;
+    
+    var thumbnails = document.querySelectorAll('.thumbnail');
+    thumbnails.forEach(function(thumb, index) {
+        if (index === currentSlide) {
+            thumb.classList.add('active');
+        } else {
+            thumb.classList.remove('active');
+        }
+    });
 }
 
 function changeSlide(direction) {
     currentSlide += direction;
+    showSlide(currentSlide);
+}
+
+function goToSlide(index) {
+    currentSlide = index;
     showSlide(currentSlide);
 }
 
@@ -612,8 +1009,26 @@ for (var i = 0; i < sliderBtns.length; i++) {
     };
 }
 
-// ========== ADD TO CART CODE (Keep existing) ==========
 <?php if ($inStock): ?>
+function increaseQty() {
+    var qtyInput = document.getElementById("quantity");
+    var maxStock = parseInt(qtyInput.max);
+    var currentQty = parseInt(qtyInput.value);
+    
+    if (currentQty < maxStock) {
+        qtyInput.value = currentQty + 1;
+    }
+}
+
+function decreaseQty() {
+    var qtyInput = document.getElementById("quantity");
+    var currentQty = parseInt(qtyInput.value);
+    
+    if (currentQty > 1) {
+        qtyInput.value = currentQty - 1;
+    }
+}
+
 function submitCart() {
     var form = document.getElementById("addToCartForm");
     var qtyInput = document.getElementById("quantity");
@@ -640,13 +1055,24 @@ function submitCart() {
                 if (data.success) {
                     alert("Item added to cart!");
                     var stockSpan = document.getElementById("availableStock");
-                    stockSpan.textContent = data.newStock;
+                    if (stockSpan) {
+                        if (data.newStock <= 5) {
+                            stockSpan.className = 'stock-badge low-stock';
+                            stockSpan.textContent = 'Low Stock: ' + data.newStock + ' left';
+                        } else {
+                            stockSpan.textContent = 'In Stock: ' + data.newStock + ' available';
+                        }
+                    }
                     qtyInput.max = data.newStock;
                     if (data.newStock == 0) {
-                        if (qtyInput) qtyInput.remove();
+                        var qtySelector = document.querySelector('.quantity-selector');
+                        if (qtySelector) qtySelector.remove();
                         var submitBtn = document.querySelector("#addToCartForm button");
                         if (submitBtn) submitBtn.remove();
-                        stockSpan.outerHTML = '<span style="color:red; font-size:24px; font-weight:bold;">OUT OF STOCK</span>';
+                        if (stockSpan) {
+                            stockSpan.className = 'stock-badge out-stock';
+                            stockSpan.textContent = 'OUT OF STOCK';
+                        }
                     }
                 } else {
                     alert(data.message || "Failed to add item.");
@@ -663,10 +1089,8 @@ function submitCart() {
 }
 <?php endif; ?>
 
-// ========== REVIEW FUNCTIONALITY (New fixed code) ==========
 <?php if (function_exists('getProductReviews')): ?>
 
-// ========== Review Form Toggle ==========
 function toggleReviewForm() {
     var form = document.getElementById('reviewFormContainer');
     
@@ -684,7 +1108,6 @@ function toggleReviewForm() {
     }
 }
 
-// ========== Star Rating System ==========
 document.addEventListener('DOMContentLoaded', function() {
     var stars = document.querySelectorAll('#starRating .star');
     var ratingInput = document.getElementById('ratingValue');
@@ -694,13 +1117,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Initialize existing rating if editing
     var existingRating = ratingInput ? ratingInput.value : 0;
     if (existingRating > 0) {
         updateStars(existingRating);
     }
     
-    // Add click handlers
     stars.forEach(function(star) {
         star.addEventListener('click', function() {
             var rating = this.getAttribute('data-rating');
@@ -715,7 +1136,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Reset stars on mouseout
     var starRating = document.getElementById('starRating');
     if (starRating) {
         starRating.addEventListener('mouseout', function() {
@@ -741,7 +1161,6 @@ function updateStars(rating) {
     highlightStars(rating);
 }
 
-// ========== Submit Review ==========
 function submitReview() {
     var ratingInput = document.getElementById('ratingValue');
     var form = document.getElementById('reviewForm');
@@ -821,7 +1240,6 @@ function submitReview() {
     xhr.send(formData);
 }
 
-// ========== Delete Review ==========
 function deleteReview(reviewId) {
     if (!confirm('Are you sure you want to delete your review?')) {
         return;
@@ -863,5 +1281,5 @@ function deleteReview(reviewId) {
 }
 <?php endif; ?>
 </script>
-
-<?php include('./includes/footer.php'); ?>igt
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<?php include('./includes/footer.php'); ?>

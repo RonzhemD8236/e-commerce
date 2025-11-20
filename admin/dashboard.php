@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Fetch Key Metrics
+ 
 $stmt = $conn->prepare("SELECT COUNT(*) as total_users FROM users WHERE role='customer'");
 $stmt->execute();
 $totalUsers = $stmt->get_result()->fetch_assoc()['total_users'] ?? 0;
@@ -30,7 +30,7 @@ $stmt = $conn->prepare("
 $stmt->execute();
 $totalRevenue = $stmt->get_result()->fetch_assoc()['total_revenue'] ?? 0;
 
-// Fetch recent stuff
+ 
 $ordersQuery = $conn->query("SELECT * FROM pending_orders_detail ORDER BY date_placed DESC LIMIT 6");
 $stockQuery = $conn->query("
     SELECT i.item_id, i.description, s.quantity
@@ -52,7 +52,7 @@ body {
 }
 
 .hero-banner {
-    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%),
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%),
                 url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=400&fit=crop') center/cover;
     color: white;
     padding: 60px 40px;
@@ -99,7 +99,7 @@ body {
     letter-spacing: 0.05em;
 }
 
-/* GRADIENT CARD ICONS */
+ 
 .metric-card-icon {
     font-size: 1.5rem;
     padding: 12px;
@@ -150,7 +150,7 @@ body {
 }
 .btn-view-all:hover { background-color: #3730a3; }
 
-/* LIST / NOTIFICATION CARDS */
+ 
 .list-card {
     display: flex;
     justify-content: space-between;
@@ -176,7 +176,7 @@ body {
     font-size: 0.85rem;
 }
 
-/* GRADIENT ICONS FOR LIST */
+ 
 .list-icon {
     width: 46px;
     height: 46px;
@@ -209,7 +209,7 @@ body {
     background: none !important;
     border: none !important;
     padding: 0 !important;
-    color: gray; /* Indigo text */
+    color: gray;  
     font-weight: 600;
     font-size: 0.95rem;
     text-decoration: none;
@@ -314,7 +314,7 @@ body {
                     <div class="list-subtext">Stock: <?= $stock['quantity'] ?></div>
                 </div>
 
-                <a href="edit_product.php?id=<?= $stock['item_id'] ?>" class="btn-manage small-btn">Restock</a>
+                <a href="../item/index.php?id=<?= $stock['item_id'] ?>" class="btn-manage small-btn">Restock</a>
             </div>
             <?php endwhile; ?>
         </div>

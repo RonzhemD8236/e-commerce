@@ -1,14 +1,14 @@
 <?php
-// delete_review.php - Handle review deletion
+ 
 
-// Start session if not already started
+ 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 header('Content-Type: application/json');
 
-// ✅ AUTHENTICATION CHECK - Must be logged in
+ 
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     echo json_encode(array(
         'success' => false, 
@@ -21,7 +21,7 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
 include('../includes/config.php');
 include('./review_functions.php');
 
-// Get customer ID - check session or lookup from user_id
+ 
 if (isset($_SESSION['customer_id'])) {
     $customerId = intval($_SESSION['customer_id']);
 } elseif (isset($_SESSION['user_id'])) {
@@ -42,7 +42,7 @@ if ($customerId <= 0) {
     exit;
 }
 
-// ✅ Check if POST request
+ 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(array('success' => false, 'message' => 'Invalid request method.'));
     exit;
@@ -55,13 +55,13 @@ if ($reviewId <= 0) {
     exit;
 }
 
-// Verify the review belongs to this customer
+ 
 if (!isReviewOwner($conn, $reviewId, $customerId)) {
     echo json_encode(array('success' => false, 'message' => 'You can only delete your own reviews.'));
     exit;
 }
 
-// Delete the review
+ 
 if (deleteReview($conn, $reviewId, $customerId)) {
     echo json_encode(array('success' => true, 'message' => 'Review deleted successfully.'));
 } else {

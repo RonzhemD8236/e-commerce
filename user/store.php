@@ -2,19 +2,19 @@
 session_start();
 include("../includes/config.php");
 
-// Only process POST requests
+ 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: register.php");
     exit();
 }
 
-// Clear previous errors
+ 
 unset($_SESSION['errors']);
 unset($_SESSION['old']);
 
-// Get and sanitize input
+ 
 $username = trim($_POST['username'] ?? '');
-$email = trim(strtolower($_POST['email'] ?? '')); // lowercase for consistency
+$email = trim(strtolower($_POST['email'] ?? '')); 
 $password = trim($_POST['password'] ?? '');
 $confirmPass = trim($_POST['confirmPass'] ?? '');
 
@@ -24,28 +24,32 @@ $old = [
     'email' => $email
 ];
 
-// ===== VALIDATION =====
+ 
 
-// Validate username
+ 
 if (empty($username)) {
     $errors['username'] = 'Username is required.';
 } elseif (strlen($username) < 3) {
     $errors['username'] = 'Username must be at least 3 characters.';
 } elseif (strlen($username) > 50) {
     $errors['username'] = 'Username must not exceed 50 characters.';
+} elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+    $errors['username'] = 'Username can only contain letters, numbers, and underscores.';
 }
 
-// Validate email
+ 
 if (empty($email)) {
     $errors['email'] = 'Email is required.';
 } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors['email'] = 'Invalid email format.';
 } else {
-    // Check allowed domains
+    
     $allowedDomains = ['@gmail.com', '@yahoo.com', '@outlook.com'];
     $validDomain = false;
     foreach ($allowedDomains as $domain) {
-        if (str_ends_with($email, $domain)) {
+        
+        $domainLength = strlen($domain);
+        if (substr($email, -$domainLength) === $domain) {
             $validDomain = true;
             break;
         }
@@ -55,21 +59,29 @@ if (empty($email)) {
     }
 }
 
-// Validate password
+ 
 if (empty($password)) {
     $errors['password'] = 'Password is required.';
 } elseif (strlen($password) < 8) {
     $errors['password'] = 'Password must be at least 8 characters long.';
+} elseif (!preg_match('/[A-Z]/', $password)) {
+    $errors['password'] = 'Password must contain at least one uppercase letter.';
+} elseif (!preg_match('/[a-z]/', $password)) {
+    $errors['password'] = 'Password must contain at least one lowercase letter.';
+} elseif (!preg_match('/[0-9]/', $password)) {
+    $errors['password'] = 'Password must contain at least one number.';
+} elseif (!preg_match('/[^a-zA-Z0-9]/', $password)) {
+    $errors['password'] = 'Password must contain at least one special character.';
 }
 
-// Validate confirm password
+ 
 if (empty($confirmPass)) {
-    $errors['password'] = 'Please confirm your password.';
+    $errors['confirmPass'] = 'Please confirm your password.';
 } elseif ($password !== $confirmPass) {
-    $errors['password'] = 'Passwords do not match.';
+    $errors['confirmPass'] = 'Passwords do not match.';
 }
 
-// If validation fails, redirect back
+ 
 if (!empty($errors)) {
     $_SESSION['errors'] = $errors;
     $_SESSION['old'] = $old;
@@ -77,13 +89,13 @@ if (!empty($errors)) {
     exit();
 }
 
-// ===== DATABASE OPERATIONS WITH PREPARED STATEMENTS =====
+ 
 
-// Start transaction
+ 
 $conn->begin_transaction();
 
 try {
-    // ✅ PREPARED STATEMENT 1: Check if username already exists
+    
     $sql_check_username = "SELECT id FROM users WHERE username = ? LIMIT 1";
     $stmt_check_user = $conn->prepare($sql_check_username);
     
@@ -105,7 +117,7 @@ try {
     }
     $stmt_check_user->close();
     
-    // ✅ PREPARED STATEMENT 2: Check if email already exists
+    
     $sql_check_email = "SELECT id FROM users WHERE email = ? LIMIT 1";
     $stmt_check_email = $conn->prepare($sql_check_email);
     
@@ -127,12 +139,12 @@ try {
     }
     $stmt_check_email->close();
     
-    // ✅ Hash password securely
+    
     $passwordHashed = password_hash($password, PASSWORD_DEFAULT);
     
-    // ✅ PREPARED STATEMENT 3: Insert into users table
-    $role = 'customer'; // Default role
-    $active = 1; // Active by default
+    
+    $role = 'customer'; 
+    $active = 1; 
     
     $sql_insert_user = "INSERT INTO users (username, email, password, role, active, created_at) 
                         VALUES (?, ?, ?, ?, ?, NOW())";
@@ -149,11 +161,11 @@ try {
         throw new Exception("Execute failed: " . $stmt_insert->error);
     }
     
-    // Get the newly created user ID
+    
     $user_id = $conn->insert_id;
     $stmt_insert->close();
     
-    // ✅ PREPARED STATEMENT 4: Insert blank profile into customer table
+    
     $default_country = 'Philippines';
     $default_state = 'Metro Manila';
     $empty_string = '';
@@ -168,20 +180,20 @@ try {
         throw new Exception("Prepare failed: " . $conn->error);
     }
     
-    // Bind all parameters (i=integer, s=string)
+    
     $stmt_customer->bind_param("isssssssssss", 
-        $user_id,           // user_id (integer)
-        $email,             // email (string)
-        $empty_string,      // fname (empty)
-        $empty_string,      // lname (empty)
-        $empty_string,      // addressline (empty)
-        $empty_string,      // town (empty)
-        $default_country,   // country
-        $default_state,     // state
-        $empty_string,      // zipcode (empty)
-        $empty_string,      // phone (empty)
-        $empty_string,      // date_of_birth (empty)
-        $empty_string       // image_path (empty)
+        $user_id,           
+        $email,             
+        $empty_string,      
+        $empty_string,      
+        $empty_string,      
+        $empty_string,      
+        $default_country,   
+        $default_state,     
+        $empty_string,      
+        $empty_string,      
+        $empty_string,      
+        $empty_string       
     );
     
     if (!$stmt_customer->execute()) {
@@ -190,23 +202,23 @@ try {
     
     $stmt_customer->close();
     
-    // ✅ Commit transaction - Everything succeeded!
+    
     $conn->commit();
     
-    // ✅ Set session variables - Auto login after registration
+    
     $_SESSION['user_id'] = $user_id;
     $_SESSION['role'] = $role;
     $_SESSION['email'] = $email;
     
-    // Redirect to profile page
+    
     header("Location: /lensify/e-commerce/user/profile.php");
     exit();
     
 } catch (Exception $e) {
-    // ✅ Rollback transaction if any error occurs
+    
     $conn->rollback();
     
-    // Log error for debugging (don't show detailed error to user)
+    
     error_log("Registration error: " . $e->getMessage());
     
     $_SESSION['errors'] = ['general' => 'Registration failed. Please try again later.'];
@@ -215,6 +227,6 @@ try {
     exit();
 }
 
-// Close connection
+ 
 $conn->close();
 ?>

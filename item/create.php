@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Authentication check
+ 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
     header("Location: ../admin/login.php");
@@ -13,7 +13,7 @@ include('../includes/config.php');
 ?>
 
 <style>
-/* Wrapper to center card */
+ 
 .add-item-wrapper {
     width: 100%;
     display: flex;
@@ -22,14 +22,14 @@ include('../includes/config.php');
     background-color: #f4f6f8;
 }
 
-/* Card container */
+ 
 .add-item-container {
     max-width: 1000px;
     width: 100%;
     margin: 0 auto;
 }
 
-/* Card styling */
+ 
 .add-item-card {
     background: #ffffff;
     border-radius: 12px;
@@ -38,7 +38,7 @@ include('../includes/config.php');
     transition: all 0.3s ease;
 }
 
-/* Card header */
+ 
 .card-header-custom {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 2rem;
@@ -59,12 +59,12 @@ include('../includes/config.php');
     opacity: 0.9;
 }
 
-/* Card body */
+ 
 .card-body-custom {
     padding: 25px 25px;
 }
 
-/* Form grid */
+ 
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -109,7 +109,7 @@ textarea.form-control-custom:focus {
     margin-left: 5px;
 }
 
-/* Buttons */
+ 
 .button-group {
     display: flex;
     gap: 12px;
@@ -149,7 +149,7 @@ textarea.form-control-custom:focus {
     transform: translateY(-1px);
 }
 
-/* Responsive */
+ 
 @media (max-width: 768px) {
     .form-grid {
         grid-template-columns: 1fr;
@@ -173,7 +173,7 @@ textarea.form-control-custom:focus {
             <div class="card-body-custom">
                 <form method="POST" action="store.php" enctype="multipart/form-data">
 
-                    <!-- Full-width fields -->
+                     
                     <div class="form-group-custom">
                         <label class="form-label-custom" for="description">
                             Item Name / Description <span class="text-danger">*</span>
@@ -204,7 +204,7 @@ textarea.form-control-custom:focus {
                         <textarea class="form-control-custom" id="specifications" name="specifications" rows="4" placeholder="Enter item specifications..."><?= isset($_SESSION['specs'])?htmlspecialchars($_SESSION['specs']):'' ?></textarea>
                     </div>
 
-                    <!-- Two-column grid -->
+                     
                     <div class="form-grid">
                         <div class="form-group-custom">
                             <label class="form-label-custom" for="cost_price">
@@ -255,7 +255,7 @@ textarea.form-control-custom:focus {
                         </div>
                     </div>
 
-                    <!-- Image Upload -->
+                     
                     <div class="form-group-custom mt-3">
                         <label class="form-label-custom" for="image_path">
                             Product Images <span class="text-danger">*</span>
@@ -267,7 +267,7 @@ textarea.form-control-custom:focus {
                         <small class="text-muted">Upload one or more product images</small>
                     </div>
 
-                    <!-- Buttons -->
+                     
                     <div class="button-group mt-4">
                         <button type="submit" class="btn-custom btn-primary-custom" name="submit">Submit</button>
                         <a href="index.php" class="btn-custom btn-secondary-custom">Cancel</a>

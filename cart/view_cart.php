@@ -2,7 +2,7 @@
 session_start();
 include('../includes/config.php');
 
-// ✅ AUTHENTICATION CHECK - Redirect if not logged in
+ 
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
     $_SESSION['message'] = 'Please login to view your cart.';
@@ -307,7 +307,7 @@ include('../includes/header.php');
                         $subtotal = $qty * $price;
                         $total += $subtotal;
 
-                        // Get current stock from DB - PREPARED STATEMENT
+                        
                         $stmt = $conn->prepare("SELECT quantity FROM stock WHERE item_id = ?");
                         $stmt->bind_param("i", $id);
                         $stmt->execute();
@@ -317,7 +317,7 @@ include('../includes/header.php');
 
                         if ($stock < 0) { $stock = 0; }
 
-                        // Total available = current DB stock + quantity in cart
+                        
                         $availableForCart = $stock + $qty;
 
                         echo "<tr>

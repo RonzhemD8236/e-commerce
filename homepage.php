@@ -1,9 +1,14 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ./user/login.php");
+    exit();
+}
 include("includes/header.php");
 include("includes/config.php");
 
-
+ 
 $sql = "
     SELECT i.item_id, i.description, i.short_description, i.sell_price, i.image_path, s.quantity
     FROM item i
@@ -25,7 +30,7 @@ $products = $stmt->get_result();
 <title>Lensify - Your Camera Shop</title>
 
 <style>
-        body { 
+    body { 
         font-family: Arial, sans-serif;
         background-image: url('uploads/homepage.jpg');
         background-size: cover;
@@ -49,10 +54,10 @@ $products = $stmt->get_result();
     }
     
     .main-container {
-        padding-top: 100px; 
+        padding-top: 100px;
     }
     
-
+     
     .hero { padding: 60px 20px; }
     
     .hero h1 {
@@ -97,12 +102,72 @@ $products = $stmt->get_result();
         border-radius: 10px;
     }
 
+     
+    .search-section {
+        margin: 0 0 20px 0;
+        max-width: 600px;
+        padding: 0;
+    }
+
+    .search-wrapper {
+        position: relative;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 12px 20px 12px 45px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50px;
+        font-size: 15px;
+        transition: all 0.3s;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #fff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        background: #fff;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 18px;
+        color: #666;
+        font-size: 16px;
+    }
+
+    .search-btn {
+        padding: 12px 30px;
+        background-color: #000;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        font-size: 15px;
+    }
+
+    .search-btn:hover {
+        background-color: #333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+     
     .feature-box h4 {
-        color: #e7e7e7ff;
+        color: white;
     }
     
     .feature-box p {
-        color: #e7e7e7ff;
+        color: white;
     }
     
     .feature-box img {
@@ -112,6 +177,7 @@ $products = $stmt->get_result();
         border-radius: 10px;
     }
 
+     
     .banner-img {
         width: 100%;
         max-width: 100%;
@@ -122,6 +188,7 @@ $products = $stmt->get_result();
         margin: 0 auto;
     }
 
+     
     .product-card img {
         width: 100%;
         height: 230px;
@@ -130,15 +197,15 @@ $products = $stmt->get_result();
     }
     
     .product-card h5 {
-        color: #e7e7e7ff;
+        color: black;
     }
     
     .product-card .text-muted {
-        color: #e7e7e7ff !important;
+        color: black !important;
     }
     
     .product-card strong {
-        color: #e7e7e7ff;
+        color: black;
     }
     
     h3.text-center {
@@ -150,16 +217,45 @@ $products = $stmt->get_result();
         .feature-box img { height: 200px; }
         .banner-img { height: 200px; }
         .product-card img { height: 200px; }
+        
+        .search-wrapper {
+            flex-direction: column;
+        }
+        
+        .search-btn {
+            width: 100%;
+        }
+        
+        .search-section {
+            padding: 30px 15px;
+        }
     }
 </style>
 </head>
 <body>
 
 <div class="main-container">
-    <!-- HERO SECTION -->
+     
     <div class="container hero">
         <div class="row align-items-center">
             <div class="col-lg-6">
+                 
+                <div class="search-section">
+                    <form action="/lensify/e-commerce/index.php" method="GET">
+                        <div class="search-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input 
+                                type="text" 
+                                name="search" 
+                                class="search-input" 
+                                placeholder="Search for cameras, lenses, accessories..."
+                                autocomplete="off"
+                            />
+                            <button type="submit" class="search-btn">Search</button>
+                        </div>
+                    </form>
+                </div>
+                
                 <h1 class="fw-bold mb-3">The Best Camera Store in Taguig</h1>
                 <p>Capture your best moments with high-quality DSLR, mirrorless cameras, and lenses. Whether you're a beginner or a pro, we have the perfect gear for you — only here at Lensify.</p>
                 <a href="/lensify/e-commerce/user/login.php" class="btn btn-primary me-2">Sign in</a>
@@ -167,8 +263,13 @@ $products = $stmt->get_result();
             </div>
             <div class="col-lg-6">
                 <?php
-                $heroImage = '/lensify/e-commerce/uploads/camera3.png';
-                if (!file_exists($heroImage)) $heroImage = '/lensify/e-commerce/uploads/default.png';
+                $heroImage = 'uploads/camera3.png';
+                if (!file_exists($heroImage)) {
+                    $heroImage = 'uploads/camera3.jpg';
+                    if (!file_exists($heroImage)) {
+                        $heroImage = 'uploads/default.png';
+                    }
+                }
                 $heroCache = file_exists($heroImage) ? filemtime($heroImage) : time();
                 ?>
                 <img src="<?= $heroImage ?>?v=<?= $heroCache ?>" alt="Camera" class="hero-img" />
@@ -176,7 +277,7 @@ $products = $stmt->get_result();
         </div>
     </div>
 
-    <!-- FEATURES -->
+     
     <div class="container my-5">
         <div class="row g-4">
             <div class="col-lg-6 feature-box">
@@ -203,7 +304,7 @@ $products = $stmt->get_result();
         </div>
     </div>
 
-
+     
     <div class="container my-5">
         <?php
         $banner = 'uploads/camera2.jpg';
@@ -213,14 +314,13 @@ $products = $stmt->get_result();
         <img src="<?= $banner ?>?v=<?= $bannerCache ?>" alt="Banner" class="banner-img" />
     </div>
 
-
+     
     <div class="container my-5">
         <h3 class="fw-bold text-center mb-4">Featured Products</h3>
         <div class="row g-4">
 
         <?php while ($row = $products->fetch_assoc()): 
             $id = $row['item_id'];
-
             $title = htmlspecialchars($row['description']);
             $short = htmlspecialchars($row['short_description']);
             $price = number_format($row['sell_price'], 2);
@@ -258,6 +358,5 @@ $products = $stmt->get_result();
 
 <?php include("includes/footer.php");?>
 
-<!-- Bootstrap JavaScript is already included in header.php, no need to include again -->
 </body>
 </html>

@@ -61,7 +61,7 @@ if (strpos($current_dir, '/admin') !== false) {
   }
 
   .navbar .dropdown-item:hover {
-    color: #2563eb !important; /* hover color for dropdown items */
+    color: #2563eb !important;  
     transition: color 0.3s ease;
   }
 </style>
@@ -89,7 +89,7 @@ if (strpos($current_dir, '/admin') !== false) {
           <li class="nav-item"><a class="nav-link" href="/lensify/e-commerce/admin/orders.php">Orders</a></li>
         </ul>
 
-        <!-- ✅ Profile / Logout -->
+         
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
           <?php
             $adminImg = $_SESSION['profile_img'] ?? '../uploads/default-profile.png';

@@ -82,8 +82,11 @@ if ($profile && empty($profile['fname']) && empty($profile['lname']) && empty($p
     $firstTime = true;
 }
 
+ 
 $errors = $_SESSION['errors'] ?? [];
+$formData = $_SESSION['form_data'] ?? [];
 unset($_SESSION['errors']);
+unset($_SESSION['form_data']);
 
 if (isset($_POST['submit'])) {
     $fname = trim($_POST['fname']);
@@ -100,10 +103,29 @@ if (isset($_POST['submit'])) {
 
     $errors = [];
 
+    
+    $formData = [
+        'fname' => $fname,
+        'lname' => $lname,
+        'username' => $usernameForm,
+        'address' => $address,
+        'town' => $town,
+        'country' => $country,
+        'state' => $state,
+        'zipcode' => $zipcode,
+        'phone' => $phone,
+        'date_of_birth' => $dob
+    ];
+
+    
     foreach (['fname','lname','username','address','town','country','state','zipcode','phone','date_of_birth'] as $field) {
-        if (empty($_POST[$field])) $errors[$field] = ucfirst(str_replace('_',' ',$field)) . " is required.";
+        if (empty($_POST[$field])) {
+            $fieldName = str_replace('_', ' ', $field);
+            $errors[$field] = ucfirst($fieldName) . " is required.";
+        }
     }
 
+    
     if (!empty($dob)) {
         $dateObj = DateTime::createFromFormat('Y-m-d', $dob);
         $errorsInDate = DateTime::getLastErrors();
@@ -115,6 +137,7 @@ if (isset($_POST['submit'])) {
         }
     }
 
+    
     if (!empty($_FILES['image']['name'])) {
         $targetDir = "../uploads/";
         if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
@@ -135,12 +158,15 @@ if (isset($_POST['submit'])) {
         }
     }
 
+    
     if (!empty($errors)) {
         $_SESSION['errors'] = $errors;
+        $_SESSION['form_data'] = $formData;
         header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
 
+    
     $sqlUpdate = "UPDATE customer SET fname=?, lname=?, addressline=?, town=?, country=?, state=?, zipcode=?, phone=?, date_of_birth=?, image_path=?, email=? WHERE user_id=?";
     $stmtUpdate = $conn->prepare($sqlUpdate);
     $stmtUpdate->bind_param("sssssssssssi",$fname,$lname,$address,$town,$country,$state,$zipcode,$phone,$dob,$imagePath,$email,$userId);
@@ -349,12 +375,16 @@ input[type="file"] {
                         <div class="row gx-3 mb-3">
                             <div class="col-md-6">
                                 <label class="small mb-1">First name</label>
-                                <input class="form-control" type="text" name="fname" value="<?php echo htmlspecialchars($profile['fname'] ?? ''); ?>" placeholder="Enter first name">
+                                <input class="form-control" type="text" name="fname" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['fname']) ? $formData['fname'] : ($profile['fname'] ?? '')); ?>" 
+                                       placeholder="Enter first name">
                                 <?php if(isset($errors['fname'])): ?><small class="text-danger"><?php echo $errors['fname']; ?></small><?php endif; ?>
                             </div>
                             <div class="col-md-6">
                                 <label class="small mb-1">Last name</label>
-                                <input class="form-control" type="text" name="lname" value="<?php echo htmlspecialchars($profile['lname'] ?? ''); ?>" placeholder="Enter last name">
+                                <input class="form-control" type="text" name="lname" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['lname']) ? $formData['lname'] : ($profile['lname'] ?? '')); ?>" 
+                                       placeholder="Enter last name">
                                 <?php if(isset($errors['lname'])): ?><small class="text-danger"><?php echo $errors['lname']; ?></small><?php endif; ?>
                             </div>
                         </div>
@@ -362,7 +392,8 @@ input[type="file"] {
                         <div class="row gx-3 mb-3">
                             <div class="col-md-6">
                                 <label class="small mb-1">Username</label>
-                                <input class="form-control" type="text" name="username" value="<?php echo htmlspecialchars($profile['username'] ?? ''); ?>">
+                                <input class="form-control" type="text" name="username" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['username']) ? $formData['username'] : ($profile['username'] ?? '')); ?>">
                                 <?php if(isset($errors['username'])): ?><small class="text-danger"><?php echo $errors['username']; ?></small><?php endif; ?>
                             </div>
                             <div class="col-md-6">
@@ -374,12 +405,16 @@ input[type="file"] {
                         <div class="row gx-3 mb-3">
                             <div class="col-md-6">
                                 <label class="small mb-1">Address</label>
-                                <input class="form-control" type="text" name="address" value="<?php echo htmlspecialchars($profile['addressline'] ?? ''); ?>" placeholder="Enter street address">
+                                <input class="form-control" type="text" name="address" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['address']) ? $formData['address'] : ($profile['addressline'] ?? '')); ?>" 
+                                       placeholder="Enter street address">
                                 <?php if(isset($errors['address'])): ?><small class="text-danger"><?php echo $errors['address']; ?></small><?php endif; ?>
                             </div>
                             <div class="col-md-6">
                                 <label class="small mb-1">Town</label>
-                                <input class="form-control" type="text" name="town" value="<?php echo htmlspecialchars($profile['town'] ?? ''); ?>" placeholder="Enter town or city">
+                                <input class="form-control" type="text" name="town" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['town']) ? $formData['town'] : ($profile['town'] ?? '')); ?>" 
+                                       placeholder="Enter town or city">
                                 <?php if(isset($errors['town'])): ?><small class="text-danger"><?php echo $errors['town']; ?></small><?php endif; ?>
                             </div>
                         </div>
@@ -387,12 +422,14 @@ input[type="file"] {
                         <div class="row gx-3 mb-3">
                             <div class="col-md-6">
                                 <label class="small mb-1">Country</label>
-                                <input class="form-control" type="text" name="country" value="<?php echo htmlspecialchars($profile['country'] ?? 'Philippines'); ?>">
+                                <input class="form-control" type="text" name="country" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['country']) ? $formData['country'] : ($profile['country'] ?? 'Philippines')); ?>">
                                 <?php if(isset($errors['country'])): ?><small class="text-danger"><?php echo $errors['country']; ?></small><?php endif; ?>
                             </div>
                             <div class="col-md-6">
                                 <label class="small mb-1">State</label>
-                                <input class="form-control" type="text" name="state" value="<?php echo htmlspecialchars($profile['state'] ?? 'Metro Manila'); ?>">
+                                <input class="form-control" type="text" name="state" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['state']) ? $formData['state'] : ($profile['state'] ?? 'Metro Manila')); ?>">
                                 <?php if(isset($errors['state'])): ?><small class="text-danger"><?php echo $errors['state']; ?></small><?php endif; ?>
                             </div>
                         </div>
@@ -400,12 +437,16 @@ input[type="file"] {
                         <div class="row gx-3 mb-3">
                             <div class="col-md-6">
                                 <label class="small mb-1">Phone number</label>
-                                <input class="form-control" type="text" name="phone" value="<?php echo htmlspecialchars($profile['phone'] ?? ''); ?>" placeholder="Enter phone number">
+                                <input class="form-control" type="text" name="phone" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['phone']) ? $formData['phone'] : ($profile['phone'] ?? '')); ?>" 
+                                       placeholder="Enter phone number">
                                 <?php if(isset($errors['phone'])): ?><small class="text-danger"><?php echo $errors['phone']; ?></small><?php endif; ?>
                             </div>
                             <div class="col-md-6">
                                 <label class="small mb-1">Zip code</label>
-                                <input class="form-control" type="text" name="zipcode" value="<?php echo htmlspecialchars($profile['zipcode'] ?? ''); ?>" placeholder="Enter zip code">
+                                <input class="form-control" type="text" name="zipcode" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['zipcode']) ? $formData['zipcode'] : ($profile['zipcode'] ?? '')); ?>" 
+                                       placeholder="Enter zip code">
                                 <?php if(isset($errors['zipcode'])): ?><small class="text-danger"><?php echo $errors['zipcode']; ?></small><?php endif; ?>
                             </div>
                         </div>
@@ -413,7 +454,9 @@ input[type="file"] {
                         <div class="row gx-3 mb-3">
                             <div class="col-md-6">
                                 <label class="small mb-1">Date of Birth</label>
-                                <input class="form-control" type="text" name="date_of_birth" value="<?php echo htmlspecialchars($profile['date_of_birth'] ?? ''); ?>" placeholder="YYYY-MM-DD">
+                                <input class="form-control" type="text" name="date_of_birth" 
+                                       value="<?php echo htmlspecialchars(!empty($formData['date_of_birth']) ? $formData['date_of_birth'] : ($profile['date_of_birth'] ?? '')); ?>" 
+                                       placeholder="YYYY-MM-DD">
                                 <?php if(isset($errors['date_of_birth'])): ?><small class="text-danger"><?php echo $errors['date_of_birth']; ?></small><?php endif; ?>
                             </div>
                         </div>

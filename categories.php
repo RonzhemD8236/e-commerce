@@ -1,5 +1,10 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ./user/login.php");
+    exit();
+}
 include('./includes/header.php');
 include('./includes/config.php');
 
@@ -18,20 +23,31 @@ if (!isset($conn) || $conn->connect_error) {
 $selectedCategory = isset($_GET['category']) ? trim($_GET['category']) : '';
 
 $categories = [
-    'DSLR Cameras' => 'fa-camera',
-    'Mirrorless Cameras' => 'fa-camera-retro',
-    'Action Cameras' => 'fa-video',
-    'Camera Lenses' => 'fa-circle-dot',
-    'Tripods & Stabilizers' => 'fa-dharmachakra',
-    'Camera Accessories' => 'fa-toolbox'
+    'DSLR Cameras' => ['icon' => 'fa-camera', 'desc' => 'Professional DSLR cameras for stunning photography'],
+    'Mirrorless Cameras' => ['icon' => 'fa-camera-retro', 'desc' => 'Compact mirrorless systems with cutting-edge tech'],
+    'Action Cameras' => ['icon' => 'fa-video', 'desc' => 'Rugged cameras for adventure and action shots'],
+    'Camera Lenses' => ['icon' => 'fa-circle-dot', 'desc' => 'Premium lenses for every shooting style'],
+    'Tripods & Stabilizers' => ['icon' => 'fa-dharmachakra', 'desc' => 'Stable support for smooth, professional shots'],
+    'Camera Accessories' => ['icon' => 'fa-toolbox', 'desc' => 'Essential gear to complete your setup']
 ];
+
+// Get product counts for each category
+$categoryCounts = array();
+foreach (array_keys($categories) as $catName) {
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM item WHERE category = ?");
+    $stmt->bind_param("s", $catName);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $categoryCounts[$catName] = $row['count'];
+    $stmt->close();
+}
 
 $products = array();
 $error_message = '';
 
 if ($selectedCategory) {
     try {
-
         $sql = "SELECT i.*, IFNULL(s.quantity, 0) AS stock 
                 FROM item i
                 LEFT JOIN stock s ON i.item_id = s.item_id
@@ -72,11 +88,44 @@ if ($selectedCategory) {
 ?>
 
 <style>
-/* ========================================
-   CATEGORIES PAGE STYLES
-   ======================================== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-/* Page Wrapper - Add background image and overlay */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
 .categories-page-wrapper {
     width: 100%;
     background-image: url('uploads/checkout-bg.jpg');
@@ -101,12 +150,25 @@ if ($selectedCategory) {
     z-index: 0;
 }
 
+.categories-page-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+    z-index: 0;
+    pointer-events: none;
+}
+
 .categories-page-wrapper > * {
     position: relative;
     z-index: 1;
 }
 
-/* Hero Header Section */
 .categories-hero {
     background: linear-gradient(135deg, #1a0033 0%, #4a0080 100%);
     color: white;
@@ -114,13 +176,28 @@ if ($selectedCategory) {
     text-align: center;
     margin-bottom: 50px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.categories-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
 }
 
 .categories-hero h1 {
     font-size: 3em;
-    font-weight: 700;
+    font-weight: 800;
     margin-bottom: 15px;
     letter-spacing: -1px;
+    position: relative;
+    z-index: 1;
 }
 
 .categories-hero p {
@@ -128,16 +205,16 @@ if ($selectedCategory) {
     opacity: 0.95;
     max-width: 600px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
-/* Container */
 .categories-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 15px;
 }
 
-/* Category Grid */
 .categories-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -146,7 +223,6 @@ if ($selectedCategory) {
     padding-bottom: 60px;
 }
 
-/* Category Card */
 .category-card {
     background: rgba(255, 255, 255, 0.21);
     padding: 50px 30px;
@@ -159,7 +235,16 @@ if ($selectedCategory) {
     display: block;
     position: relative;
     overflow: hidden;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
 }
+
+.category-card:nth-child(1) { animation-delay: 0.1s; }
+.category-card:nth-child(2) { animation-delay: 0.2s; }
+.category-card:nth-child(3) { animation-delay: 0.3s; }
+.category-card:nth-child(4) { animation-delay: 0.4s; }
+.category-card:nth-child(5) { animation-delay: 0.5s; }
+.category-card:nth-child(6) { animation-delay: 0.6s; }
 
 .category-card::before {
     content: '';
@@ -168,13 +253,37 @@ if ($selectedCategory) {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #1a0033 0%, #4a0080 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     transition: left 0.4s ease;
     z-index: 0;
 }
 
+.category-card::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 20px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
 .category-card:hover::before {
     left: 0;
+}
+
+.category-card:hover::after {
+    opacity: 1;
+}
+
+.category-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+    border-color: transparent;
 }
 
 .category-card > * {
@@ -182,44 +291,89 @@ if ($selectedCategory) {
     z-index: 1;
 }
 
-.category-card:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    border-color: #4a0080;
-}
-
 .category-icon {
     font-size: 4em;
-    color: #9f35ebff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 25px;
     transition: all 0.4s ease;
+    display: inline-block;
 }
 
 .category-card:hover .category-icon {
-    color: white;
-    transform: scale(1.15);
+    background: white;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transform: scale(1.15) rotateY(360deg);
 }
 
 .category-name {
     font-size: 1.5em;
     font-weight: 700;
     color: #e9e9e9ff;
-    margin: 0;
+    margin: 0 0 10px 0;
     transition: color 0.4s ease;
+}
+
+.category-description {
+    font-size: 0.9em;
+    color: #d0d0d0;
+    margin: 10px 0 15px 0;
+    opacity: 0.9;
+    transition: all 0.4s ease;
+    line-height: 1.5;
+}
+
+.category-count {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-top: 10px;
+    transition: all 0.4s ease;
+}
+
+.category-card:hover .category-count {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px);
 }
 
 .category-card:hover .category-name {
     color: white;
 }
 
-/* Products View */
+.category-card:hover .category-description {
+    color: white;
+    opacity: 1;
+}
+
+.view-arrow {
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.4s ease;
+    color: white;
+    font-weight: 600;
+    margin-top: 10px;
+    font-size: 0.95em;
+}
+
+.category-card:hover .view-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
 .products-view {
     margin-top: 0;
     padding-top: 60px;
     padding-bottom: 100px;
 }
 
-/* Back Button - Matching category card style */
 .back-button {
     display: inline-flex;
     align-items: center;
@@ -246,7 +400,7 @@ if ($selectedCategory) {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #1a0033 0%, #4a0080 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     transition: left 0.4s ease;
     z-index: 0;
 }
@@ -263,8 +417,8 @@ if ($selectedCategory) {
 
 .back-button:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    border-color: #4a0080;
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+    border-color: #764ba2;
     color: white;
 }
 
@@ -277,33 +431,31 @@ if ($selectedCategory) {
     transform: translateX(-5px);
 }
 
-/* Category Title Box - Matching product card style */
 .category-title {
-    background: rgba(255, 255, 255, 0.21);
+    background: rgba(0, 0, 0, 0.7);
     padding: 40px;
     border-radius: 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    border: 2px solid rgba(255, 255, 255, 0.2);
     margin-bottom: 30px;
     text-align: center;
+    border: 2px solid rgba(102, 126, 234, 0.3);
 }
 
 .category-title h1 {
     font-size: 2.5em;
     font-weight: 700;
-    color: #e9e9e9ff;
+    color: #ffffff;
     margin-bottom: 15px;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .product-count {
-    color: #e9e9e9ff;
+    color: #ffffff;
     font-size: 1.2em;
     font-weight: 600;
     opacity: 0.9;
 }
 
-/* Products Grid */
 .products-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -311,7 +463,6 @@ if ($selectedCategory) {
     padding-bottom: 40px;
 }
 
-/* Product Card - Enhanced to match category style */
 .product-card {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 20px;
@@ -323,12 +474,39 @@ if ($selectedCategory) {
     display: flex;
     flex-direction: column;
     height: 100%;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.product-card:nth-child(1) { animation-delay: 0.1s; }
+.product-card:nth-child(2) { animation-delay: 0.15s; }
+.product-card:nth-child(3) { animation-delay: 0.2s; }
+.product-card:nth-child(4) { animation-delay: 0.25s; }
+.product-card:nth-child(5) { animation-delay: 0.3s; }
+.product-card:nth-child(6) { animation-delay: 0.35s; }
+
+.product-card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 20px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.product-card:hover::before {
+    opacity: 1;
 }
 
 .product-card:hover {
     transform: translateY(-12px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    border-color: #4a0080;
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+    border-color: transparent;
 }
 
 .product-image {
@@ -347,6 +525,7 @@ if ($selectedCategory) {
     background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
     height: 250px;
     flex-shrink: 0;
+    position: relative;
 }
 
 .product-info {
@@ -392,7 +571,10 @@ if ($selectedCategory) {
 .product-price {
     font-size: 1.4em;
     font-weight: 800;
-    color: #4a0080;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .product-stock {
@@ -406,7 +588,7 @@ if ($selectedCategory) {
 }
 
 .view-details-btn {
-    background: linear-gradient(135deg, #1a0033 0%, #4a0080 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 10px 20px;
     border-radius: 10px;
@@ -416,14 +598,33 @@ if ($selectedCategory) {
     display: block;
     transition: all 0.3s;
     margin-top: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.view-details-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.product-card:hover .view-details-btn::before {
+    width: 300px;
+    height: 300px;
 }
 
 .product-card:hover .view-details-btn {
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(74, 0, 128, 0.4);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* No Products Message - Matching style */
 .no-products {
     background: rgba(255, 255, 255, 0.21);
     padding: 80px 40px;
@@ -435,8 +636,12 @@ if ($selectedCategory) {
 
 .no-products i {
     font-size: 4em;
-    color: #9f35ebff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 20px;
+    display: inline-block;
 }
 
 .no-products h3 {
@@ -452,12 +657,20 @@ if ($selectedCategory) {
     opacity: 0.9;
 }
 
-/* FOOTER FIX - THIS MUST BE OUTSIDE MEDIA QUERIES */
 .footer {
     margin-top: 0 !important;
 }
 
-/* Responsive Design */
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.1) 25%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        rgba(255, 255, 255, 0.1) 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
 @media (max-width: 992px) {
     .categories-grid {
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -561,7 +774,6 @@ if ($selectedCategory) {
     <?php endif; ?>
     
     <?php if (!$selectedCategory): ?>
-        <!-- Category Selection View -->
         <div class="categories-hero">
             <h1>Browse by Category</h1>
             <p>Choose a category to explore our premium products</p>
@@ -569,17 +781,22 @@ if ($selectedCategory) {
         
         <div class="categories-container">
             <div class="categories-grid">
-                <?php foreach ($categories as $catName => $icon): ?>
+                <?php foreach ($categories as $catName => $catData): ?>
                     <a href="?category=<?php echo urlencode($catName); ?>" class="category-card">
-                        <i class="fas <?php echo $icon; ?> category-icon"></i>
+                        <i class="fas <?php echo $catData['icon']; ?> category-icon"></i>
                         <h4 class="category-name"><?php echo htmlspecialchars($catName); ?></h4>
+                        <p class="category-description"><?php echo htmlspecialchars($catData['desc']); ?></p>
+                        <span class="category-count">
+                            <?php echo $categoryCounts[$catName]; ?> 
+                            Product<?php echo $categoryCounts[$catName] !== 1 ? 's' : ''; ?>
+                        </span>
+                        <div class="view-arrow">View Products →</div>
                     </a>
                 <?php endforeach; ?>
             </div>
         </div>
         
     <?php else: ?>
-        <!-- Products View for Selected Category -->
         <div class="categories-container products-view">
             <a href="/lensify/e-commerce/categories.php" class="back-button">
                 <i class="fas fa-arrow-left"></i>
@@ -607,7 +824,6 @@ if ($selectedCategory) {
                 <div class="products-grid">
                     <?php foreach ($products as $product): ?>
                         <?php
-                    
                         $images = array();
                         if (!empty($product['image_path'])) {
                             $cleanPath = stripslashes($product['image_path']);
@@ -619,7 +835,6 @@ if ($selectedCategory) {
                             }
                         }
                         
-
                         $firstImage = !empty($images) ? $images[0] : 'uploads/default.png';
                         
                         $stock = (int)$product['stock'];

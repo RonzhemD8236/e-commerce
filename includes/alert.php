@@ -1,11 +1,11 @@
 <?php
 
 if (isset($_SESSION['message'])) {
-    // Get message type or default to 'danger' for backward compatibility
+    
     $messageType = isset($_SESSION['message_type']) ? $_SESSION['message_type'] : 'danger';
     
-    // Map message types to Bootstrap alert classes
-    $alertClass = 'alert-' . $messageType; // success, warning, danger, info, primary, etc.
+    
+    $alertClass = 'alert-' . $messageType; 
     
     echo "<div class='alert {$alertClass} alert-dismissible fade show' role='alert'>
     <strong>{$_SESSION['message']}</strong>

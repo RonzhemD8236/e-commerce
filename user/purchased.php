@@ -374,7 +374,7 @@ $orderCount = $result->num_rows;
             color: #333;
         }
 
-        /* Ensure footer stays at bottom */
+         
         .footer {
             margin-top: auto;
         }
@@ -495,7 +495,7 @@ $orderCount = $result->num_rows;
                             $itemTotal = $item['sell_price'] * $item['quantity'];
                             $subtotal += $itemTotal;
                             
-                            // Get first image from JSON array
+                            
                             $firstImage = '../uploads/default.png';
                             
                             $images = json_decode($item['image_path'], true);

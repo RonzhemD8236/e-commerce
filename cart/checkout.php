@@ -2,7 +2,7 @@
 session_start();
 include('../includes/config.php');
 
-// ✅ AUTHENTICATION CHECK - Redirect if not logged in
+ 
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
     $_SESSION['message'] = 'Please login to proceed with checkout.';
@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     exit();
 }
 
-// ✅ Check if cart has items
+ 
 if (!isset($_SESSION['cart_products']) || count($_SESSION['cart_products']) === 0) {
     $_SESSION['message'] = 'Your cart is empty. Add items before checkout.';
     $_SESSION['message_type'] = 'warning';
@@ -21,7 +21,7 @@ if (!isset($_SESSION['cart_products']) || count($_SESSION['cart_products']) === 
 
 include('../includes/header.php');
 
-// Fetch customer info using correct columns - PREPARED STATEMENT
+ 
 $stmt = $conn->prepare("SELECT customer_id, fname, lname, phone, addressline FROM customer WHERE user_id = ? LIMIT 1");
 if (!$stmt) {
     die("Prepare failed: " . $conn->error);
@@ -44,12 +44,12 @@ $customer_phone = $customer['phone'];
 $customer_address = $customer['addressline'];
 $stmt->close();
 
-// Calculate merchandise total
+ 
 $merchandise_total = 0;
 foreach ($_SESSION['cart_products'] as $itm) {
     $merchandise_total += $itm['item_price'] * $itm['item_qty'];
 }
-$default_shipping = 50; // default delivery fee
+$default_shipping = 50; 
 
 ?>
 
@@ -343,9 +343,9 @@ $default_shipping = 50; // default delivery fee
 
     <form method="POST" action="checkout_process.php" id="checkoutForm" novalidate>
         <div class="checkout-layout">
-            <!-- Main Section -->
+             
             <div class="main-section">
-                <!-- Customer Info -->
+                 
                 <h2 class="section-title">Delivery Information</h2>
                 <div class="customer-info">
                     <strong><?= htmlspecialchars($customer_name) ?></strong>
@@ -353,7 +353,7 @@ $default_shipping = 50; // default delivery fee
                     <p>📍 <?= nl2br(htmlspecialchars($customer_address)) ?></p>
                 </div>
 
-                <!-- Cart Items -->
+                 
                 <h2 class="section-title">Order Items</h2>
                 <table class="cart-table">
                     <thead>
@@ -377,7 +377,7 @@ $default_shipping = 50; // default delivery fee
                     </tbody>
                 </table>
 
-                <!-- Shipping Method -->
+                 
                 <h2 class="section-title">Shipping Method</h2>
                 <div class="option-group">
                     <label class="option-label selected">
@@ -390,7 +390,7 @@ $default_shipping = 50; // default delivery fee
                     </label>
                 </div>
 
-                <!-- Payment Method -->
+                 
                 <h2 class="section-title">Payment Method</h2>
                 <div class="option-group">
                     <label class="option-label selected">
@@ -444,7 +444,7 @@ $default_shipping = 50; // default delivery fee
                 </div>
             </div>
 
-            <!-- Order Summary Sidebar -->
+             
             <div class="order-summary">
                 <h2 class="section-title">Order Summary</h2>
                 
@@ -475,7 +475,7 @@ $default_shipping = 50; // default delivery fee
             </div>
         </div>
 
-        <!-- Pass customer ID -->
+         
         <input type="hidden" name="customer_id" value="<?= $customer_id ?>">
     </form>
 </div>
@@ -487,16 +487,16 @@ const walletDiv = document.getElementById('ewalletDetails');
 const shippingRadios = document.querySelectorAll('input[name="shipping_method"]');
 const allOptions = document.querySelectorAll('.option-label');
 
-// Handle option selection styling
+ 
 allOptions.forEach(label => {
     const radio = label.querySelector('input[type="radio"]');
     radio.addEventListener('change', () => {
-        // Remove selected class from all labels in the same group
+        
         const groupName = radio.name;
         document.querySelectorAll(`input[name="${groupName}"]`).forEach(r => {
             r.closest('.option-label').classList.remove('selected');
         });
-        // Add selected class to current label
+        
         label.classList.add('selected');
     });
 });

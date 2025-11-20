@@ -3,10 +3,9 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
-// Default to 'guest' if not logged in
 $role = $_SESSION['role'] ?? 'guest';
 
-// ✅ Determine correct CSS path based on current directory
+ 
 $current_dir = dirname($_SERVER['PHP_SELF']);
 if (strpos($current_dir, '/user') !== false || 
     strpos($current_dir, '/admin') !== false || 
@@ -23,70 +22,95 @@ if (strpos($current_dir, '/user') !== false ||
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lensify - Your Camera Shop</title>
     
-    <!-- Bootstrap CSS -->
+     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     
-    <!-- Font Awesome -->
+     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
-    <!-- Bootstrap Icons -->
+     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-    <!-- Bootstrap JS Bundle -->
+     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
-    <!-- ✅ Custom CSS -->
+     
     <link href="<?php echo htmlspecialchars($css_path); ?>" rel="stylesheet" type="text/css">
 
-    <style>
-        .profile-img {
-            width: 35px;
-            height: 35px;
-            object-fit: cover;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        .navbar {
-            background-color: white !important;
-        }
-        .navbar .nav-link, .navbar .navbar-brand {
-            color: #000 !important;
-        }
-        .navbar .nav-link:hover, .navbar .dropdown-item:hover {
-            color: red !important;
-        }
-        .dropdown-menu {
-            background-color: #fff;
-            border-radius: 10px;
-        }
-        .cart-icon { 
-            position: relative;
-            display: inline-block;
-        }
-        .cart-count {
-            position: absolute;
-            top: -8px;
-            right: -12px;
-            background-color: #dc3545;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 10px;
-            min-width: 18px;
-            text-align: center;
-            line-height: 1.2;
-        }
-    </style>
+<style>
+    .profile-img {
+        width: 35px;
+        height: 35px;
+        object-fit: cover;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+
+    .navbar {
+        background-color: white !important;
+    }
+
+    .navbar .nav-link,
+    .navbar .navbar-brand {
+        color: #000 !important;
+        transition: color 0.3s ease, transform 0.3s ease;
+    }
+
+     
+    .navbar .nav-link:hover,
+    .navbar .navbar-brand:hover {
+        color: #2563eb !important;
+        transform: translateY(-2px);
+    }
+
+     
+    .dropdown-menu {
+        background-color: #fff;
+        border-radius: 10px;
+    }
+
+    .navbar .dropdown-item {
+        transition: color 0.3s ease;
+    }
+
+    .navbar .dropdown-item:hover {
+        color: #2563eb !important;
+    }
+
+     
+    .cart-icon {
+        position: relative;
+        display: inline-block;
+        transition: transform 0.3s ease;
+    }
+
+    .cart-icon:hover {
+        transform: translateY(-2px);
+        color: #2563eb !important;
+    }
+
+    .cart-count {
+        position: absolute;
+        top: -8px;
+        right: -12px;
+        background-color: #dc3545;
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 10px;
+        min-width: 18px;
+        text-align: center;
+        line-height: 1.2;
+    }
+</style>
+
 </head>
 <body>
 
-<!-- User Navigation -->
 <nav class="navbar navbar-expand-lg navbar-light">
     <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="/lensify/e-commerce/homepage.php">
-            Lensify
-        </a>
+        <a class="navbar-brand fw-bold" href="/lensify/e-commerce/homepage.php">Lensify</a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#navbarUser" aria-controls="navbarUser" aria-expanded="false"
@@ -107,9 +131,10 @@ if (strpos($current_dir, '/user') !== false ||
                 </li>
             </ul>
 
-            <!-- Right Side Nav Items -->
+             
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                <!-- Shopping Cart -->
+
+                 
                 <li class="nav-item me-3">
                     <a href="/lensify/e-commerce/cart/view_cart.php" class="nav-link cart-icon">
                         <i class="fas fa-shopping-cart fa-lg"></i>
@@ -120,16 +145,17 @@ if (strpos($current_dir, '/user') !== false ||
                     </a>
                 </li>
 
-                <!-- User Account / Login -->
+                 
                 <?php if (isset($_SESSION['user_id'])):
                     $profileImg = $_SESSION['profile_img'] ?? '/lensify/e-commerce/uploads/default-profile.png';
                     $userName = $_SESSION['email'] ?? 'User';
                 ?>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                             <img src="<?= htmlspecialchars($profileImg) ?>" alt="Profile" class="profile-img">
                             <?= htmlspecialchars($userName) ?>
                         </a>
+
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="/lensify/e-commerce/user/profile.php"><i class="bi bi-person-circle me-2"></i>Profile</a></li>
                             <li><a class="dropdown-item" href="/lensify/e-commerce/user/myorders.php"><i class="bi bi-bag-check me-2"></i>My Orders</a></li>
@@ -138,16 +164,21 @@ if (strpos($current_dir, '/user') !== false ||
                             <li><a class="dropdown-item text-danger" href="/lensify/e-commerce/user/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                         </ul>
                     </li>
+
                 <?php else: ?>
+
+                     
                     <li class="nav-item">
                         <a href="/lensify/e-commerce/user/login.php" class="nav-link">
                             <i class="bi bi-box-arrow-in-right me-1"></i>Login
                         </a>
                     </li>
+
                 <?php endif; ?>
+
             </ul>
         </div>
     </div>
 </nav>
 
-<!-- PAGE CONTENT STARTS BELOW -->
+ 

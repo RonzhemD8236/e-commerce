@@ -1,13 +1,13 @@
 <?php
 session_start();
 
-// ✅ Redirect if already logged in (BEFORE any output)
+  
 if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
     header("Location: dashboard.php");
     exit();
 }
 
-// ✅ Include ONLY config, NOT header (to avoid HTML output)
+  
 include("../includes/config.php");
 
 if (isset($_POST['submit'])) {
@@ -15,7 +15,7 @@ if (isset($_POST['submit'])) {
     $password = trim($_POST['password']);
     $errors = array();
 
-    // ✅ PHP Validation
+     
     if (empty($email)) {
         $errors[] = 'Email is required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -219,14 +219,14 @@ if (isset($_POST['submit'])) {
             
             <div class="mb-3">
                 <label class="form-label">Email address</label>
-                <input type="text" class="form-control" name="email" id="email" 
+                <input type="text" class="form-control" name="email" id="email" autocomplete="off"
                        value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" placeholder="Enter your email">
                 <small class="text-danger" id="emailError"></small>
             </div>
 
             <div class="mb-3 position-relative">
                 <label class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password">
+                <input type="password" class="form-control" id="password" name="password" autocomplete="off" placeholder="Enter your password">
                 <span id="togglePassword">
                     <i class="bi bi-eye"></i>
                 </span>

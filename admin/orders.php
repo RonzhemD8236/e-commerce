@@ -390,7 +390,7 @@ $itemCount = mysqli_num_rows($result);
 </style>
 
 <div class="container-fluid px-4 py-4">
-    <!-- Hero Banner -->
+     
     <div class="hero-banner">
         <h1>Order Management</h1>
         <p>Manage and oversee order statuses, payment methods, and shipping details. Monitor all transactions and maintain order data securely.</p>
@@ -453,7 +453,7 @@ $itemCount = mysqli_num_rows($result);
                     echo "<td>" . htmlspecialchars($row['payment_method']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['shipping_method']) . "</td>";
                     
-                    // Status badge
+                    
                     $statusLower = strtolower($row['status']);
                     $statusClass = 'status-pending';
                     $statusText = ucfirst($statusLower);
@@ -546,7 +546,7 @@ $itemCount = mysqli_num_rows($result);
 </div>
 
 <script>
-// Modal Functions
+ 
 function openUpdateModal(orderId, currentStatus) {
     document.getElementById('modalOrderId').value = orderId;
     document.getElementById('modalStatus').value = currentStatus.toLowerCase();

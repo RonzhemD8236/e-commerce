@@ -1,13 +1,12 @@
 <?php
 session_start();
-include('../includes/header.php');
-include('../includes/config.php');
-
-
-if (!isset($_SESSION['user_id'])) {
-    header("Location: /lensify/e-commerce/user/login.php");
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ./login.php");
     exit();
 }
+include('../includes/header.php');
+include('../includes/config.php');
 
 
 $user_id = (int)$_SESSION['user_id'];
@@ -383,7 +382,7 @@ $orderCount = $result->num_rows;
             color: #333;
         }
 
-        /* Ensure footer stays at bottom */
+         
         .footer {
             margin-top: auto;
         }

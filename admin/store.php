@@ -8,30 +8,30 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 include('../includes/config.php');
 
 if(isset($_POST['submit'])){
-    // Get form data (no need to escape - prepared statements handle this)
+    
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $role = $_POST['role'];
     $created_at = date('Y-m-d H:i:s');
 
-    // Validate role to prevent invalid values
+    
     $allowedRoles = ['admin', 'customer'];
     if (!in_array($role, $allowedRoles)) {
         die("Error: Invalid role specified.");
     }
 
-    // Basic validation
+    
     if (empty($username) || empty($email) || empty($_POST['password'])) {
         die("Error: All fields are required.");
     }
 
-    // Validate email format
+    
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         die("Error: Invalid email format.");
     }
 
-    // Check if username already exists
+    
     $checkSql = "SELECT id FROM users WHERE username = ? LIMIT 1";
     $checkStmt = mysqli_prepare($conn, $checkSql);
     
@@ -49,7 +49,7 @@ if(isset($_POST['submit'])){
     }
     mysqli_stmt_close($checkStmt);
 
-    // Check if email already exists
+    
     $checkEmailSql = "SELECT id FROM users WHERE email = ? LIMIT 1";
     $checkEmailStmt = mysqli_prepare($conn, $checkEmailSql);
     
@@ -67,7 +67,7 @@ if(isset($_POST['submit'])){
     }
     mysqli_stmt_close($checkEmailStmt);
 
-    // Insert into users table using prepared statement
+    
     $sql = "INSERT INTO users (username, email, password, role, created_at) 
             VALUES (?, ?, ?, ?, ?)";
     
@@ -77,10 +77,10 @@ if(isset($_POST['submit'])){
         die("Prepare failed: " . mysqli_error($conn));
     }
 
-    // Bind parameters: s = string
+    
     mysqli_stmt_bind_param($stmt, "sssss", $username, $email, $password, $role, $created_at);
 
-    // Execute the statement
+    
     if(mysqli_stmt_execute($stmt)){
         mysqli_stmt_close($stmt);
         header("Location: index.php?success=1");

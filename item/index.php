@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Authentication check
+ 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
     header("Location: ../admin/login.php");
@@ -11,11 +11,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 include('../admin/header.php'); 
 include('../includes/config.php');
 
-// Check for search keyword and category filter
+ 
 $keyword = isset($_GET['search']) ? trim($_GET['search']) : '';
 $category_filter = isset($_GET['category']) ? trim($_GET['category']) : '';
 
-// Build query conditions
+ 
 $conditions = [];
 $params = [];
 $types = '';
@@ -54,8 +54,8 @@ $itemCount = $result->num_rows;
 .hero-banner {
     background: linear-gradient(
                     135deg,
-                    rgba(102, 126, 234, 0.6) 0%,  /* #667eea with 60% opacity */
-                    rgba(118, 75, 162, 0.6) 100% /* #764ba2 with 60% opacity */
+                    rgba(102, 126, 234, 0.6) 0%,   
+                    rgba(118, 75, 162, 0.6) 100%  
                 ),
                 url('https://i.pinimg.com/1200x/31/7d/27/317d272366bd3ebba9a022262f0fe81e.jpg') center/cover;
     color: white;
@@ -79,7 +79,7 @@ $itemCount = $result->num_rows;
     max-width: 800px;
 }
 
-/* Search and Action Bar */
+ 
 .search-action-bar {
     display: flex;
     justify-content: space-between;
@@ -128,7 +128,7 @@ $itemCount = $result->num_rows;
     transform: translateY(-2px);
 }
 
-/* Category Filter Tabs */
+ 
 .category-tabs {
     display: flex;
     gap: 0;
@@ -169,7 +169,7 @@ $itemCount = $result->num_rows;
     background-color: #667eea;
 }
 
-/* Table Styling */
+ 
 .products-table {
     background: white;
     border-radius: 8px;
@@ -207,7 +207,7 @@ $itemCount = $result->num_rows;
     background-color: #f9fafb;
 }
 
-/* Stock Status */
+ 
 .low-stock {
     background-color: #fef3c7 !important;
 }
@@ -239,7 +239,7 @@ $itemCount = $result->num_rows;
     color: #991b1b;
 }
 
-/* Category Badge */
+ 
 .category-badge {
     display: inline-block;
     padding: 4px 12px;
@@ -250,7 +250,7 @@ $itemCount = $result->num_rows;
     color: #1e40af;
 }
 
-/* Product Images */
+ 
 .product-images {
     display: flex;
     gap: 5px;
@@ -284,7 +284,7 @@ $itemCount = $result->num_rows;
     color: #4b5563;
 }
 
-/* Action Buttons */
+ 
 .action-buttons {
     display: flex;
     gap: 8px;
@@ -347,7 +347,7 @@ $itemCount = $result->num_rows;
     color: white;
 }
 
-/* Modal Styles */
+ 
 .modal {
     display: none;
     position: fixed;
@@ -450,7 +450,7 @@ $itemCount = $result->num_rows;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Empty State */
+ 
 .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -469,7 +469,7 @@ $itemCount = $result->num_rows;
     color: #374151;
 }
 
-/* Alert Styles */
+ 
 .alert {
     padding: 15px 20px;
     border-radius: 8px;
@@ -514,13 +514,13 @@ $itemCount = $result->num_rows;
 </style>
 
 <div class="container-fluid px-4 py-4">
-    <!-- Hero Banner -->
+     
     <div class="hero-banner">
         <h1>Product Management</h1>
         <p>Manage and oversee product inventory, pricing, and specifications. Control stock levels and maintain product data securely for efficient business operations.</p>
     </div>
 
-    <!-- Search and Add Item Bar -->
+     
     <div class="search-action-bar">
         <div class="search-box">
             <input 
@@ -538,7 +538,7 @@ $itemCount = $result->num_rows;
         </div>
     </div>
 
-    <!-- Alert Messages -->
+     
     <?php if (isset($_SESSION['success_message'])): ?>
         <div class="alert alert-success alert-dismissible">
             <i class="fas fa-check-circle"></i>
@@ -557,7 +557,7 @@ $itemCount = $result->num_rows;
         <?php unset($_SESSION['error_message']); ?>
     <?php endif; ?>
 
-    <!-- Category Filter Tabs -->
+     
     <div class="category-tabs">
         <a href="?" class="category-tab <?= empty($category_filter) ? 'active' : '' ?>">
             All Products
@@ -582,7 +582,7 @@ $itemCount = $result->num_rows;
         </a>
     </div>
 
-    <!-- Products Table -->
+     
     <?php if ($result->num_rows > 0): ?>
     <div class="products-table">
         <table>
@@ -612,7 +612,7 @@ $itemCount = $result->num_rows;
                 <tr class="product-row <?= $stock_class ?>" data-name="<?= htmlspecialchars(strtolower($row['description'])) ?>" data-desc="<?= htmlspecialchars(strtolower($row['short_description'])) ?>">
                     <td><strong>#<?= htmlspecialchars($row['item_id']) ?></strong></td>
                     
-                    <!-- Images -->
+                     
                     <td>
                         <div class="product-images">
                             <?php
@@ -646,7 +646,7 @@ $itemCount = $result->num_rows;
                     <td><strong style="color: #059669;">₱<?= number_format($row['cost_price'], 2) ?></strong></td>
                     <td><strong style="color: #3b82f6;">₱<?= number_format($row['sell_price'], 2) ?></strong></td>
                     
-                    <!-- Stock Badge -->
+                     
                     <td>
                         <?php if ($row['quantity'] == 0): ?>
                             <span class="stock-badge stock-out">Out of Stock</span>
@@ -657,14 +657,14 @@ $itemCount = $result->num_rows;
                         <?php endif; ?>
                     </td>
 
-                    <!-- Specs Button -->
+                     
                     <td>
                         <button class="btn-view" onclick='openSpecModal(<?= json_encode($row["description"]) ?>, <?= json_encode($row["specifications"]) ?>)'>
                             View
                         </button>
                     </td>
 
-                    <!-- Actions -->
+                     
                     <td>
                         <div class="action-buttons">
                             <a href="edit.php?id=<?= htmlspecialchars($row['item_id']) ?>" class="btn-edit" title="Edit">
@@ -698,7 +698,7 @@ $itemCount = $result->num_rows;
     <?php endif; ?>
 </div>
 
-<!-- Specifications Modal -->
+ 
 <div id="specModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -711,7 +711,7 @@ $itemCount = $result->num_rows;
     </div>
 </div>
 
-<!-- Images Modal -->
+ 
 <div id="imageModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -725,7 +725,7 @@ $itemCount = $result->num_rows;
 </div>
 
 <script>
-// Specifications Modal
+ 
 function openSpecModal(title, specs) {
     document.getElementById('specModalTitle').textContent = 'Specifications - ' + title;
     document.getElementById('specModalContent').textContent = specs;
@@ -736,7 +736,7 @@ function closeSpecModal() {
     document.getElementById('specModal').classList.remove('show');
 }
 
-// Images Modal
+ 
 function openImageModal(images) {
     const container = document.getElementById('imageModalContent');
     container.innerHTML = '';
@@ -755,7 +755,7 @@ function closeImageModal() {
     document.getElementById('imageModal').classList.remove('show');
 }
 
-// Close modals when clicking outside
+ 
 window.onclick = function(event) {
     const specModal = document.getElementById('specModal');
     const imageModal = document.getElementById('imageModal');
@@ -768,7 +768,7 @@ window.onclick = function(event) {
     }
 }
 
-// Search functionality
+ 
 document.getElementById('searchProduct').addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase();
     document.querySelectorAll('.product-row').forEach(row => {
@@ -783,7 +783,7 @@ document.getElementById('searchProduct').addEventListener('input', function() {
     });
 });
 
-// Search on enter key
+ 
 document.getElementById('searchProduct').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         const searchTerm = this.value.trim();

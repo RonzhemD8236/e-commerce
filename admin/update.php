@@ -14,21 +14,21 @@ if (isset($_POST['submit'])) {
     $role = $_POST['role'];
     $password = trim($_POST['password']);
 
-    // Update users table
+    
     if (!empty($password)) {
-        $passwordHashed = password_hash($password, PASSWORD_DEFAULT); // secure hash
-        $sql = "UPDATE users SET name=?, email=?, role=?, password=? WHERE id=?";
+        $passwordHashed = password_hash($password, PASSWORD_DEFAULT);
+        $sql = "UPDATE users SET username=?, email=?, role=?, password=? WHERE id=?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ssssi", $name, $email, $role, $passwordHashed, $id);
     } else {
-        $sql = "UPDATE users SET name=?, email=?, role=? WHERE id=?";
+        $sql = "UPDATE users SET username=?, email=?, role=? WHERE id=?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("sssi", $name, $email, $role, $id);
     }
 
     if ($stmt->execute()) {
 
-        // Handle customer table logic
+        
         if ($role === 'customer') {
             $checkSql = "SELECT * FROM customer WHERE user_id=?";
             $stmtCheck = $conn->prepare($checkSql);

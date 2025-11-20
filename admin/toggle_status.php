@@ -10,7 +10,7 @@ include('../includes/config.php');
 if (isset($_GET['id'])) {
     $userId = intval($_GET['id']);
 
-    // Fetch the user's role and current status
+    
     $stmt = $conn->prepare("SELECT role, active FROM users WHERE id = ?");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
@@ -21,14 +21,14 @@ if (isset($_GET['id'])) {
         $role = $row['role'];
         $active = $row['active'];
 
-        // Prevent deactivating yourself
+        
         if ($userId == $_SESSION['user_id']) {
             $_SESSION['message'] = "You cannot deactivate your own account.";
             header("Location: index.php");
             exit();
         }
 
-        // If user is admin and is currently active, check if they are the last active admin
+        
         if ($role === 'admin' && $active) {
             $stmtAdmin = $conn->prepare("SELECT COUNT(*) AS count FROM users WHERE role='admin' AND active=1");
             $stmtAdmin->execute();
@@ -43,7 +43,7 @@ if (isset($_GET['id'])) {
             }
         }
 
-        // Toggle active status
+        
         $newStatus = $active ? 0 : 1;
         $stmtUpdate = $conn->prepare("UPDATE users SET active=? WHERE id=?");
         $stmtUpdate->bind_param("ii", $newStatus, $userId);

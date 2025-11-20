@@ -1,5 +1,10 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ./user/login.php");
+    exit();
+}
 include('./includes/header.php');
 include('./includes/config.php');
 ?>
@@ -165,8 +170,8 @@ body {
 
 .filter-sidebar,
 .filter-header {
-    background: rgba(255, 255, 255, 0.8) !important; /* 80% transparency */
-    backdrop-filter: blur(10px) !important; /* glass effect */
+    background: rgba(255, 255, 255, 0.8) !important;  
+    backdrop-filter: blur(10px) !important;  
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.4);
 }
@@ -269,7 +274,7 @@ body {
     list-style: none !important;
 }
 
-/* Product Card - Modern Design */
+ 
 .product {
     width: 100% !important;
     background: white !important;
@@ -300,7 +305,7 @@ body {
     height: 100% !important;
 }
 
-/* Product Thumbnail - Improved */
+ 
 .product-thumb {
     position: relative;
     width: 100% !important;
@@ -324,7 +329,7 @@ body {
     transform: scale(1.1);
 }
 
-/* Stock Badge - Modern */
+ 
 .stock-badge {
     position: absolute;
     top: 16px;
@@ -347,7 +352,7 @@ body {
     box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
 }
 
-/* Product Info - Improved Spacing */
+ 
 .product-info {
     padding: 25px !important;
     flex: 1;
@@ -379,7 +384,7 @@ body {
     font-weight: 700 !important;
 }
 
-/* No Results */
+ 
 .no-results {
     text-align: center;
     padding: 100px 40px;
@@ -480,14 +485,14 @@ body {
 </style>
 
 <div class="product-page-wrapper">
-    <!-- Hero Section -->
+     
     <div class="hero-section">
-        <img src="uploads/banner.jpg" alt="Banner" class="hero-image">
+        <img src="uploads/banner.jpg" alt="" class="hero-image">
             <h1>Discover Our Products</h1>
             <p>Explore our carefully curated collection of premium products. From the latest trends to timeless classics, find exactly what you're looking for.</p>
     </div>
 
-    <!-- Search Section -->
+     
     <div class="search-section">
         <div class="search-box">
             <?php $searchValue = isset($_GET['search']) ? $_GET['search'] : ''; ?>
@@ -496,32 +501,32 @@ body {
         </div>
     </div>
 
-    <!-- Main Content -->
+     
     <div class="content-wrapper">
         <div class="filter-section">
-            <!-- Left Sidebar - Filters -->
+             
             <div class="filter-sidebar">
                 <h3>Filters</h3>
                 
                 <div class="price-filter">
                     <h4>Price Range</h4>
                     <div class="price-slider-container">
-                        <input type="range" id="minPrice" class="price-slider" min="0" max="50000" value="0" step="100">
+                        <input type="range" id="minPrice" class="price-slider" min="0" max="500000" value="0" step="100">
                         <div class="price-values">
                             <span>Min: ₱<span id="minPriceValue">0</span></span>
                         </div>
                     </div>
                     <div class="price-slider-container">
-                        <input type="range" id="maxPrice" class="price-slider" min="0" max="50000" value="50000" step="100">
+                        <input type="range" id="maxPrice" class="price-slider" min="0" max="500000" value="500000" step="100">
                         <div class="price-values">
-                            <span>Max: ₱<span id="maxPriceValue">50,000</span></span>
+                            <span>Max: ₱<span id="maxPriceValue">500,000</span></span>
                         </div>
                     </div>
                     <button class="reset-btn" onclick="resetFilters()">Reset Filters</button>
                 </div>
             </div>
             
-            <!-- Right Side - Products -->
+             
             <div class="products-content">
                 <div class="filter-header">
                     <div class="results-count" id="resultsCount">Loading products...</div>
@@ -677,9 +682,9 @@ function filterProducts() {
 function resetFilters() {
     searchInput.value = '';
     minPriceSlider.value = 0;
-    maxPriceSlider.value = 50000;
+    maxPriceSlider.value = 500000;
     minPriceValue.textContent = '0';
-    maxPriceValue.textContent = '50,000';
+    maxPriceValue.textContent = '500,000';
     filterProducts();
 }
 

@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Authentication check
+ 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
     header("Location: ../admin/login.php");
@@ -21,9 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $qty          = trim($_POST['quantity'] ?? '');
     $category     = trim($_POST['category'] ?? '');
 
-    // ==========================
-    // VALIDATION
-    // ==========================
+    
+    
+    
     $errors = [];
     if (empty($desc))        $errors['descError']       = 'Description is required';
     if (empty($short_desc))  $errors['shortDescError']  = 'Short description is required';
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($errors as $key => $val) {
             $_SESSION[$key] = $val;
         }
-        // Save old input
+        
         $_SESSION['desc']       = $desc;
         $_SESSION['short_desc'] = $short_desc;
         $_SESSION['specs']      = $specs;
@@ -50,9 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // ==========================
-    // GET CURRENT IMAGES
-    // ==========================
+    
+    
+    
     $stmt = $conn->prepare("SELECT image_path FROM item WHERE item_id = ?");
     if (!$stmt) {
         die("Prepare failed: " . $conn->error);
@@ -77,30 +77,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $images = json_decode($old_images_json, true) ?: [];
 
-    // ==========================
-    // HANDLE REMOVED IMAGES
-    // ==========================
+    
+    
+    
     $keep_images = $_POST['keep_images'] ?? [];
 
-    // Delete images that are not kept
+    
     foreach ($images as $img) {
         if (!in_array($img, $keep_images) && $img !== "uploads/default.png" && file_exists("../" . $img)) {
             unlink("../" . $img);
         }
     }
 
-    // Keep only the remaining images
+    
     $images = $keep_images;
 
-    // ==========================
-    // HANDLE NEW IMAGE UPLOADS
-    // ==========================
+    
+    
+    
     if (!empty($_FILES['image_path']['name'][0])) {
         $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        $max_file_size = 5 * 1024 * 1024; // 5MB
+        $max_file_size = 5 * 1024 * 1024; 
         $target_dir = "../uploads/";
 
-        // Ensure directory exists
+        
         if (!is_dir($target_dir)) {
             mkdir($target_dir, 0755, true);
         }
@@ -111,14 +111,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $size = $_FILES['image_path']['size'][$key];
 
             if ($error === UPLOAD_ERR_OK) {
-                // Validate file size
+                
                 if ($size > $max_file_size) {
                     $_SESSION['imageError'] = "Image too large. Maximum size is 5MB.";
                     header("Location: edit.php?id=$item_id");
                     exit();
                 }
 
-                // Validate MIME type
+                
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
                 $mime = finfo_file($finfo, $tmp_name);
                 finfo_close($finfo);
@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit();
                 }
 
-                // Generate unique filename
+                
                 $extension = pathinfo($filename, PATHINFO_EXTENSION);
                 $new_name = time() . "_" . rand(1000,9999) . "." . $extension;
                 $target_file = $target_dir . $new_name;
@@ -149,16 +149,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // If no images exist, use default
+    
     if (empty($images)) {
         $images[] = "uploads/default.png";
     }
 
     $images_json = json_encode($images);
 
-    // ==========================
-    // UPDATE ITEM TABLE
-    // ==========================
+    
+    
+    
     $stmt = $conn->prepare("UPDATE item 
                             SET description = ?, 
                                 short_description = ?, 
@@ -184,9 +184,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt->close();
 
-    // ==========================
-    // UPDATE STOCK TABLE
-    // ==========================
+    
+    
+    
     $stmt2 = $conn->prepare("UPDATE stock SET quantity = ? WHERE item_id = ?");
     
     if (!$stmt2) {
@@ -202,9 +202,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt2->close();
 
-    // ==========================
-    // CLEAR SESSION + RESULT
-    // ==========================
+    
+    
+    
     unset($_SESSION['desc'], $_SESSION['short_desc'], $_SESSION['specs'], $_SESSION['cost'], $_SESSION['sell'], $_SESSION['qty'], $_SESSION['category']);
     unset($_SESSION['descError'], $_SESSION['shortDescError'], $_SESSION['specsError'], $_SESSION['costError'], $_SESSION['sellError'], $_SESSION['qtyError'], $_SESSION['imageError'], $_SESSION['categoryError']);
 

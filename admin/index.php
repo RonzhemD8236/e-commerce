@@ -8,16 +8,16 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 include('../admin/header.php');
 include('../includes/config.php');
 
-// Make sure the current user ID is set
+ 
 $currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 
-// Determine if a role filter is applied
+ 
 $roleFilter = isset($_GET['role']) ? $_GET['role'] : '';
 
-// Get search query if exists
+ 
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Base SQL query with prepared statement
+ 
 $sql = "
     SELECT 
         u.id, u.username, u.email, u.role, u.active, u.created_at,
@@ -28,11 +28,11 @@ $sql = "
 ";
 
 $params = array();
-// Prepare parameters array
+ 
 $params = [];
 $types = "";
 
-// Add role filter if applied (with validation)
+ 
 if ($roleFilter === 'customer') {
     $sql .= " AND u.role = ?";
     $params[] = 'customer';
@@ -43,7 +43,7 @@ if ($roleFilter === 'customer') {
     $types .= "s";
 }
 
-// Add search filter if exists
+ 
 if (!empty($searchQuery)) {
     $searchPattern = "%$searchQuery%";
     $sql .= " AND (
@@ -61,7 +61,7 @@ if (!empty($searchQuery)) {
 
 $sql .= " ORDER BY u.id ASC";
 
-// Prepare and execute statement
+ 
 $stmt = mysqli_prepare($conn, $sql);
 
 if (!$stmt) {
@@ -69,7 +69,7 @@ if (!$stmt) {
 }
 
 if (!empty($params)) {
-    // Dynamically bind parameters
+    
     mysqli_stmt_bind_param($stmt, $types, ...$params);
 }
 
@@ -81,12 +81,12 @@ $result = mysqli_stmt_get_result($stmt);
 ?>
 
 <style>
-/* Hero Banner */
+ 
 .hero-banner {
     background: linear-gradient(
                     135deg,
-                    rgba(102, 126, 234, 0.6) 0%,  /* #667eea with 60% opacity */
-                    rgba(118, 75, 162, 0.6) 100% /* #764ba2 with 60% opacity */
+                    rgba(102, 126, 234, 0.6) 0%,   
+                    rgba(118, 75, 162, 0.6) 100%  
                 ),
                 url('https://i.pinimg.com/1200x/f1/00/bc/f100bcb2fa356c07568d4d53ce2f78fa.jpg') center/cover;
     color: white;
@@ -215,7 +215,7 @@ $result = mysqli_stmt_get_result($stmt);
     background-color: #fef2f2;
 }
 
-/* Status Badges */
+ 
 .status-badge {
     display: inline-block;
     padding: 4px 12px;
@@ -371,13 +371,13 @@ body {
     
 <div class="content-wrapper">
     <div class="content-inner">
-        <!-- Hero Banner -->
+         
         <div class="hero-banner">
             <h1>User Management</h1>
             <p>Manage and oversee user roles, activate/deactivate users, and maintain user data securely. Control access and permissions for all system users.</p>
         </div>
 
-        <!-- Search and Add User Bar -->
+         
         <div class="search-action-bar">
             <div class="search-box">
                 <form method="GET" action="index.php">
@@ -397,7 +397,7 @@ body {
             <a href="create.php" class="btn-add-user">Add New User</a>
         </div>
 
-        <!-- Role Filter Tabs -->
+         
         <div class="role-tabs">
             <a href="index.php<?= $searchQuery ? '?search=' . urlencode($searchQuery) : '' ?>" 
                class="role-tab <?= $roleFilter == '' ? 'active' : '' ?>">
@@ -413,7 +413,7 @@ body {
             </a>
         </div>
 
-        <!-- Users Table -->
+         
         <div class="users-table">
             <table>
                 <thead>
@@ -431,7 +431,7 @@ body {
                     <?php if (mysqli_num_rows($result) > 0): ?>
                         <?php while($row = mysqli_fetch_assoc($result)): ?>
                             <?php
-                            // Determine display name
+                            
                             if ($row['role'] === 'customer') {
                                 $displayName = (!empty($row['fname']) && !empty($row['lname'])) 
                                     ? trim($row['fname'] . ' ' . $row['lname']) 
@@ -461,10 +461,15 @@ body {
                                 <td><?= htmlspecialchars($createdAt) ?></td>
                                 <td>
                                     <div class="action-buttons">
-                                        <?php if ($row['active']): ?>
+                                        <?php if ($row['active'] && $row['id'] != $currentUserId): ?>
                                             <a href="edit.php?id=<?= (int)$row['id'] ?>" class="btn-edit">Edit</a>
                                         <?php else: ?>
-                                            <button class="btn-disabled" disabled>Edit</button>
+                                            <button class="btn-disabled" disabled 
+                                                <?php if ($row['id'] == $currentUserId): ?>
+                                                    title="You cannot edit yourself"
+                                                <?php endif; ?>>
+                                                Edit
+                                            </button>
                                         <?php endif; ?>
 
                                         <?php if ($row['active']): ?>
@@ -510,15 +515,15 @@ mysqli_stmt_close($stmt);
 include('../includes/footer.php'); 
 ?>
 <script>
-// Predictive search for Users
+ 
 document.getElementById('searchUser').addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase();
 
     document.querySelectorAll('.users-table tbody tr').forEach(row => {
-        // Grab relevant columns: Name, Email, Username
+        
         const name = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
         const email = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-        const username = row.querySelector('td:nth-child(2)').textContent.toLowerCase(); // same as name for customers
+        const username = row.querySelector('td:nth-child(2)').textContent.toLowerCase(); 
 
         if (name.includes(searchTerm) || email.includes(searchTerm) || username.includes(searchTerm)) {
             row.style.display = '';

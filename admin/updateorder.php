@@ -1,18 +1,18 @@
 <?php
 session_start();
 
-// ✅ Authentication Check
-// Authentication: Admin Only
+ 
+ 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
     header("Location: ../admin/login.php");
     exit();
 }
 
-// ✅ Validate orderinfo_id parameter BEFORE including header (so we can redirect)
+ 
 $orderId = 0;
 
-// Check GET parameters
+ 
 if (isset($_GET['orderinfo_id']) && !empty($_GET['orderinfo_id'])) {
     $orderId = (int)$_GET['orderinfo_id'];
 } elseif (isset($_GET['orderId']) && !empty($_GET['orderId'])) {
@@ -23,7 +23,7 @@ if (isset($_GET['orderinfo_id']) && !empty($_GET['orderinfo_id'])) {
     $orderId = (int)$_SESSION['orderId'];
 }
 
-// Also check POST in case it's a form submission
+ 
 if ($orderId === 0 && isset($_POST['orderinfo_id']) && !empty($_POST['orderinfo_id'])) {
     $orderId = (int)$_POST['orderinfo_id'];
 } elseif ($orderId === 0 && isset($_POST['orderId']) && !empty($_POST['orderId'])) {
@@ -31,31 +31,31 @@ if ($orderId === 0 && isset($_POST['orderinfo_id']) && !empty($_POST['orderinfo_
 }
 
 if ($orderId === 0 || $orderId < 1) {
-    // User-friendly error message with redirect option
+    
     $_SESSION['message'] = 'Invalid or missing order ID. Please select an order from the orders list.';
     $_SESSION['message_type'] = 'danger';
     header("Location: orders.php");
     exit();
 }
 
-// Now include config (but not header yet, in case we need to redirect)
+ 
 include('../includes/config.php');
 
-// Include PHPMailer files (must be before POST processing so function can use them)
+ 
 require '../phpmailer/src/Exception.php';
 require '../phpmailer/src/PHPMailer.php';
 require '../phpmailer/src/SMTP.php';
 
-// Import PHPMailer classes after requiring the files
+ 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// ✅ PROCESS POST REQUEST - Update Order Status
+ 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && isset($_POST['orderId'])) {
     $status = $_POST['status'];
     $orderId = (int)$_POST['orderId'];
     
-    // Map lowercase values to proper case matching database ENUM
+    
     $statusMap = [
         'pending' => 'Pending',
         'processing' => 'Processing',
@@ -65,10 +65,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && isset($_
         'canceled' => 'Canceled'
     ];
     
-    // Convert to proper case
+    
     $status = isset($statusMap[strtolower($status)]) ? $statusMap[strtolower($status)] : null;
     
-    // Validate status value
+    
     $validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Canceled'];
     if (!$status || !in_array($status, $validStatuses)) {
         $_SESSION['message'] = 'Invalid status value: ' . htmlspecialchars($_POST['status']);
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && isset($_
         exit();
     }
     
-    // Check if order exists and get customer email
+    
     $checkSql = "SELECT o.orderinfo_id, c.email, c.fname, c.lname 
                  FROM orderinfo o
                  INNER JOIN customer c USING(customer_id)
@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && isset($_
     $customerName = $orderData['fname'] . ' ' . $orderData['lname'];
     mysqli_stmt_close($checkStmt);
     
-    // Update the order status
+    
     $sql = "UPDATE orderinfo SET status = ?, updated_at = NOW() WHERE orderinfo_id = ?";
     $stmt = mysqli_prepare($conn, $sql);
     
@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && isset($_
     mysqli_stmt_bind_param($stmt, "si", $status, $orderId);
     
     if (mysqli_stmt_execute($stmt)) {
-        // Update date_shipped for Shipped and Delivered statuses
+        
         if ($status === 'Delivered' || $status === 'Shipped') {
             $updateShipDate = "UPDATE orderinfo 
                               SET date_shipped = CURDATE() 
@@ -136,23 +136,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && isset($_
             }
         }
         
-        // ✅ ALWAYS send email notification to customer for EVERY status update
-        // This ensures customers are notified whenever their order status changes
+        
+        
         $emailSent = sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $customerName);
         
         if ($emailSent) {
-            // ✅ GREEN: Both status update and email sent successfully
+            
             $_SESSION['message'] = "✅ Order #$orderId status updated to '$status' and email sent successfully to customer";
             $_SESSION['message_type'] = 'success';
         } else {
-            // ⚠️ YELLOW: Status updated but email failed
+            
             $_SESSION['message'] = "⚠️ Order #$orderId status updated to '$status' but email failed to send. Please check email configuration.";
             $_SESSION['message_type'] = 'warning';
-            // Log the error for debugging
+            
             error_log("Failed to send order status email for order #$orderId to $customerEmail");
         }
     } else {
-        // ❌ RED: Both status update and email failed
+        
         $_SESSION['message'] = '❌ Failed to update order status and email notification: ' . mysqli_error($conn);
         $_SESSION['message_type'] = 'danger';
     }
@@ -164,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && isset($_
     exit();
 }
 
-// Include header only if we're displaying the page (not redirecting)
+ 
 include('../admin/header.php');
 
 /**
@@ -172,7 +172,7 @@ include('../admin/header.php');
  */
 function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $customerName) {
     try {
-        // Get order items using prepared statement
+        
         $itemsSql = "SELECT 
                         i.description, 
                         ol.quantity, 
@@ -192,7 +192,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         mysqli_stmt_execute($itemsStmt);
         $itemsResult = mysqli_stmt_get_result($itemsStmt);
         
-        // Build items table HTML
+        
         $itemsHtml = '';
         $subtotal = 0;
         
@@ -204,14 +204,14 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
             <tr>
                 <td style='padding: 12px; border-bottom: 1px solid #eee;'>" . htmlspecialchars($item['description']) . "</td>
                 <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: center;'>" . intval($item['quantity']) . "</td>
-                <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: right;'>₱" . number_format($item['sell_price'], 2) . "</td>
-                <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: right;'>₱" . number_format($itemTotal, 2) . "</td>
+                <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: right;'>" . number_format($item['sell_price'], 2) . "</td>
+                <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: right;'>" . number_format($itemTotal, 2) . "</td>
             </tr>";
         }
         
         mysqli_stmt_close($itemsStmt);
         
-        // Status-specific message
+        
         $statusMessages = [
             'Pending' => 'Your order has been received and is pending confirmation.',
             'Processing' => 'Your order is now being processed and prepared for shipment.',
@@ -222,7 +222,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         
         $statusMessage = $statusMessages[$status] ?? 'Your order status has been updated.';
         
-        // Status color
+        
         $statusColors = [
             'Pending' => '#ffc107',
             'Processing' => '#007bff',
@@ -233,7 +233,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         
         $statusColor = $statusColors[$status] ?? '#6c757d';
         
-        // Get delivery information using prepared statement
+        
         $deliveryInfoSql = "SELECT 
                                 o.created_at,
                                 o.shipping,
@@ -265,7 +265,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
             return false;
         }
         
-        // Use current real-time date
+        
         date_default_timezone_set('Asia/Manila');
         $orderDate = date('F j, Y g:i A', time());
         $shippingMethod = 'Standard Delivery';
@@ -273,7 +273,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         $deliveryName = htmlspecialchars($deliveryInfo['fname'] . ' ' . $deliveryInfo['lname']);
         $deliveryPhone = htmlspecialchars($deliveryInfo['phone'] ?? 'N/A');
         
-        // Build full address from customer table
+        
         $addressParts = array_filter([
             $deliveryInfo['addressline'],
             $deliveryInfo['town'],
@@ -282,10 +282,10 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         ]);
         $deliveryAddress = !empty($addressParts) ? htmlspecialchars(implode(', ', $addressParts)) : 'N/A';
         
-        // Calculate shipping fee
+        
         $shippingFee = floatval($deliveryInfo['shipping'] ?? 50.00);
         
-        // Email HTML template
+        
         $emailBody = "
         <!DOCTYPE html>
         <html>
@@ -295,13 +295,13 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         </head>
         <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4;'>
             <div style='max-width: 650px; margin: 30px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);'>
-                <!-- Header -->
+                 
                 <div style='background: linear-gradient(135deg, #8b5cf6 0%, #bb86fc 100%); padding: 40px 30px; text-align: center;'>
                     <h1 style='color: white; margin: 0; font-size: 28px;'>Order Status Update</h1>
                     <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Thank you for your purchase!</p>
                 </div>
                 
-                <!-- Order Info -->
+                 
                 <div style='padding: 30px;'>
                     <div style='background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #bb86fc;'>
                         <h2 style='margin: 0 0 15px 0; color: #8b5cf6; font-size: 18px;'>Order #" . str_pad($orderId, 2, '0', STR_PAD_LEFT) . "</h2>
@@ -311,7 +311,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
                     
                     <p style='color: #666; line-height: 1.8; margin-bottom: 30px; font-size: 15px;'>$statusMessage</p>
                     
-                    <!-- Customer Details -->
+                     
                     <div style='margin-bottom: 30px;'>
                         <h3 style='color: #8b5cf6; font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;'>Delivery Information</h3>
                         <p style='margin: 5px 0; color: #333;'><strong>Name:</strong> $deliveryName</p>
@@ -321,7 +321,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
                         <p style='margin: 5px 0; color: #333;'><strong>Payment:</strong> $paymentMethod</p>
                     </div>
                     
-                    <!-- Order Items -->
+                     
                     <h3 style='color: #8b5cf6; font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;'>Order Items</h3>
                     <table style='width: 100%; border-collapse: collapse; margin-bottom: 30px;'>
                         <thead>
@@ -337,30 +337,30 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
                         </tbody>
                     </table>
                     
-                    <!-- Order Summary -->
+                     
                     <div style='background: #f8f9fa; padding: 20px; border-radius: 8px;'>
                         <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
                             <span style='color: #666;'>Subtotal:</span>
-                            <span style='font-weight: 600; color: #333;'>₱" . number_format($subtotal, 2) . "</span>
+                            <span style='font-weight: 600; color: #333;'>" . number_format($subtotal, 2) . "</span>
                         </div>
                         <div style='display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;'>
                             <span style='color: #666;'>Shipping Fee:</span>
-                            <span style='font-weight: 600; color: #333;'>₱" . number_format($shippingFee, 2) . "</span>
+                            <span style='font-weight: 600; color: #333;'>" . number_format($shippingFee, 2) . "</span>
                         </div>
                         <div style='display: flex; justify-content: space-between;'>
                             <span style='font-size: 18px; font-weight: 600; color: #8b5cf6;'>Grand Total:</span>
-                            <span style='font-size: 20px; font-weight: 700; color: #8b5cf6;'>₱" . number_format($subtotal + $shippingFee, 2) . "</span>
+                            <span style='font-size: 20px; font-weight: 700; color: #8b5cf6;'>" . number_format($subtotal + $shippingFee, 2) . "</span>
                         </div>
                     </div>
                     
-                    <!-- Footer Message -->
+                     
                     <div style='margin-top: 30px; padding: 20px; background: #f0f0f0; border-radius: 8px; text-align: center;'>
                         <p style='margin: 0; color: #666; font-size: 14px;'>We'll send you a notification when your order ships.</p>
                         <p style='margin: 10px 0 0 0; color: #666; font-size: 14px;'>If you have any questions, please contact our support team.</p>
                     </div>
                 </div>
                 
-                <!-- Footer -->
+                 
                 <div style='background: #2a2a2a; padding: 20px; text-align: center;'>
                     <p style='margin: 0; color: #999; font-size: 13px;'>© " . date('Y') . " Lensify Store. All rights reserved.</p>
                 </div>
@@ -368,7 +368,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         </body>
         </html>";
         
-        // Configure PHPMailer
+        
         $mail = new PHPMailer(true);
         
         $mail->isSMTP();
@@ -379,7 +379,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 2525;
         
-        // Set message date to current real-time
+        
         $mail->MessageDate = date('D, j M Y H:i:s O');
         
         $mail->setFrom('noreply@lensify.com', 'Lensify');
@@ -388,7 +388,7 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
         $mail->isHTML(true);
         $mail->Subject = "Order #" . str_pad($orderId, 4, '0', STR_PAD_LEFT) . " - Status Updated to $status";
         $mail->Body = $emailBody;
-        $mail->AltBody = "Your order #$orderId status has been updated to $status. Subtotal: ₱" . number_format($subtotal, 2) . " | Shipping: ₱" . number_format($shippingFee, 2) . " | Grand Total: ₱" . number_format($subtotal + $shippingFee, 2);
+        $mail->AltBody = "Your order #$orderId status has been updated to $status. Subtotal: " . number_format($subtotal, 2) . " | Shipping: " . number_format($shippingFee, 2) . " | Grand Total: " . number_format($subtotal + $shippingFee, 2);
         
         $mail->send();
         return true;
@@ -401,15 +401,15 @@ function sendOrderStatusEmail($conn, $orderId, $status, $customerEmail, $custome
 
 $_SESSION['orderId'] = $orderId;
 
-// ✅ Query using order_transaction_details view (PREPARED STATEMENT)
+ 
 $sql = "SELECT * FROM order_transaction_details WHERE orderinfo_id = ?";
 
 $stmt = mysqli_prepare($conn, $sql);
 if (!$stmt) {
-    // If prepared statement fails, try alternative query without view
+    
     error_log("Prepared statement failed: " . mysqli_error($conn));
     
-    // Fallback: Use JOIN query directly (in case view doesn't exist)
+    
     $orderIdEscaped = (int)$orderId;
     $sql = "SELECT 
                 o.orderinfo_id,
@@ -463,18 +463,18 @@ if (!$stmt) {
     }
 }
 
-// Get all order items
+ 
 $orderItems = [];
 $customer = null;
 while ($row = mysqli_fetch_assoc($result)) {
     if ($customer === null) {
-        // Store customer and order info from first row
+        
         $customer = $row;
     }
     $orderItems[] = $row;
 }
 
-// Close statement if it was created
+ 
 if (isset($stmt) && $stmt !== false && is_object($stmt)) {
     mysqli_stmt_close($stmt);
 }
@@ -483,8 +483,8 @@ if (!$customer) {
     die("Error: Order not found.");
 }
 
-// ✅ Set profile picture path - check both profile_img and customer_image_path
-$profilePicture = "../uploads/default-profile.png"; // Default
+ 
+$profilePicture = "../uploads/default-profile.png"; 
 
 if (!empty($customer['profile_img']) && file_exists("../uploads/" . $customer['profile_img'])) {
     $profilePicture = "../uploads/" . $customer['profile_img'];
@@ -492,7 +492,7 @@ if (!empty($customer['profile_img']) && file_exists("../uploads/" . $customer['p
     $profilePicture = "../uploads/" . $customer['customer_image_path'];
 }
 
-// ✅ Calculate status badge color
+ 
 $statusColors = [
     'Processing' => 'warning',
     'Delivered' => 'success',
@@ -628,7 +628,7 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
 </style>
 
 <div class="container my-5">
-    <!-- Order Header -->
+     
     <div class="order-card">
         <div class="order-header d-flex justify-content-between align-items-center">
             <div>
@@ -640,7 +640,7 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
         
         <div class="info-section">
             <div class="row">
-                <!-- Customer Information -->
+                 
                 <div class="col-lg-6 mb-4 mb-lg-0">
                     <h5 class="section-title">Customer Information</h5>
                     <div class="d-flex align-items-start">
@@ -671,7 +671,7 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
                     </div>
                 </div>
                 
-                <!-- Order Information -->
+                 
                 <div class="col-lg-6">
                     <h5 class="section-title">Order Information</h5>
                     
@@ -696,7 +696,7 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
         </div>
     </div>
 
-    <!-- Order Items -->
+     
     <div class="order-card">
         <div class="info-section">
             <h5 class="section-title">Order Items</h5>
@@ -731,8 +731,8 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
                                 echo "<br><small class='text-muted'>Stock: " . $item['available_stock'] . "</small>";
                             }
                             echo "</td>";
-                            echo "<td class='text-end'>₱" . number_format($item['item_price'], 2) . "</td>";
-                            echo "<td class='text-end'><strong>₱" . number_format($item['subtotal'], 2) . "</strong></td>";
+                            echo "<td class='text-end'>" . number_format($item['item_price'], 2) . "</td>";
+                            echo "<td class='text-end'><strong>" . number_format($item['subtotal'], 2) . "</strong></td>";
                             echo "</tr>";
                         }
                         ?>
@@ -740,15 +740,15 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
                     <tfoot>
                         <tr>
                             <td colspan="4" class="text-end">Subtotal:</td>
-                            <td class="text-end">₱<?= number_format($itemsSubtotal, 2) ?></td>
+                            <td class="text-end"><?= number_format($itemsSubtotal, 2) ?></td>
                         </tr>
                         <tr>
                             <td colspan="4" class="text-end">Shipping Fee:</td>
-                            <td class="text-end">₱<?= number_format($customer['shipping'], 2) ?></td>
+                            <td class="text-end"><?= number_format($customer['shipping'], 2) ?></td>
                         </tr>
                         <tr>
                             <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
-                            <td class="text-end"><strong>₱<?= number_format($itemsSubtotal + $customer['shipping'], 2) ?></strong></td>
+                            <td class="text-end"><strong><?= number_format($itemsSubtotal + $customer['shipping'], 2) ?></strong></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -756,7 +756,7 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
         </div>
     </div>
 
-    <!-- Action Buttons -->
+     
     <div class="mt-4">
         <a href="orders.php" class="btn btn-back">
             <i class="bi bi-arrow-left me-2"></i>Back to Orders

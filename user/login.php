@@ -8,10 +8,10 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
         if ($_SESSION['role'] === 'admin') {
             header("Location: ../admin/dashboard.php");
         } else {
-            header("Location: ../index.php");
+            header("Location: ../homepage.php");
         }
     } else {
-        header("Location: ../index.php");
+        header("Location: ../homepage.php");
     }
     exit();
 }
@@ -88,7 +88,7 @@ if (isset($_POST['submit'])) {
                         exit();
                     }
                     
-                    header("Location: ../index.php");
+                    header("Location: ../homepage.php");
                     exit();
                 } else {
 
@@ -122,9 +122,9 @@ if (isset($_POST['submit'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <!-- Bootstrap CSS -->
+     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
+     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <style>
@@ -167,7 +167,7 @@ if (isset($_POST['submit'])) {
     }
 
     .btn-signin {
-        background-color: #007bff;
+        background-color: black;
         color: white;
         font-weight: 500;
         padding: 0.75rem;
@@ -175,12 +175,12 @@ if (isset($_POST['submit'])) {
     }
 
     .btn-signin:hover {
-        background-color: #0056b3;
+        background-color: black;
         color: white;
     }
 
     .login-container a {
-        color: #007bff;
+        color: black;
         text-decoration: none;
     }
 
@@ -199,37 +199,42 @@ if (isset($_POST['submit'])) {
 </head>
 <body>
 
-<!-- ✅ Login Form -->
+ 
 <div class="login-container">
     <?php include("../includes/alert.php"); ?>
-    <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST" id="loginForm" novalidate>
-        <h3 class="text-center mb-4">Login</h3>
-        <div class="mb-3">
-            <label class="form-label">Email address</label>
-            <input type="text" class="form-control" name="email" id="email" 
-                   value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
-            <small class="text-danger" id="emailError"></small>
-        </div>
+    <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" 
+      method="POST" 
+      id="loginForm"
+      novalidate>
+    <h3 class="text-center mb-4">Login</h3>
 
-        <div class="mb-3 position-relative">
-            <label class="form-label">Password</label>
-            <input type="password" class="form-control" id="password" name="password">
-            <span id="togglePassword" style="position:absolute; top:35px; right:10px; cursor:pointer;">
-                <i class="bi bi-eye"></i>
-            </span>
-            <small class="text-danger" id="passwordError"></small>
-        </div>
+    <div class="mb-3">
+        <label class="form-label">Email address</label>
+        <input type="text" class="form-control" name="email" id="email" autocomplete="off"
+               value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+        <small class="text-danger" id="emailError"></small>
+    </div>
 
-        <button type="submit" class="btn btn-signin w-100 mb-3" name="submit">Login</button>
+    <div class="mb-3 position-relative">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" name="password" autocomplete="off">
+        <span id="togglePassword" style="position:absolute; top:35px; right:10px; cursor:pointer;">
+            <i class="bi bi-eye"></i>
+        </span>
+        <small class="text-danger" id="passwordError"></small>
+    </div>
 
-        <div class="text-center">
-            <p>Not a member? <a href="register.php">Register</a></p>
-        </div>
+    <button type="submit" class="btn btn-signin w-100 mb-3" name="submit">Login</button>
 
-        <div class="admin-login-link">
-            <p class="text-muted">Are you an admin? <a href="../admin/login.php">Admin Login</a></p>
-        </div>
-    </form>
+    <div class="text-center">
+        <p>Not a member? <a href="register.php">Register</a></p>
+    </div>
+
+    <div class="admin-login-link">
+        <p class="text-muted">Are you an admin? <a href="../admin/login.php">Admin Login</a></p>
+    </div>
+</form>
+
 </div>
 
 <script>

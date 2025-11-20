@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Authentication check
+ 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
     header("Location: ../admin/login.php");
@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 require('../includes/config.php');
 
-// Save old input for form repopulation
+ 
 $_SESSION['desc']        = trim($_POST['description'] ?? '');
 $_SESSION['short_desc']  = trim($_POST['short_description'] ?? '');
 $_SESSION['specs']       = trim($_POST['specifications'] ?? '');
@@ -21,9 +21,9 @@ $_SESSION['category']    = trim($_POST['category'] ?? '');
 
 if (isset($_POST['submit'])) {
 
-    // ======================
-    // VALIDATION
-    // ======================
+    
+    
+    
     if (empty($_SESSION['desc'])) {
         $_SESSION['descError'] = 'Please input a Product description';
         header("Location: create.php");
@@ -66,15 +66,15 @@ if (isset($_POST['submit'])) {
         exit();
     }
 
-    // ======================
-    // IMAGE UPLOAD (MULTIPLE)
-    // ======================
+    
+    
+    
     $uploadedImages = [];
     $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
-    $max_file_size = 5 * 1024 * 1024; // 5MB
+    $max_file_size = 5 * 1024 * 1024; 
     $target_dir = "../uploads/";
 
-    // Ensure upload directory exists
+    
     if (!is_dir($target_dir)) {
         mkdir($target_dir, 0755, true);
     }
@@ -86,14 +86,14 @@ if (isset($_POST['submit'])) {
             $size     = $_FILES['image_path']['size'][$key];
 
             if ($error === UPLOAD_ERR_OK) {
-                // Validate file size
+                
                 if ($size > $max_file_size) {
                     $_SESSION['imageError'] = "Image too large. Maximum size is 5MB.";
                     header("Location: create.php");
                     exit();
                 }
 
-                // Validate MIME type
+                
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
                 $mime = finfo_file($finfo, $tmp_name);
                 finfo_close($finfo);
@@ -104,7 +104,7 @@ if (isset($_POST['submit'])) {
                     exit();
                 }
 
-                // Generate unique filename
+                
                 $extension = pathinfo($name, PATHINFO_EXTENSION);
                 $filename = time() . "_" . rand(1000,9999) . "." . $extension;
                 $target_file = $target_dir . $filename;
@@ -124,17 +124,17 @@ if (isset($_POST['submit'])) {
         }
     }
 
-    // If no images uploaded, use default
+    
     if (empty($uploadedImages)) {
         $uploadedImages[] = "uploads/default.png";
     }
 
-    // Convert to JSON for DB storage
+    
     $db_path = json_encode($uploadedImages);
 
-    // ======================
-    // INSERT ITEM (PREPARED STATEMENT)
-    // ======================
+    
+    
+    
     $stmt = $conn->prepare("INSERT INTO item(description, short_description, specifications, cost_price, sell_price, category, image_path)
                             VALUES (?, ?, ?, ?, ?, ?, ?)");
     
@@ -160,9 +160,9 @@ if (isset($_POST['submit'])) {
     $item_id = $stmt->insert_id;
     $stmt->close();
 
-    // ======================
-    // INSERT STOCK
-    // ======================
+    
+    
+    
     $stmt2 = $conn->prepare("INSERT INTO stock(item_id, quantity) VALUES (?, ?)");
     
     if (!$stmt2) {
@@ -177,9 +177,9 @@ if (isset($_POST['submit'])) {
     }
     $stmt2->close();
 
-    // ======================
-    // CLEAR SESSION + REDIRECT
-    // ======================
+    
+    
+    
     unset($_SESSION['desc'], $_SESSION['short_desc'], $_SESSION['specs'], $_SESSION['cost'], $_SESSION['sell'], $_SESSION['qty'], $_SESSION['category']);
     unset($_SESSION['descError'], $_SESSION['shortDescError'], $_SESSION['specsError'], $_SESSION['costError'], $_SESSION['sellError'], $_SESSION['qtyError'], $_SESSION['imageError'], $_SESSION['categoryError']);
 

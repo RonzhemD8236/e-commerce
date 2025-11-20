@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Authentication check
+ 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
     header("Location: ../admin/login.php");
@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 include('../includes/config.php');
 include('../admin/header.php');
 
-// Check if item_id is provided
+ 
 if (!isset($_GET['id'])) {
     echo "<script>
             alert('No item selected.');
@@ -22,7 +22,7 @@ if (!isset($_GET['id'])) {
 
 $item_id = intval($_GET['id']);
 
-// Fetch item details using prepared statement
+ 
 $stmt = $conn->prepare("SELECT item.*, stock.quantity 
                         FROM item 
                         LEFT JOIN stock USING (item_id) 
@@ -43,7 +43,7 @@ if ($result->num_rows == 0) {
 $row = $result->fetch_assoc();
 $stmt->close();
 
-// Use session values if available (after validation errors)
+ 
 $desc       = $_SESSION['desc']        ?? $row['description'];
 $short_desc = $_SESSION['short_desc']  ?? $row['short_description'];
 $specs      = $_SESSION['specs']       ?? $row['specifications'];
@@ -52,7 +52,7 @@ $sell       = $_SESSION['sell']        ?? $row['sell_price'];
 $qty        = $_SESSION['qty']         ?? $row['quantity'];
 $category   = $_SESSION['category']    ?? $row['category'];
 
-// Capture errors if any
+ 
 $descError       = $_SESSION['descError']       ?? '';
 $shortDescError  = $_SESSION['shortDescError']  ?? '';
 $specsError      = $_SESSION['specsError']      ?? '';
@@ -62,13 +62,13 @@ $qtyError        = $_SESSION['qtyError']        ?? '';
 $categoryError   = $_SESSION['categoryError']   ?? '';
 $imageError      = $_SESSION['imageError']      ?? '';
 
-// Clear session errors
+ 
 unset($_SESSION['descError'], $_SESSION['shortDescError'], $_SESSION['specsError'], $_SESSION['costError'], $_SESSION['sellError'], $_SESSION['qtyError'], $_SESSION['categoryError'], $_SESSION['imageError']);
 unset($_SESSION['desc'], $_SESSION['short_desc'], $_SESSION['specs'], $_SESSION['cost'], $_SESSION['sell'], $_SESSION['qty'], $_SESSION['category']);
 ?>
 
 <style>
-/* Wrapper to center card */
+ 
 .edit-item-wrapper {
     width: 100%;
     display: flex;
@@ -77,14 +77,14 @@ unset($_SESSION['desc'], $_SESSION['short_desc'], $_SESSION['specs'], $_SESSION[
     background-color: #f4f6f8;
 }
 
-/* Card container */
+ 
 .edit-item-container {
     max-width: 1000px;
     width: 100%;
     margin: 0 auto;
 }
 
-/* Card styling */
+ 
 .edit-item-card {
     background: #ffffff;
     border-radius: 12px;
@@ -93,7 +93,7 @@ unset($_SESSION['desc'], $_SESSION['short_desc'], $_SESSION['specs'], $_SESSION[
     transition: all 0.3s ease;
 }
 
-/* Card header */
+ 
 .card-header-custom {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 2rem;
@@ -114,12 +114,12 @@ unset($_SESSION['desc'], $_SESSION['short_desc'], $_SESSION['specs'], $_SESSION[
     opacity: 0.9;
 }
 
-/* Card body */
+ 
 .card-body-custom {
     padding: 25px 25px;
 }
 
-/* Form grid */
+ 
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -164,7 +164,7 @@ textarea.form-control-custom:focus {
     margin-left: 5px;
 }
 
-/* Image previews */
+ 
 .image-wrapper {
     display: inline-block;
     position: relative;
@@ -174,7 +174,7 @@ textarea.form-control-custom:focus {
     cursor: pointer;
 }
 
-/* Buttons */
+ 
 .button-group {
     display: flex;
     gap: 12px;
@@ -214,7 +214,7 @@ textarea.form-control-custom:focus {
     transform: translateY(-1px);
 }
 
-/* Responsive */
+ 
 @media (max-width: 768px) {
     .form-grid {
         grid-template-columns: 1fr;
@@ -241,7 +241,7 @@ textarea.form-control-custom:focus {
                 <form id="editItemForm" action="update.php" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="item_id" value="<?= htmlspecialchars($row['item_id']) ?>">
 
-                    <!-- Single-column fields -->
+                     
                     <div class="form-group-custom mb-3">
                         <label class="form-label-custom">Item Name / Description <span class="text-danger">*</span></label>
                         <input type="text" name="description" class="form-control-custom" value="<?= htmlspecialchars($desc) ?>">
@@ -260,7 +260,7 @@ textarea.form-control-custom:focus {
                         <div class="text-danger" id="specsWarning"></div>
                     </div>
 
-                    <!-- Two-column fields -->
+                     
                     <div class="form-grid">
                         <div class="form-group-custom">
                             <label class="form-label-custom">Cost Price <span class="text-danger">*</span></label>
@@ -295,8 +295,8 @@ textarea.form-control-custom:focus {
                         </div>
                     </div>
 
-                    <!-- Product Images -->
-                    <!-- Product Images -->
+                     
+                     
 <div class="form-group-custom mt-3">
     <label class="form-label-custom">Product Images</label>
     <div class="mb-2" id="imageContainer">
@@ -317,7 +317,7 @@ textarea.form-control-custom:focus {
 </div>
 
                                 
-                    <!-- Buttons -->
+                     
                     <div class="button-group mt-4">
                         <button type="submit" class="btn-custom btn-primary-custom">Update</button>
                         <a href="index.php" class="btn-custom btn-secondary-custom">Cancel</a>
@@ -329,7 +329,7 @@ textarea.form-control-custom:focus {
 </div>
 
 <script>
-// Remove image functionality
+ 
 document.addEventListener('DOMContentLoaded', function() {
     var removeButtons = document.getElementsByClassName('remove-image');
     for(var i=0; i<removeButtons.length; i++) {
@@ -341,16 +341,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Inline validation
+    
     document.getElementById('editItemForm').onsubmit = function() {
         var valid = true;
 
-        // Clear all warnings first
+        
         ['desc','shortDesc','specs','cost','sell','category','qty'].forEach(function(id){
             document.getElementById(id+'Warning').innerHTML = '';
         });
 
-        // Fields
+        
         var desc = this.elements['description'];
         if(!desc.value){ document.getElementById('descWarning').innerHTML = 'This field is required'; valid=false; }
 

@@ -19,17 +19,17 @@ $stmt->execute();
 $result = $stmt->get_result();
 $profile = $result->fetch_assoc();
 
-// Handle form submission
+ 
 if (isset($_POST['submit'])) {
     $usernameForm = trim($_POST['username']);
     $profileImg = $profile['profile_img'] ?? '';
 
-    // Validate username
+    
     if (empty($usernameForm)) {
         $errors['username'] = "Username cannot be empty.";
     }
 
-    // Handle image upload
+    
     if (!empty($_FILES['image']['name'])) {
         $targetDir = "../uploads/";
         if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
@@ -41,7 +41,7 @@ if (isset($_POST['submit'])) {
 
         if (in_array($fileType, $allowedTypes) && $_FILES["image"]["size"] <= 5 * 1024 * 1024) {
             if (move_uploaded_file($_FILES["image"]["tmp_name"], $targetFile)) {
-                // Delete old image if exists and not default
+                
                 if (!empty($profileImg) && file_exists("../".$profileImg) && $profileImg !== "uploads/default-profile.png") {
                     unlink("../".$profileImg);
                 }
@@ -54,7 +54,7 @@ if (isset($_POST['submit'])) {
         }
     }
 
-    // Update database if no errors
+    
     if (empty($errors)) {
         $sqlUpdate = "UPDATE users SET username=?, profile_img=? WHERE id=?";
         $stmtUpdate = $conn->prepare($sqlUpdate);
@@ -84,7 +84,7 @@ if (isset($_POST['submit'])) {
 
     <form action="" method="POST" enctype="multipart/form-data">
         <div class="row">
-            <!-- Profile Picture -->
+             
             <div class="col-xl-4">
                 <div class="card mb-4 mb-xl-0">
                     <div class="card-header">Profile Picture</div>
@@ -102,7 +102,7 @@ if (isset($_POST['submit'])) {
                 </div>
             </div>
 
-            <!-- Account Details -->
+             
             <div class="col-xl-8">
                 <div class="card mb-4">
                     <div class="card-header">Account Details</div>

@@ -25,7 +25,7 @@
             background: #f5f5f5;
         }
 
-        /* Professional Footer */
+         
         .footer {
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             color: #ffffff;
@@ -166,11 +166,11 @@
     </style>
 </head>
 <body>
-    <!-- Professional Footer -->
+     
     <footer class="footer">
         <div class="footer-container">
             <div class="footer-content">
-                <!-- Company Info -->
+                 
                 <div class="footer-section">
                     <div class="footer-logo">Lensify</div>
                     <p class="footer-description">
@@ -184,17 +184,14 @@
                     </div>
                 </div>
 
-                <!-- Quick Links -->
+                 
                 <div class="footer-section">
                     <h3>Quick Links</h3>
-                    <a href="#">About Us</a>
                     <a href="#">Products</a>
                     <a href="#">Categories</a>
-                    <a href="#">Special Offers</a>
-                    <a href="#">Blog</a>
                 </div>
 
-                <!-- Customer Service -->
+                 
                 <div class="footer-section">
                     <h3>Customer Service</h3>
                     <a href="#">Contact Us</a>
@@ -204,12 +201,12 @@
                     <a href="#">FAQ</a>
                 </div>
 
-                <!-- Contact Info -->
+                 
                 <div class="footer-section">
                     <h3>Get In Touch</h3>
                     <div class="contact-item">
                         <i class="bi bi-geo-alt-fill"></i>
-                        <span>123 Camera Street, Taguig City<br>Metro Manila, Philippines</span>
+                        <span>22 Narra Street, Taguig City<br>Metro Manila, Philippines</span>
                     </div>
                     <div class="contact-item">
                         <i class="bi bi-envelope-fill"></i>
@@ -226,7 +223,7 @@
                 </div>
             </div>
 
-            <!-- Footer Bottom -->
+             
             <div class="footer-bottom">
                 <p class="copyright">© 2025 Lensify. All rights reserved.</p>
                 <div class="footer-bottom-links">

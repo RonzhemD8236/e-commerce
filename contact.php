@@ -1,5 +1,10 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
+    header("Location: ./user/login.php");
+    exit();
+}
 include("includes/header.php");
 include("includes/config.php");
 ?>
@@ -159,7 +164,7 @@ $bannerCache = filemtime($banner);
 <div class="main-content">
 <div class="container">
 
-    <!-- LEFT SIDE -->
+     
     <div class="left-panel">
         <div class="left-title">Get In Touch With Us!</div>
 
@@ -192,45 +197,7 @@ $bannerCache = filemtime($banner);
         <div class="banner" style="background-image: url('<?= $banner ?>?v=<?= $bannerCache ?>');"></div>
     </div>
 
-    <!-- RIGHT SIDE -->
-    <div class="right-panel">
-        <div class="right-title">Contact Us</div>
-
-        <div class="form">
-            <div class="form-group">
-                <label>First Name *</label>
-                <input type="text">
-            </div>
-
-            <div class="form-group">
-                <label>Last Name *</label>
-                <input type="text">
-            </div>
-
-            <div class="form-group">
-                <label>Mobile No *</label>
-                <input type="text">
-            </div>
-
-            <div class="form-group">
-                <label>Email ID *</label>
-                <input type="email">
-            </div>
-
-            <div class="form-group">
-                <label>Message</label>
-                <textarea></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Verification *</label>
-                <input type="text">
-            </div>
-
-            <button class="submit-btn">Submit</button>
-        </div>
-    </div>
-
+    
 </div>
 </div>
 

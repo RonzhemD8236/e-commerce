@@ -11,7 +11,7 @@ include('../admin/header.php');
 
 $id = $_GET['id'];
 
-// Fetch user info
+ 
 $sqlUser = "SELECT * FROM users WHERE id=?";
 $stmtUser = $conn->prepare($sqlUser);
 $stmtUser->bind_param("i", $id);
@@ -19,7 +19,7 @@ $stmtUser->execute();
 $resultUser = $stmtUser->get_result();
 $user = $resultUser->fetch_assoc();
 
-// If user is a customer, fetch name from customer profile
+ 
 $profileName = '';
 if ($user['role'] === 'customer') {
     $sqlProfile = "SELECT fname, lname FROM customer WHERE user_id=?";
@@ -33,27 +33,27 @@ if ($user['role'] === 'customer') {
     }
 }
 
-// Use profile name if available, otherwise fallback to username
+ 
 $nameValue = !empty($profileName) ? $profileName : $user['username'];
 ?>
 <style>
-/* Wrapper to center card */
+ 
 .edit-user-wrapper {
     width: 100%;
     display: flex;
     justify-content: center;
     padding: 40px 20px;
-    background-color: #f4f6f8; /* light page background */
+    background-color: #f4f6f8;  
 }
 
-/* Main card container */
+ 
 .edit-user-container {
-    max-width: 1300px; /* slightly narrower for two-column form */
+    max-width: 1300px;  
     width: 100%;
     margin: 0 auto;
 }
 
-/* Card styling */
+ 
 .edit-user-card {
     background: #ffffff;
     border-radius: 12px;
@@ -62,7 +62,7 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
     transition: all 0.3s ease;
 }
 
-/* Card header with left-to-right purple gradient */
+ 
 .card-header-custom {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 2rem;
@@ -83,12 +83,12 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
     opacity: 0.9;
 }
 
-/* Card body */
+ 
 .card-body-custom {
     padding: 25px 25px;
 }
 
-/* Two-column form grid */
+ 
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -96,7 +96,7 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
 }
 
 .form-group-custom {
-    margin-bottom: 0; /* spacing handled by grid gap */
+    margin-bottom: 0;  
 }
 
 .form-label-custom {
@@ -133,7 +133,7 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
     font-style: italic;
 }
 
-/* Buttons */
+ 
 .button-group {
     display: flex;
     gap: 12px;
@@ -176,7 +176,7 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
 
 @media (max-width: 768px) {
     .form-grid {
-        grid-template-columns: 1fr; /* stack fields on small screens */
+        grid-template-columns: 1fr;  
         gap: 20px 0;
     }
 
