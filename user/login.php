@@ -61,12 +61,20 @@ if (isset($_POST['submit'])) {
                 $stmt->bind_result($user_id, $username, $user_email, $hashed_password, $role, $active, $customer_id);
                 $stmt->fetch();
                 
+                // ✅ CHECK IF USER IS ADMIN - Redirect to admin login
+                if ($role === 'admin') {
+                    $_SESSION['message'] = 'Please use the admin login page.';
+                    $_SESSION['message_type'] = 'warning';
+                    header("Location: ../admin/login.php");
+                    exit();
+                }
+                
                 // ✅ Check if account is active
                 if (!$active) {
                     $_SESSION['message'] = 'Your account has been deactivated. Please contact admin.';
                     $_SESSION['message_type'] = 'danger';
                 } elseif (password_verify($password, $hashed_password)) {
-                    // ✅ LOGIN SUCCESSFUL - Set session variables
+                    // ✅ LOGIN SUCCESSFUL - Set session variables (CUSTOMER ONLY)
                     $_SESSION['user_id'] = $user_id;
                     $_SESSION['username'] = $username;
                     $_SESSION['email'] = $user_email;
@@ -85,12 +93,8 @@ if (isset($_POST['submit'])) {
                         exit();
                     }
                     
-                    // ✅ Default redirect based on role
-                    if ($role === 'admin') {
-                        header("Location: ../admin/dashboard.php");
-                    } else {
-                        header("Location: ../index.php");
-                    }
+                    // ✅ Redirect customer to homepage
+                    header("Location: ../index.php");
                     exit();
                 } else {
                     // Wrong password
@@ -189,6 +193,14 @@ if (isset($_POST['submit'])) {
     .login-container a:hover {
         text-decoration: underline;
     }
+
+    .admin-login-link {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #dee2e6;
+        text-align: center;
+        font-size: 0.9rem;
+    }
     </style>
 </head>
 <body>
@@ -218,6 +230,10 @@ if (isset($_POST['submit'])) {
 
         <div class="text-center">
             <p>Not a member? <a href="register.php">Register</a></p>
+        </div>
+
+        <div class="admin-login-link">
+            <p class="text-muted">Are you an admin? <a href="../admin/login.php">Admin Login</a></p>
         </div>
     </form>
 </div>
