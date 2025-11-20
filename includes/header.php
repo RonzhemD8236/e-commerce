@@ -85,7 +85,7 @@ if (strpos($current_dir, '/user') !== false ||
 <nav class="navbar navbar-expand-lg navbar-light">
     <div class="container-fluid">
         <a class="navbar-brand fw-bold" href="/lensify/e-commerce/homepage.php">
-            📸 Lensify
+            Lensify
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"

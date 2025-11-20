@@ -109,7 +109,6 @@ $result = mysqli_stmt_get_result($stmt);
     max-width: 800px;
 }
 
-/* Search and Action Bar */
 .search-action-bar {
     display: flex;
     justify-content: space-between;
@@ -137,7 +136,6 @@ $result = mysqli_stmt_get_result($stmt);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* Role Filter Tabs */
 .role-tabs {
     display: flex;
     gap: 0;
@@ -176,7 +174,6 @@ $result = mysqli_stmt_get_result($stmt);
     background-color: #667eea;
 }
 
-/* Table Styling */
 .users-table {
     background: white;
     border-radius: 8px;
@@ -237,7 +234,6 @@ $result = mysqli_stmt_get_result($stmt);
     color: #991b1b;
 }
 
-/* Role Badges */
 .role-badge {
     display: inline-block;
     padding: 4px 12px;
@@ -256,7 +252,6 @@ $result = mysqli_stmt_get_result($stmt);
     color: #4338ca;
 }
 
-/* Action Buttons */
 .action-buttons {
     display: flex;
     gap: 8px;
@@ -344,7 +339,6 @@ $result = mysqli_stmt_get_result($stmt);
     color: white;
 }
 
-/* Page Layout */
 body {
     display: flex;
     flex-direction: column;

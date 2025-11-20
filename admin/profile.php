@@ -1,9 +1,8 @@
 <?php
 session_start();
 include('../includes/config.php');
-include('header.php'); // Make sure this is correct path
+include('header.php');
 
-// ✅ Restrict access to admins only
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
     header("Location: ../admin/login.php");
@@ -13,7 +12,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 $adminId = $_SESSION['user_id'];
 $errors = [];
 
-// Fetch admin info
 $sql = "SELECT username, email, profile_img FROM users WHERE id=?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $adminId);

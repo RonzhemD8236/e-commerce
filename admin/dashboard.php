@@ -45,14 +45,12 @@ $stockQuery = $conn->query("
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-/* GLOBAL STYLE */
 body {
     font-family: 'Inter', sans-serif;
     background-color: #f9fafb;
     color: #1f2937;
 }
 
-/* HERO BANNER */
 .hero-banner {
     background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%),
                 url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=400&fit=crop') center/cover;
@@ -71,7 +69,6 @@ body {
     opacity: 0.95;
 }
 
-/* METRIC CARDS */
 .metric-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
@@ -135,7 +132,6 @@ body {
     color:  #4f46e5;
 }
 
-/* SECTION HEADER */
 .section-header {
     display: flex;
     justify-content: space-between;
@@ -221,7 +217,7 @@ body {
 }
 
 .btn-view-all:hover {
-    color: #3730a3; /* Darker hover */
+    color: #3730a3; 
 }
 
 </style>
@@ -229,13 +225,13 @@ body {
 
 <div class="container-fluid px-4 py-4">
 
-    <!-- HERO -->
+
     <div class="hero-banner">
         <h1>Dashboard Overview</h1>
         <p>Welcome back! Here's a quick overview of your store performance.</p>
     </div>
 
-    <!-- METRICS -->
+
     <div class="metric-cards">
 
         <div class="metric-card">
@@ -275,10 +271,10 @@ body {
         </div>
     </div>
 
-    <!-- RECENT + STOCK -->
+
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
 
-        <!-- RECENT ORDERS -->
+
         <div>
             <div class="section-header">
                 <h2>Recent Orders</h2>
@@ -302,7 +298,7 @@ body {
             <?php endwhile; ?>
         </div>
 
-        <!-- LOW STOCK -->
+
         <div>
             <div class="section-header">
                 <h2>Low Stock Inventory</h2>

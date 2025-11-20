@@ -2,16 +2,8 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-
-// ✅ Restrict access to admins only
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//   header("Location: login.php");
-//   exit();
-// }
-
 $role = $_SESSION['role'] ?? 'guest';
 
-// ✅ Determine correct CSS path based on current directory
 $current_dir = dirname($_SERVER['PHP_SELF']);
 if (strpos($current_dir, '/admin') !== false) {
     $css_path = '../includes/style/style.css';
@@ -26,19 +18,14 @@ if (strpos($current_dir, '/admin') !== false) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
   
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
-  <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-  <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
-  <!-- ✅ Custom CSS -->
   <link href="<?php echo htmlspecialchars($css_path); ?>" rel="stylesheet" type="text/css">
   
   <title>Admin Dashboard - Lensify</title>
@@ -56,18 +43,16 @@ if (strpos($current_dir, '/admin') !== false) {
     background-color: white !important;
   }
 
-  /* Navbar links and brand */
   .navbar .nav-link,
   .navbar .navbar-brand {
     color: #000 !important;
-    transition: color 0.3s ease, transform 0.3s ease; /* smooth color and slight movement */
+    transition: color 0.3s ease, transform 0.3s ease;
   }
 
-  /* Hover effect */
   .navbar .nav-link:hover,
   .navbar .navbar-brand:hover {
-    color: #2563eb !important; /* your desired blue */
-    transform: translateY(-2px); /* subtle lift animation */
+    color: #2563eb !important;
+    transform: translateY(-2px);
   }
 
   .dropdown-menu {
@@ -84,7 +69,6 @@ if (strpos($current_dir, '/admin') !== false) {
 </head>
 
 <body>
-  <!-- ✅ Admin Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand fw-bold" href="dashboard.php">
@@ -126,5 +110,3 @@ if (strpos($current_dir, '/admin') !== false) {
       </div>
     </div>
   </nav>
-
-  <!-- ✅ Page content starts - REMOVED container class -->

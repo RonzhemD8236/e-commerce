@@ -1,18 +1,13 @@
 <?php
 session_start();
 
-// ✅ Authentication Check
-// Authentication: Admin Only
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
     header("Location: ../admin/login.php");
     exit();
 }
 
-// ✅ Validate orderinfo_id parameter BEFORE including header (so we can redirect)
 $orderId = 0;
-
-// Check GET parameters
 if (isset($_GET['orderinfo_id']) && !empty($_GET['orderinfo_id'])) {
     $orderId = (int)$_GET['orderinfo_id'];
 } elseif (isset($_GET['orderId']) && !empty($_GET['orderId'])) {
@@ -23,7 +18,6 @@ if (isset($_GET['orderinfo_id']) && !empty($_GET['orderinfo_id'])) {
     $orderId = (int)$_SESSION['orderId'];
 }
 
-// Also check POST in case it's a form submission
 if ($orderId === 0 && isset($_POST['orderinfo_id']) && !empty($_POST['orderinfo_id'])) {
     $orderId = (int)$_POST['orderinfo_id'];
 } elseif ($orderId === 0 && isset($_POST['orderId']) && !empty($_POST['orderId'])) {
@@ -31,28 +25,23 @@ if ($orderId === 0 && isset($_POST['orderinfo_id']) && !empty($_POST['orderinfo_
 }
 
 if ($orderId === 0 || $orderId < 1) {
-    // User-friendly error message with redirect option
     $_SESSION['message'] = 'Invalid or missing order ID. Please select an order from the orders list.';
     $_SESSION['message_type'] = 'danger';
     header("Location: orders.php");
     exit();
 }
 
-// Now include header and config after validation
 include('../admin/header.php');
 include('../includes/config.php');
 
 $_SESSION['orderId'] = $orderId;
 
-// ✅ Query using order_transaction_details view (PREPARED STATEMENT)
 $sql = "SELECT * FROM order_transaction_details WHERE orderinfo_id = ?";
 
 $stmt = mysqli_prepare($conn, $sql);
 if (!$stmt) {
-    // If prepared statement fails, try alternative query without view
     error_log("Prepared statement failed: " . mysqli_error($conn));
     
-    // Fallback: Use JOIN query directly (in case view doesn't exist)
     $orderIdEscaped = (int)$orderId;
     $sql = "SELECT 
                 o.orderinfo_id,
@@ -106,18 +95,15 @@ if (!$stmt) {
     }
 }
 
-// Get all order items
 $orderItems = [];
 $customer = null;
 while ($row = mysqli_fetch_assoc($result)) {
     if ($customer === null) {
-        // Store customer and order info from first row
         $customer = $row;
     }
     $orderItems[] = $row;
 }
 
-// Close statement if it was created
 if (isset($stmt) && $stmt !== false && is_object($stmt)) {
     mysqli_stmt_close($stmt);
 }
@@ -126,8 +112,7 @@ if (!$customer) {
     die("Error: Order not found.");
 }
 
-// ✅ Set profile picture path - check both profile_img and customer_image_path
-$profilePicture = "../uploads/default-profile.png"; // Default
+$profilePicture = "../uploads/default-profile.png";
 
 if (!empty($customer['profile_img']) && file_exists("../uploads/" . $customer['profile_img'])) {
     $profilePicture = "../uploads/" . $customer['profile_img'];
@@ -135,7 +120,6 @@ if (!empty($customer['profile_img']) && file_exists("../uploads/" . $customer['p
     $profilePicture = "../uploads/" . $customer['customer_image_path'];
 }
 
-// ✅ Calculate status badge color
 $statusColors = [
     'Processing' => 'warning',
     'Delivered' => 'success',
@@ -271,7 +255,6 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
 </style>
 
 <div class="container my-5">
-    <!-- Order Header -->
     <div class="order-card">
         <div class="order-header d-flex justify-content-between align-items-center">
             <div>
@@ -283,7 +266,6 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
         
         <div class="info-section">
             <div class="row">
-                <!-- Customer Information -->
                 <div class="col-lg-6 mb-4 mb-lg-0">
                     <h5 class="section-title">Customer Information</h5>
                     <div class="d-flex align-items-start">
@@ -314,7 +296,6 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
                     </div>
                 </div>
                 
-                <!-- Order Information -->
                 <div class="col-lg-6">
                     <h5 class="section-title">Order Information</h5>
                     
@@ -339,7 +320,6 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
         </div>
     </div>
 
-    <!-- Order Items -->
     <div class="order-card">
         <div class="info-section">
             <h5 class="section-title">Order Items</h5>
@@ -399,7 +379,6 @@ $badgeColor = $statusColors[$customer['order_status']] ?? 'secondary';
         </div>
     </div>
 
-    <!-- Action Buttons -->
     <div class="mt-4">
         <a href="orders.php" class="btn btn-back">
             <i class="bi bi-arrow-left me-2"></i>Back to Orders

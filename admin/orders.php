@@ -1,18 +1,15 @@
 <?php
 session_start();
 
-// ✅ Authentication Check - Admin Only
-// Authentication: Admin Only
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     $_SESSION['auth_error'] = 'Please log in as admin to access this page.';
     header("Location: ../admin/login.php");
     exit();
 }
 
-include('header.php'); // Admin header
+include('header.php');
 include('../includes/config.php');
 
-// ---------- UPDATED SQL: include payment_method and shipping_method ----------
 $sql = "SELECT 
             o.orderinfo_id,
             o.orderinfo_id AS orderId, 
@@ -35,12 +32,11 @@ $itemCount = mysqli_num_rows($result);
 ?>
 
 <style>
-/* Hero Banner */
 .hero-banner {
     background: linear-gradient(
                     135deg,
-                    rgba(102, 126, 234, 0.6) 0%,  /* #667eea with 60% opacity */
-                    rgba(118, 75, 162, 0.6) 100% /* #764ba2 with 60% opacity */
+                    rgba(102, 126, 234, 0.6) 0%,
+                    rgba(118, 75, 162, 0.6) 100%
                 ),
                 url('https://i.pinimg.com/1200x/31/7d/27/317d272366bd3ebba9a022262f0fe81e.jpg') center/cover;
     color: white;
@@ -64,7 +60,6 @@ $itemCount = mysqli_num_rows($result);
     max-width: 800px;
 }
 
-/* Search and Action Bar */
 .search-action-bar {
     display: flex;
     justify-content: space-between;
@@ -92,7 +87,6 @@ $itemCount = mysqli_num_rows($result);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* Order Filter Tabs */
 .order-tabs {
     display: flex;
     gap: 0;
@@ -131,7 +125,6 @@ $itemCount = mysqli_num_rows($result);
     background-color: #667eea;
 }
 
-/* Table Styling */
 .orders-table {
     background: white;
     border-radius: 8px;
@@ -169,7 +162,6 @@ $itemCount = mysqli_num_rows($result);
     background-color: #f9fafb;
 }
 
-/* Status Badges */
 .status-badge {
     display: inline-block;
     padding: 4px 12px;
@@ -203,7 +195,6 @@ $itemCount = mysqli_num_rows($result);
     color: #4338ca;
 }
 
-/* Action Buttons */
 .action-buttons {
     display: flex;
     gap: 8px;
@@ -262,7 +253,6 @@ $itemCount = mysqli_num_rows($result);
     color: white;
 }
 
-/* Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -393,7 +383,6 @@ $itemCount = mysqli_num_rows($result);
     background-color: #5568d3;
 }
 
-/* Footer Spacing */
 .page-wrapper {
     min-height: calc(100vh - 200px);
     padding-bottom: 50px;
@@ -407,7 +396,6 @@ $itemCount = mysqli_num_rows($result);
         <p>Manage and oversee order statuses, payment methods, and shipping details. Monitor all transactions and maintain order data securely.</p>
     </div>
 
-    <!-- Search and Add Order Bar -->
     <div class="search-action-bar">
         <div class="search-box">
             <input 
@@ -421,7 +409,6 @@ $itemCount = mysqli_num_rows($result);
 
     <?php include("../includes/alert.php"); ?>
 
-    <!-- Order Filter Tabs -->
     <div class="order-tabs">
         <button class="order-tab active" data-status="all">
             All Orders
@@ -443,7 +430,6 @@ $itemCount = mysqli_num_rows($result);
         </button>
     </div>
 
-    <!-- Orders Table -->
     <div class="orders-table">
         <table>
             <thead>
@@ -485,8 +471,6 @@ $itemCount = mysqli_num_rows($result);
                     echo "<td><span class='status-badge {$statusClass}'>{$statusText}</span></td>";
                     echo "<td>" . date('Y-m-d H:i:s', strtotime($row['created_at'])) . "</td>";
                     
-                    // Actions - ensure orderId is valid before creating link
-                    // Check for both camelCase and lowercase column names (MySQL case sensitivity)
                     $orderIdValue = 0;
                     if (isset($row['orderId'])) {
                         $orderIdValue = (int)$row['orderId'];
@@ -504,7 +488,6 @@ $itemCount = mysqli_num_rows($result);
                                 </div>
                               </td>";
                     } else {
-                        // Fallback: try to get orderinfo_id directly from the row
                         $orderIdValue = isset($row['orderinfo_id']) ? (int)$row['orderinfo_id'] : 0;
                         if ($orderIdValue > 0) {
                             echo "<td>
@@ -533,7 +516,6 @@ $itemCount = mysqli_num_rows($result);
     </div>
 </div>
 
-<!-- Update Order Modal -->
 <div id="updateModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -575,7 +557,6 @@ function closeUpdateModal() {
     document.getElementById('updateModal').classList.remove('show');
 }
 
-// Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('updateModal');
     if (event.target === modal) {
@@ -583,16 +564,13 @@ window.onclick = function(event) {
     }
 }
 
-// Tab filtering - FIXED VERSION
 document.querySelectorAll('.order-tab').forEach(tab => {
     tab.addEventListener('click', function() {
-        // Update active tab styling
         document.querySelectorAll('.order-tab').forEach(t => {
             t.classList.remove('active');
         });
         this.classList.add('active');
         
-        // Filter rows
         const status = this.dataset.status.toLowerCase();
         document.querySelectorAll('.order-row').forEach(row => {
             const rowStatus = row.dataset.status.toLowerCase();
@@ -605,7 +583,6 @@ document.querySelectorAll('.order-tab').forEach(tab => {
     });
 });
 
-// Search functionality
 document.getElementById('searchOrder').addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase();
     document.querySelectorAll('.order-row').forEach(row => {

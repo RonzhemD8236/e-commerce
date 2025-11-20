@@ -174,7 +174,6 @@ $nameValue = !empty($profileName) ? $profileName : $user['username'];
     transform: translateY(-1px);
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .form-grid {
         grid-template-columns: 1fr; /* stack fields on small screens */
