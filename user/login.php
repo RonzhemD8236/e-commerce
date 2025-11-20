@@ -129,39 +129,88 @@ include("../includes/header.php");
     box-sizing: border-box;
 }
 
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+.main-content {
+    background: url('../uploads/login-bg.jpeg') no-repeat center center;
+    background-size: cover;
+    background-attachment: fixed;
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8%;
+    position: relative;
+}
+
+.main-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('../uploads/login-bg.jpeg') no-repeat center center;
+    background-size: cover;
+    z-index: 0;
+}
+
+.login-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 420px;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
+}
+
+.login-container form {
+    width: 100%;
+}
 
 </style>
 
 <!-- ✅ Login Form -->
 <div class="main-content">
-    <div class="content">
-        <div class="login-container">
-            <?php include("../includes/alert.php"); ?>
-            <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST" id="loginForm" novalidate>
-                <h3 class="text-center mb-4">Login</h3>
-                <div class="mb-3">
-                    <label class="form-label">Email address</label>
-                    <input type="text" class="form-control" name="email" id="email" 
-                           value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
-                    <small class="text-danger" id="emailError"></small>
-                </div>
+    <div class="login-container">
+        <?php include("../includes/alert.php"); ?>
+        <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST" id="loginForm" novalidate>
+            <h3 class="text-center mb-4">Login</h3>
+            <div class="mb-3">
+                <label class="form-label">Email address</label>
+                <input type="text" class="form-control" name="email" id="email" 
+                       value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+                <small class="text-danger" id="emailError"></small>
+            </div>
 
-                <div class="mb-3 position-relative">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password">
-                    <span id="togglePassword" style="position:absolute; top:35px; right:10px; cursor:pointer;">
-                        <i class="bi bi-eye"></i>
-                    </span>
-                    <small class="text-danger" id="passwordError"></small>
-                </div>
+            <div class="mb-3 position-relative">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password">
+                <span id="togglePassword" style="position:absolute; top:35px; right:10px; cursor:pointer;">
+                    <i class="bi bi-eye"></i>
+                </span>
+                <small class="text-danger" id="passwordError"></small>
+            </div>
 
-                <button type="submit" class="btn btn-signin w-100 mb-3" name="submit">Login</button>
+            <button type="submit" class="btn btn-signin w-100 mb-3" name="submit">Login</button>
 
-                <div class="text-center">
-                    <p>Not a member? <a href="register.php">Register</a></p>
-                </div>
-            </form>
-        </div>
+            <div class="text-center">
+                <p>Not a member? <a href="register.php">Register</a></p>
+            </div>
+        </form>
     </div>
 </div>
 
