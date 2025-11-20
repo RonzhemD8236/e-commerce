@@ -3,31 +3,26 @@ session_start();
 include('./includes/header.php');
 include('./includes/config.php');
 
-// Debug background image path
 echo "<!-- DEBUG: Checking background image path -->";
 $bgPath = __DIR__ . '/uploads/login-bg.jpeg';
 echo "<!-- Full path: $bgPath -->";
 echo "<!-- File exists: " . (file_exists($bgPath) ? 'YES' : 'NO') . " -->";
 echo "<!-- Current directory: " . __DIR__ . " -->";
 
-// List all files in uploads directory
 if (is_dir(__DIR__ . '/uploads')) {
     $files = scandir(__DIR__ . '/uploads');
     echo "<!-- Files in uploads: " . implode(', ', $files) . " -->";
 }
 
-// Determine the correct base URL
 $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'];
 $baseUrl = $scheme . '://' . $host . '/lensify/e-commerce/';
 echo "<!-- Base URL: $baseUrl -->";
 
-// Include review functions
 if (file_exists('./review/review_functions.php')) {
     include('./review/review_functions.php');
 }
 
-// Check if product ID is provided
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     echo "<script>alert('No product selected.'); window.location.href='index.php';</script>";
     exit;
@@ -35,7 +30,6 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $itemId = intval($_GET['id']);
 
-// Fetch product with stock
 $sql = "
     SELECT i.*, s.quantity AS stock 
     FROM item i
@@ -56,7 +50,6 @@ if (!$result || mysqli_num_rows($result) == 0) {
 
 $row = mysqli_fetch_assoc($result);
 
-// Handle images
 $images = array();
 
 if (!empty($row['image_path'])) {
@@ -74,7 +67,6 @@ if (empty($images)) {
     $images = array('https://via.placeholder.com/400x300?text=No+Image');
 }
 
-// Process each image to create full URLs
 $processedImages = array();
 foreach ($images as $img) {
     if (empty(trim($img))) {
@@ -100,7 +92,6 @@ $images = $processedImages;
 $stock = (int)$row['stock'];
 $inStock = $stock > 0;
 
-// Get reviews and ratings
 $reviews = array();
 $avgRating = 0;
 $totalReviews = 0;
@@ -650,18 +641,17 @@ function toggleReviewForm() {
     var currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
     
     if (form.style.display === 'none') {
-        // Store current scroll position before showing form
+
         var scrollBefore = window.pageYOffset || document.documentElement.scrollTop;
         
         form.style.display = 'block';
         
-        // Immediately restore scroll position to preserve padding between header and product
         requestAnimationFrame(function() {
             window.scrollTo({
                 top: scrollBefore,
-                behavior: 'auto' // Instant, no smooth scrolling
+                behavior: 'auto' 
             });
-            // Double-check after a brief moment
+
             setTimeout(function() {
                 window.scrollTo({
                     top: scrollBefore,
@@ -671,7 +661,7 @@ function toggleReviewForm() {
         });
     } else {
         form.style.display = 'none';
-        // Maintain exact scroll position when closing
+
         requestAnimationFrame(function() {
             window.scrollTo({
                 top: currentScrollPosition,

@@ -5,10 +5,6 @@ include('./includes/config.php');
 ?>
 
 <style>
-/* ========================================
-   RESET & BASE STYLES
-   ======================================== */
-
 
 * {
     margin: 0;
@@ -18,7 +14,6 @@ include('./includes/config.php');
 
 
 
-/* Override Bootstrap container */
 .main-content {
     padding: 0 !important;
     margin: 0 !important;
@@ -26,7 +21,6 @@ include('./includes/config.php');
     width: 100% !important;
 }
 
-/* Page Wrapper - Full Width */
 .product-page-wrapper {
     background: transparent !important;
     width: 100%;
@@ -34,9 +28,6 @@ include('./includes/config.php');
     margin: 0;
 }
 
-/* ========================================
-   HERO SECTION - FULL WIDTH
-   ======================================== */
 
 body {
     background: url("uploads/homepage.jpg") no-repeat center center fixed;
@@ -86,9 +77,7 @@ body {
     line-height: 1.7;
 }
 
-/* ========================================
-   SEARCH SECTION
-   ======================================== */
+
 .search-section {
     width: 100%;
     background: transparent;
@@ -119,16 +108,13 @@ body {
     background: white;
 }
 
-/* ========================================
-   MAIN CONTENT AREA - CONSTRAINED WIDTH
-   ======================================== */
+
 .content-wrapper {
     max-width: 1400px;
     margin: 0 auto;
     padding: 40px 20px;
 }
 
-/* Filter Section - Side by Side */
 .filter-section {
     display: flex;
     gap: 30px;
@@ -155,7 +141,6 @@ body {
     padding-bottom: 15px;
 }
 
-/* Products Content */
 .products-content {
     flex: 1;
     min-width: 0;
@@ -416,9 +401,7 @@ body {
     font-size: 1.2em;
 }
 
-/* ========================================
-   RESPONSIVE DESIGN
-   ======================================== */
+
 @media (max-width: 1200px) {
     .products-grid {
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
@@ -584,21 +567,21 @@ body {
                             $cacheBuster = file_exists($img) ? filemtime($img) : time();
                             echo '<img src="' . $img . '?v=' . $cacheBuster . '" class="rotating-image" style="opacity:' . ($index === 0 ? 1 : 0) . ';">';
                         }
-                        echo '</div>'; // end product-thumb
+                        echo '</div>'; 
 
                         echo '<div class="product-info">';
                         echo '<div class="product-name">' . $item_name . '</div>';
                         echo '<div class="product-price ' . $stockClass . '">';
                         echo ($stock > 0) ? '₱' . $price : 'OUT OF STOCK';
                         echo '</div>';
-                        echo '</div>'; // end product-info
+                        echo '</div>'; 
 
                         echo '</a>';
-                        echo '</div>'; // end product
-                    } // end while
-                } // end if
+                        echo '</div>'; 
+                    } 
+                } 
                 ?>
-                </div> <!-- end products-grid -->
+                </div> 
 
                 
                 <div class="no-results" id="noResults">
@@ -611,7 +594,7 @@ body {
 </div>
 
 <script type="text/javascript">
-// Rotating image script
+
 var productThumbs = document.querySelectorAll('.product-thumb');
 for (var i = 0; i < productThumbs.length; i++) {
     (function(container) {
@@ -627,7 +610,6 @@ for (var i = 0; i < productThumbs.length; i++) {
     })(productThumbs[i]);
 }
 
-// Filter functionality
 var searchInput = document.getElementById('searchInput');
 var minPriceSlider = document.getElementById('minPrice');
 var maxPriceSlider = document.getElementById('maxPrice');
@@ -681,7 +663,6 @@ function filterProducts() {
         }
     });
 
-    // Show/Hide product grid & no-results message
     if (visibleCount === 0) {
         productsGrid.style.display = 'none';
         noResults.style.display = 'block';
@@ -690,7 +671,6 @@ function filterProducts() {
         noResults.style.display = 'none';
     }
 
-    // Update results text
     resultsCount.textContent = 'Showing ' + visibleCount + ' product' + (visibleCount !== 1 ? 's' : '');
 }
 
@@ -703,7 +683,6 @@ function resetFilters() {
     filterProducts();
 }
 
-// MUST be kept — initializes filter on page load
 filterProducts();
 </script>
 

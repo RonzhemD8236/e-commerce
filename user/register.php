@@ -2,10 +2,10 @@
 session_start();
 include("../includes/header.php");
 
-// Get errors and old input if available
+
 $errors = $_SESSION['errors'] ?? [];
 $old = $_SESSION['old'] ?? [];
-unset($_SESSION['errors'], $_SESSION['old']); // clear after use
+unset($_SESSION['errors'], $_SESSION['old']);
 ?>
 
 <style>
@@ -136,7 +136,7 @@ header, nav, .navbar { position: relative; z-index: 10; }
 </div>
 
 <script>
-// Toggle Password Show/Hide
+
 document.getElementById('togglePassword').addEventListener('click', function () {
     const passwordField = document.getElementById('password');
     const icon = this.querySelector('i');
@@ -161,11 +161,10 @@ document.getElementById('togglePassword2').addEventListener('click', function ()
     }
 });
 
-// JavaScript validation (NO HTML5 validation)
 document.getElementById('registerForm').addEventListener('submit', function(e) {
     let valid = true;
 
-    // Clear previous errors
+  
     document.getElementById('usernameError').textContent = '';
     document.getElementById('emailError').textContent = '';
     document.getElementById('passwordError').textContent = '';
@@ -177,7 +176,7 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const confirm = document.getElementById('password2').value.trim();
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    // Validate username
+    
     if(username === '') {
         document.getElementById('usernameError').textContent = 'Username is required.';
         valid = false;
@@ -186,7 +185,6 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
         valid = false;
     }
 
-    // Validate email
     if(email === '') {
         document.getElementById('emailError').textContent = 'Email is required.';
         valid = false;
@@ -194,7 +192,7 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
         document.getElementById('emailError').textContent = 'Invalid email format.';
         valid = false;
     } else {
-        // Check allowed domains
+
         const allowedDomains = ['@gmail.com', '@yahoo.com', '@outlook.com'];
         let validDomain = false;
         for(let i = 0; i < allowedDomains.length; i++) {
@@ -209,7 +207,6 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
         }
     }
 
-    // Validate password
     if(password === '') {
         document.getElementById('passwordError').textContent = 'Password is required.';
         valid = false;
@@ -218,7 +215,7 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
         valid = false;
     }
 
-    // Validate confirm password
+
     if(confirm === '') {
         document.getElementById('confirmError').textContent = 'Confirm Password is required.';
         valid = false;

@@ -3,13 +3,12 @@ session_start();
 include('../includes/header.php');
 include('../includes/config.php');
 
-// ---------- LOGIN CHECK ----------
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../user/login.php");
     exit();
 }
 
-// ---------- GET CUSTOMER ID ----------
 $user_id = (int)$_SESSION['user_id'];
 $stmt = $conn->prepare("SELECT customer_id, fname, lname FROM customer WHERE user_id = ? LIMIT 1");
 $stmt->bind_param("i", $user_id);
@@ -25,7 +24,6 @@ $customer_id = (int)$customer['customer_id'];
 $customer_name = $customer['fname'] . ' ' . $customer['lname'];
 $stmt->close();
 
-// ---------- FETCH DELIVERED ORDERS ONLY ----------
 $stmt = $conn->prepare("SELECT o.orderinfo_id AS orderId, o.date_placed, o.date_shipped, o.shipping, o.payment_method, o.shipping_method FROM orderinfo o WHERE o.customer_id = ? AND o.status = 'Delivered' ORDER BY o.date_shipped DESC");
 $stmt->bind_param("i", $customer_id);
 $stmt->execute();
@@ -454,7 +452,6 @@ $orderCount = $result->num_rows;
             while ($order = $result->fetch_assoc()) {
                 $orderId = (int)$order['orderId'];
                 
-                // Fetch items for this order
                 $itemsStmt = $conn->prepare("SELECT i.description AS item_name, i.image_path, i.sell_price, ol.quantity FROM orderline ol INNER JOIN item i USING (item_id) WHERE ol.orderinfo_id = ?");
                 $itemsStmt->bind_param("i", $orderId);
                 $itemsStmt->execute();

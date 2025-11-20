@@ -2,9 +2,8 @@
 session_start();
 include("../includes/config.php");
 
-// ✅ AUTHENTICATION CHECK: Redirect if already logged in (BEFORE any output)
 if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
-    // Redirect based on role
+
     if (isset($_SESSION['role'])) {
         if ($_SESSION['role'] === 'admin') {
             header("Location: ../admin/dashboard.php");
@@ -17,13 +16,13 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
     exit();
 }
 
-// ✅ Handle form submission BEFORE including header
+
 if (isset($_POST['submit'])) {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
     $errors = [];
 
-    // ===== SERVER-SIDE VALIDATION =====
+
     if (empty($email)) {
         $errors[] = 'Email is required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -34,10 +33,8 @@ if (isset($_POST['submit'])) {
         $errors[] = 'Password is required.';
     }
 
-    // ===== PREPARED STATEMENT LOGIN =====
     if (empty($errors)) {
-        // ✅ PREPARED STATEMENT: Prevent SQL Injection
-        // Join users and customer tables to get all needed data in one query
+
         $sql = "SELECT u.id, u.username, u.email, u.password, u.role, u.active, c.customer_id 
                 FROM users u 
                 LEFT JOIN customer c ON u.id = c.user_id 
@@ -47,21 +44,19 @@ if (isset($_POST['submit'])) {
         $stmt = $conn->prepare($sql);
         
         if ($stmt) {
-            // Bind parameter (s = string)
+
             $stmt->bind_param("s", $email);
             
-            // Execute query
+
             $stmt->execute();
-            
-            // Store result to check row count
+
             $stmt->store_result();
             
             if ($stmt->num_rows === 1) {
-                // Bind result variables
+
                 $stmt->bind_result($user_id, $username, $user_email, $hashed_password, $role, $active, $customer_id);
                 $stmt->fetch();
-                
-                // ✅ CHECK IF USER IS ADMIN - Redirect to admin login
+
                 if ($role === 'admin') {
                     $_SESSION['message'] = 'Please use the admin login page.';
                     $_SESSION['message_type'] = 'warning';
@@ -69,54 +64,53 @@ if (isset($_POST['submit'])) {
                     exit();
                 }
                 
-                // ✅ Check if account is active
+
                 if (!$active) {
                     $_SESSION['message'] = 'Your account has been deactivated. Please contact admin.';
                     $_SESSION['message_type'] = 'danger';
                 } elseif (password_verify($password, $hashed_password)) {
-                    // ✅ LOGIN SUCCESSFUL - Set session variables (CUSTOMER ONLY)
+    
                     $_SESSION['user_id'] = $user_id;
                     $_SESSION['username'] = $username;
                     $_SESSION['email'] = $user_email;
                     $_SESSION['role'] = $role;
                     $_SESSION['customer_id'] = $customer_id;
                     
-                    // Set success message
+
                     $_SESSION['message'] = 'Login successful! Welcome back, ' . htmlspecialchars($username) . '!';
                     $_SESSION['message_type'] = 'success';
                     
-                    // ✅ Check if there's a redirect URL stored (user tried to access protected page)
+
                     if (isset($_SESSION['redirect_after_login']) && !empty($_SESSION['redirect_after_login'])) {
                         $redirect_url = $_SESSION['redirect_after_login'];
-                        unset($_SESSION['redirect_after_login']); // Clear it after use
+                        unset($_SESSION['redirect_after_login']); 
                         header("Location: " . $redirect_url);
                         exit();
                     }
                     
-                    // ✅ Redirect customer to homepage
                     header("Location: ../index.php");
                     exit();
                 } else {
-                    // Wrong password
+
                     $_SESSION['message'] = 'Wrong email or password.';
                     $_SESSION['message_type'] = 'danger';
                 }
             } else {
-                // User not found
+
                 $_SESSION['message'] = 'Wrong email or password.';
                 $_SESSION['message_type'] = 'danger';
             }
             
-            // Close statement
+
             $stmt->close();
         } else {
-            // Database error
+
             $_SESSION['message'] = 'Database error. Please try again later.';
             $_SESSION['message_type'] = 'danger';
             error_log("Login prepare statement failed: " . $conn->error);
         }
     } else {
-        // Validation errors
+
         $_SESSION['message'] = implode('<br>', $errors);
         $_SESSION['message_type'] = 'danger';
     }
@@ -239,7 +233,7 @@ if (isset($_POST['submit'])) {
 </div>
 
 <script>
-// ✅ Password Show/Hide
+
 document.getElementById('togglePassword').addEventListener('click', function () {
     const passwordField = document.getElementById('password');
     const icon = this.querySelector('i');
@@ -252,7 +246,6 @@ document.getElementById('togglePassword').addEventListener('click', function () 
     }
 });
 
-// ✅ Client-side Form Validation (NO HTML5)
 document.getElementById('loginForm').addEventListener('submit', function (e) {
     let valid = true;
     document.getElementById('emailError').textContent = '';

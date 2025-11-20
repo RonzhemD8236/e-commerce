@@ -3,7 +3,6 @@ session_start();
 include('./includes/header.php');
 include('./includes/config.php');
 
-// Verify connection exists
 if (!isset($conn) || $conn->connect_error) {
     die("<div style='background: #ffebee; color: #c62828; padding: 20px; margin: 20px; border-radius: 5px; font-family: Arial;'>
          <strong>Database Connection Failed</strong>
@@ -16,10 +15,8 @@ if (!isset($conn) || $conn->connect_error) {
          </div>");
 }
 
-// Get selected category if any
 $selectedCategory = isset($_GET['category']) ? trim($_GET['category']) : '';
 
-// Define all categories with icons
 $categories = [
     'DSLR Cameras' => 'fa-camera',
     'Mirrorless Cameras' => 'fa-camera-retro',
@@ -29,13 +26,12 @@ $categories = [
     'Camera Accessories' => 'fa-toolbox'
 ];
 
-// If a category is selected, fetch products
 $products = array();
 $error_message = '';
 
 if ($selectedCategory) {
     try {
-        // Use prepared statement to prevent SQL injection
+
         $sql = "SELECT i.*, IFNULL(s.quantity, 0) AS stock 
                 FROM item i
                 LEFT JOIN stock s ON i.item_id = s.item_id
@@ -611,7 +607,7 @@ if ($selectedCategory) {
                 <div class="products-grid">
                     <?php foreach ($products as $product): ?>
                         <?php
-                        // Handle images
+                    
                         $images = array();
                         if (!empty($product['image_path'])) {
                             $cleanPath = stripslashes($product['image_path']);
@@ -623,7 +619,7 @@ if ($selectedCategory) {
                             }
                         }
                         
-                        // Get first image
+
                         $firstImage = !empty($images) ? $images[0] : 'uploads/default.png';
                         
                         $stock = (int)$product['stock'];

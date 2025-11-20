@@ -5,7 +5,7 @@ include("includes/config.php");
 ?>
 
 <style>
-    /* Remove conflicting body styles */
+
     body {
         background: #f2f2f2 !important;
     }
@@ -18,7 +18,6 @@ include("includes/config.php");
         gap: 25px;
     }
 
-    /* LEFT SIDE */
     .left-panel {
         flex: 1;
         display: flex;
@@ -66,7 +65,7 @@ include("includes/config.php");
         color: #333;
     }
 
-    /* FIXED IMAGE BANNER */
+ 
     .banner {
         width: 100%;
         height: 200px;
@@ -79,7 +78,6 @@ include("includes/config.php");
         flex-shrink: 0;
     }
 
-    /* RIGHT SIDE */
     .right-panel {
         flex: 1;
         background: white;
@@ -142,7 +140,6 @@ include("includes/config.php");
         background: #333;
     }
 
-    /* Responsive */
     @media(max-width: 900px){
         .container {
             flex-direction: column;

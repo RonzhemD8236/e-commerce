@@ -3,8 +3,7 @@ session_start();
 include("includes/header.php");
 include("includes/config.php");
 
-// Fetch first 3 featured products
-// Changed i.title to i.description since the table uses 'description' for product name
+
 $sql = "
     SELECT i.item_id, i.description, i.short_description, i.sell_price, i.image_path, s.quantity
     FROM item i
@@ -50,10 +49,10 @@ $products = $stmt->get_result();
     }
     
     .main-container {
-        padding-top: 100px; /* Add space for fixed header */
+        padding-top: 100px; 
     }
     
-    /* HERO */
+
     .hero { padding: 60px 20px; }
     
     .hero h1 {
@@ -98,7 +97,6 @@ $products = $stmt->get_result();
         border-radius: 10px;
     }
 
-    /* FEATURE BOX */
     .feature-box h4 {
         color: #e7e7e7ff;
     }
@@ -114,7 +112,6 @@ $products = $stmt->get_result();
         border-radius: 10px;
     }
 
-    /* BANNER */
     .banner-img {
         width: 100%;
         max-width: 100%;
@@ -125,7 +122,6 @@ $products = $stmt->get_result();
         margin: 0 auto;
     }
 
-    /* FEATURED PRODUCTS */
     .product-card img {
         width: 100%;
         height: 230px;
@@ -207,7 +203,7 @@ $products = $stmt->get_result();
         </div>
     </div>
 
-    <!-- BANNER -->
+
     <div class="container my-5">
         <?php
         $banner = 'uploads/camera2.jpg';
@@ -217,14 +213,14 @@ $products = $stmt->get_result();
         <img src="<?= $banner ?>?v=<?= $bannerCache ?>" alt="Banner" class="banner-img" />
     </div>
 
-    <!-- FEATURED PRODUCTS -->
+
     <div class="container my-5">
         <h3 class="fw-bold text-center mb-4">Featured Products</h3>
         <div class="row g-4">
 
         <?php while ($row = $products->fetch_assoc()): 
             $id = $row['item_id'];
-            // Changed from 'title' to 'description'
+
             $title = htmlspecialchars($row['description']);
             $short = htmlspecialchars($row['short_description']);
             $price = number_format($row['sell_price'], 2);

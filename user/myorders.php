@@ -3,13 +3,13 @@ session_start();
 include('../includes/header.php');
 include('../includes/config.php');
 
-// ---------- LOGIN CHECK ----------
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: /lensify/e-commerce/user/login.php");
     exit();
 }
 
-// ---------- GET CUSTOMER ID ----------
+
 $user_id = (int)$_SESSION['user_id'];
 $stmt = $conn->prepare("SELECT customer_id, fname, lname FROM customer WHERE user_id = ? LIMIT 1");
 $stmt->bind_param("i", $user_id);
@@ -25,7 +25,6 @@ $customer_id = (int)$customer['customer_id'];
 $customer_name = $customer['fname'] . ' ' . $customer['lname'];
 $stmt->close();
 
-// ---------- FETCH USER'S ORDERS (FIXED) ----------
 $stmt = $conn->prepare("SELECT o.orderinfo_id AS orderId, o.date_placed, o.shipping, o.status, o.payment_method, o.shipping_method FROM orderinfo o WHERE o.customer_id = ? ORDER BY o.date_placed DESC");
 $stmt->bind_param("i", $customer_id);
 $stmt->execute();
@@ -458,8 +457,7 @@ $orderCount = $result->num_rows;
             <?php 
             while ($order = $result->fetch_assoc()) {
                 $orderId = (int)$order['orderId'];
-                
-                // Fetch items for this order
+
                 $itemsStmt = $conn->prepare("SELECT i.description AS item_name, i.image_path, i.sell_price, ol.quantity FROM orderline ol INNER JOIN item i USING (item_id) WHERE ol.orderinfo_id = ?");
                 $itemsStmt->bind_param("i", $orderId);
                 $itemsStmt->execute();
@@ -486,22 +484,20 @@ $orderCount = $result->num_rows;
                         <?php while ($item = $itemsResult->fetch_assoc()): 
                             $itemTotal = $item['sell_price'] * $item['quantity'];
                             $subtotal += $itemTotal;
-                            
-                            // Get first image from JSON array
-                            $firstImage = '../uploads/default.png'; // Default fallback
+                  
+                            $firstImage = '../uploads/default.png'; 
                             
                             $images = json_decode($item['image_path'], true);
                             if (is_array($images) && !empty($images)) {
-                                // Take the first image from the array
+
                                 $firstImage = $images[0];
                                 
-                                // Add ../ if path doesn't start with it
+
                                 if (strpos($firstImage, '../') !== 0 && strpos($firstImage, 'uploads/') === 0) {
                                     $firstImage = '../' . $firstImage;
                                 }
                             }
                             
-                            // Verify file exists, otherwise use default
                             if (!file_exists($firstImage)) {
                                 $firstImage = '../uploads/default.png';
                             }

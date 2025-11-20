@@ -1,17 +1,15 @@
 <?php
-// Start output buffering to prevent header errors
+
 ob_start();
 
 session_start();
 include('../includes/config.php');
 
-// Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// Redirect if user is not a customer
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'customer') {
     if ($_SESSION['role'] === 'admin') {
         header("Location: /lensify/e-commerce/admin/profile.php");
@@ -23,7 +21,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'customer') {
 
 $userId = $_SESSION['user_id'];
 
-// Fetch username and email
 $sqlUser = "SELECT username, email FROM users WHERE id = ?";
 $stmtUser = $conn->prepare($sqlUser);
 $stmtUser->bind_param("i", $userId);
@@ -34,7 +31,6 @@ $username = $userRow['username'] ?? '';
 $email = $userRow['email'] ?? '';
 $stmtUser->close();
 
-// Fetch profile
 $sql = "SELECT * FROM customer WHERE user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $userId);
@@ -43,7 +39,6 @@ $result = $stmt->get_result();
 $profile = $result->fetch_assoc();
 $stmt->close();
 
-// Insert if missing
 if (!$profile) {
     $sqlInsert = "INSERT INTO customer 
                   (user_id, fname, lname, addressline, town, country, state, zipcode, phone, date_of_birth, email, image_path)
@@ -53,7 +48,7 @@ if (!$profile) {
     $stmtInsert->execute();
     $stmtInsert->close();
     
-    // Re-fetch the newly inserted profile
+
     $stmtRefetch = $conn->prepare($sql);
     $stmtRefetch->bind_param("i", $userId);
     $stmtRefetch->execute();
@@ -62,7 +57,6 @@ if (!$profile) {
     $stmtRefetch->close();
 }
 
-// Ensure profile exists before accessing
 if (!$profile) {
     $profile = [
         'fname' => '',
@@ -79,21 +73,18 @@ if (!$profile) {
     ];
 }
 
-// Merge username/email
+
 $profile['username'] = $username;
 $profile['email'] = $email;
 
-// Detect first-time
 $firstTime = false;
 if ($profile && empty($profile['fname']) && empty($profile['lname']) && empty($profile['addressline'])) {
     $firstTime = true;
 }
 
-// Get any previous errors from session
 $errors = $_SESSION['errors'] ?? [];
 unset($_SESSION['errors']);
 
-// Handle form submission
 if (isset($_POST['submit'])) {
     $fname = trim($_POST['fname']);
     $lname = trim($_POST['lname']);
@@ -109,12 +100,10 @@ if (isset($_POST['submit'])) {
 
     $errors = [];
 
-    // Validate required fields first
     foreach (['fname','lname','username','address','town','country','state','zipcode','phone','date_of_birth'] as $field) {
         if (empty($_POST[$field])) $errors[$field] = ucfirst(str_replace('_',' ',$field)) . " is required.";
     }
 
-    // Validate DOB format and value
     if (!empty($dob)) {
         $dateObj = DateTime::createFromFormat('Y-m-d', $dob);
         $errorsInDate = DateTime::getLastErrors();
@@ -126,7 +115,6 @@ if (isset($_POST['submit'])) {
         }
     }
 
-    // Handle image upload
     if (!empty($_FILES['image']['name'])) {
         $targetDir = "../uploads/";
         if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
@@ -153,14 +141,12 @@ if (isset($_POST['submit'])) {
         exit();
     }
 
-    // Update customer profile
     $sqlUpdate = "UPDATE customer SET fname=?, lname=?, addressline=?, town=?, country=?, state=?, zipcode=?, phone=?, date_of_birth=?, image_path=?, email=? WHERE user_id=?";
     $stmtUpdate = $conn->prepare($sqlUpdate);
     $stmtUpdate->bind_param("sssssssssssi",$fname,$lname,$address,$town,$country,$state,$zipcode,$phone,$dob,$imagePath,$email,$userId);
     $stmtUpdate->execute();
     $stmtUpdate->close();
 
-    // Update username
     $sqlUserUpdate = "UPDATE users SET username=? WHERE id=?";
     $stmtUserUpdate = $conn->prepare($sqlUserUpdate);
     $stmtUserUpdate->bind_param("si",$usernameForm,$userId);
@@ -168,8 +154,7 @@ if (isset($_POST['submit'])) {
     $stmtUserUpdate->close();
 
     $_SESSION['success'] = "Profile saved successfully!";
-    
-    // Redirect based on whether this is a first-time setup
+
     if ($firstTime) {
         header("Location: /lensify/e-commerce/index.php");
     } else {
@@ -178,7 +163,6 @@ if (isset($_POST['submit'])) {
     exit();
 }
 
-// Include header after all redirects
 include('../includes/header.php');
 ?>
 
