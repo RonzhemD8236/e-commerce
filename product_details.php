@@ -163,6 +163,18 @@ body::before {
     z-index: 1;
 }
 
+.main-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('../uploads/login-bg.jpeg') no-repeat center center;
+    background-size: cover;
+    z-index: 0;
+}
+
 /* Ensure product section maintains its position when review form opens */
 .product-section {
     position: relative;
@@ -406,7 +418,7 @@ body::before {
                     <input type="number" name="item_qty" id="quantity"
                            value="1" class="form-control" style="width:100px; font-size: 14px;">
                 </div>
-
+                <br>
                 <button type="button" onclick="submitCart()" class="btn btn-success">Add to Cart</button>
             </form>
             <?php endif; ?>
@@ -801,4 +813,4 @@ function deleteReview(reviewId) {
 <?php endif; ?>
 </script>
 
-<?php include('./includes/footer.php'); ?>
+<?php include('./includes/footer.php'); ?>igt
