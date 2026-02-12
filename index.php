@@ -17,8 +17,6 @@ include('./includes/config.php');
     box-sizing: border-box;
 }
 
-
-
 .main-content {
     padding: 0 !important;
     margin: 0 !important;
@@ -33,22 +31,40 @@ include('./includes/config.php');
     margin: 0;
 }
 
-
 body {
-    background: url("uploads/homepage.jpg") no-repeat center center fixed;
-    background-size: cover;
+    background: #000000;
+    background-attachment: fixed;
+    min-height: 100vh;
 }
 
-
+ 
 .hero-section {
-    background: linear-gradient(135deg, #1a0033 0%, #4a0080 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 80px 20px;
+    padding: 100px 20px;
     text-align: center;
     position: relative;
     overflow: hidden;
     width: 100%;
     margin: 0;
+    border-bottom: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(157, 78, 221, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(199, 125, 255, 0.3) 0%, transparent 50%);
+    animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 .hero-image {
@@ -58,243 +74,259 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.2;
+    opacity: 0.15;
     z-index: 1;
+    mix-blend-mode: overlay;
 }
 
 .hero-content {
     position: relative;
     z-index: 2;
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
 }
 
 .hero-section h1 {
-    font-size: 3em;
-    margin-bottom: 20px;
-    font-weight: 700;
-    letter-spacing: -1px;
+    font-size: 3.5em;
+    margin-bottom: 25px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    text-shadow: 2px 4px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #ffffff 0%, #e0b3ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .hero-section p {
-    font-size: 1.2em;
+    font-size: 1.3em;
     opacity: 0.95;
-    line-height: 1.7;
+    line-height: 1.8;
+    text-shadow: 1px 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-
+ 
 .search-section {
     width: 100%;
-    background: transparent;
-    padding: 40px 20px;
+    background: rgba(10, 0, 21, 0.6);
+    backdrop-filter: blur(20px);
+    padding: 50px 20px;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(157, 78, 221, 0.2);
 }
 
 .search-box {
     max-width: 700px;
     margin: 0 auto;
+    position: relative;
 }
 
 .search-box input {
     width: 100%;
-    padding: 18px 30px;
-    border: 2px solid #e0e0e0;
+    padding: 20px 30px;
+    border: 2px solid rgba(157, 78, 221, 0.4);
     border-radius: 50px;
     font-size: 17px;
     transition: all 0.3s;
-    background: #fafafa;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    box-shadow: 0 8px 32px rgba(107, 0, 179, 0.2);
+}
+
+.search-box input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .search-box input:focus {
     outline: none;
-    border-color: #4a0080;
-    box-shadow: 0 0 0 4px rgba(74, 0, 128, 0.1);
-    background: white;
+    border-color: #9d4edd;
+    box-shadow: 0 0 0 4px rgba(157, 78, 221, 0.2),
+                0 8px 32px rgba(107, 0, 179, 0.4);
+    background: rgba(255, 255, 255, 0.1);
 }
 
-
+ 
 .content-wrapper {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 40px 20px;
+    padding: 50px 20px;
 }
 
 .filter-section {
     display: flex;
-    gap: 30px;
+    gap: 35px;
     align-items: flex-start;
 }
 
+ 
 .filter-sidebar {
-    background: white;
-    padding: 30px;
-    border-radius: 16px;
-    width: 300px;
+    background: linear-gradient(135deg, rgba(107, 0, 179, 0.15) 0%, rgba(45, 27, 78, 0.2) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(157, 78, 221, 0.3);
+    padding: 35px;
+    border-radius: 20px;
+    width: 320px;
     flex-shrink: 0;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     position: sticky;
     top: 100px;
 }
 
 .filter-sidebar h3 {
-    margin-bottom: 25px;
-    color: #1a0033;
-    font-size: 1.4em;
-    font-weight: 700;
-    border-bottom: 3px solid #4a0080;
+    margin-bottom: 30px;
+    color: white;
+    font-size: 1.5em;
+    font-weight: 800;
+    border-bottom: 3px solid #9d4edd;
     padding-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
+ 
 .products-content {
     flex: 1;
     min-width: 0;
 }
 
 .filter-header {
-    background: white;
-    padding: 25px 30px;
-    border-radius: 16px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    background: linear-gradient(135deg, rgba(107, 0, 179, 0.15) 0%, rgba(45, 27, 78, 0.2) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(157, 78, 221, 0.3);
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 35px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .results-count {
-    color: #333;
+    color: white;
     font-weight: 700;
-    font-size: 1.2em;
+    font-size: 1.3em;
+    text-shadow: 1px 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.filter-sidebar,
-.filter-header {
-    background: rgba(255, 255, 255, 0.8) !important;  
-    backdrop-filter: blur(10px) !important;  
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.4);
-}
-
-
-/* ========================================
-   PRICE FILTER
-   ======================================== */
+ 
 .price-filter h4 {
-    margin-bottom: 20px;
-    color: #1a0033;
-    font-size: 1.05em;
-    font-weight: 600;
+    margin-bottom: 25px;
+    color: white;
+    font-size: 1.1em;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 }
 
 .price-slider-container {
-    margin: 25px 0;
+    margin: 30px 0;
 }
 
 .price-slider {
     width: 100%;
-    height: 8px;
-    background: linear-gradient(to right, #e0e0e0, #4a0080);
+    height: 10px;
+    background: linear-gradient(to right, #2d1b4e, #9d4edd);
     border-radius: 10px;
     outline: none;
     -webkit-appearance: none;
     cursor: pointer;
+    box-shadow: 0 4px 15px rgba(157, 78, 221, 0.3);
 }
 
 .price-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 24px;
-    height: 24px;
-    background: white;
-    border: 3px solid #4a0080;
+    width: 26px;
+    height: 26px;
+    background: linear-gradient(135deg, #9d4edd 0%, #c77dff 100%);
+    border: 3px solid white;
     cursor: pointer;
     border-radius: 50%;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(157, 78, 221, 0.5);
     transition: all 0.2s;
 }
 
 .price-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
-    box-shadow: 0 5px 15px rgba(74, 0, 128, 0.4);
+    transform: scale(1.2);
+    box-shadow: 0 6px 20px rgba(157, 78, 221, 0.7);
 }
 
 .price-slider::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-    background: white;
-    border: 3px solid #4a0080;
+    width: 26px;
+    height: 26px;
+    background: linear-gradient(135deg, #9d4edd 0%, #c77dff 100%);
+    border: 3px solid white;
     cursor: pointer;
     border-radius: 50%;
-    border: none;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(157, 78, 221, 0.5);
 }
 
 .price-values {
     display: flex;
     justify-content: space-between;
-    margin-top: 12px;
+    margin-top: 15px;
     font-weight: 700;
-    font-size: 1em;
-    color: #4a0080;
+    font-size: 1.05em;
+    color: #c77dff;
+    text-shadow: 1px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .reset-btn {
-    background: linear-gradient(135deg, #1a0033 0%, #4a0080 100%);
+    background: linear-gradient(135deg, #6b00b3 0%, #9d4edd 100%);
     color: white;
-    border: none;
-    padding: 15px 25px;
-    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    padding: 16px 28px;
+    border-radius: 50px;
     cursor: pointer;
     font-size: 16px;
-    margin-top: 30px;
+    margin-top: 35px;
     transition: all 0.3s;
     width: 100%;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    box-shadow: 0 6px 25px rgba(107, 0, 179, 0.4);
 }
 
 .reset-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(74, 0, 128, 0.4);
+    box-shadow: 0 10px 35px rgba(107, 0, 179, 0.6);
+    background: linear-gradient(135deg, #7d00cc 0%, #b35eff 100%);
 }
 
-/* ========================================
-   PRODUCTS GRID - MODERN LAYOUT
-   ======================================== */
+ 
 .products-grid {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
-    gap: 30px !important;
+    gap: 35px !important;
     padding: 0 !important;
     margin: 0 !important;
     list-style: none !important;
 }
 
- 
 .product {
     width: 100% !important;
-    background: white !important;
-    border-radius: 20px !important;
+    background: linear-gradient(135deg, rgba(10, 0, 21, 0.8) 0%, rgba(45, 27, 78, 0.6) 100%) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(157, 78, 221, 0.3) !important;
+    border-radius: 25px !important;
     overflow: hidden !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
     display: flex !important;
     flex-direction: column !important;
-    border: none !important;
     margin: 0 !important;
 }
 
 .product:hover {
-    transform: translateY(-12px) !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
+    transform: translateY(-15px) scale(1.02) !important;
+    box-shadow: 0 20px 50px rgba(157, 78, 221, 0.4) !important;
+    border-color: rgba(199, 125, 255, 0.6) !important;
 }
 
 .product.out-of-stock {
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .product > a {
@@ -309,9 +341,9 @@ body {
 .product-thumb {
     position: relative;
     width: 100% !important;
-    height: 320px !important;
+    height: 340px !important;
     overflow: hidden;
-    background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+    background: linear-gradient(135deg, #1a0033 0%, #2d1b4e 100%);
     flex-shrink: 0;
 }
 
@@ -322,95 +354,109 @@ body {
     position: absolute !important;
     top: 0;
     left: 0;
-    transition: opacity 1s ease, transform 0.5s ease;
+    transition: opacity 1s ease, transform 0.6s ease;
 }
 
 .product:hover .product-thumb img {
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
  
 .stock-badge {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    background: rgba(76, 175, 80, 0.95);
+    top: 18px;
+    right: 18px;
+    background: linear-gradient(135deg, #00c853 0%, #64dd17 100%);
     backdrop-filter: blur(10px);
     color: white;
-    padding: 8px 18px;
-    border-radius: 25px;
+    padding: 10px 20px;
+    border-radius: 30px;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 800;
     z-index: 10;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    letter-spacing: 1px;
+    box-shadow: 0 6px 20px rgba(0, 200, 83, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .stock-badge.out {
-    background: rgba(244, 67, 54, 0.95);
-    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+    background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+    box-shadow: 0 6px 20px rgba(211, 47, 47, 0.4);
 }
 
  
 .product-info {
-    padding: 25px !important;
+    padding: 28px !important;
     flex: 1;
     display: flex !important;
     flex-direction: column !important;
-    gap: 12px;
+    gap: 15px;
+    background: linear-gradient(180deg, rgba(10, 0, 21, 0.4) 0%, rgba(10, 0, 21, 0.8) 100%);
 }
 
 .product-name {
-    font-size: 1.15em !important;
+    font-size: 1.2em !important;
     font-weight: 700 !important;
-    color: #1a0033 !important;
+    color: white !important;
     line-height: 1.5 !important;
-    min-height: 55px;
+    min-height: 60px;
     margin: 0 !important;
+    text-shadow: 1px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .product-price {
-    font-size: 1.8em !important;
-    font-weight: 800 !important;
-    color: #4a0080 !important;
+    font-size: 2em !important;
+    font-weight: 900 !important;
+    background: linear-gradient(135deg, #9d4edd 0%, #c77dff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-top: auto !important;
     margin-bottom: 0 !important;
+    text-shadow: 2px 4px 15px rgba(157, 78, 221, 0.3);
 }
 
 .product-price.out-of-stock {
-    color: #f44336 !important;
-    font-size: 1.2em !important;
-    font-weight: 700 !important;
+    background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.3em !important;
+    font-weight: 800 !important;
 }
 
  
 .no-results {
     text-align: center;
-    padding: 100px 40px;
-    color: #666;
+    padding: 120px 40px;
+    color: rgba(255, 255, 255, 0.7);
     display: none;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    background: linear-gradient(135deg, rgba(107, 0, 179, 0.15) 0%, rgba(45, 27, 78, 0.2) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(157, 78, 221, 0.3);
+    border-radius: 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .no-results h3 {
-    font-size: 2em;
-    margin-bottom: 20px;
-    color: #1a0033;
-    font-weight: 700;
+    font-size: 2.5em;
+    margin-bottom: 25px;
+    color: white;
+    font-weight: 800;
+    text-shadow: 2px 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .no-results p {
-    font-size: 1.2em;
+    font-size: 1.3em;
+    color: rgba(199, 125, 255, 0.8);
 }
 
-
+ 
 @media (max-width: 1200px) {
     .products-grid {
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
-        gap: 25px !important;
+        gap: 30px !important;
     }
 }
 
@@ -425,7 +471,7 @@ body {
     }
     
     .hero-section h1 {
-        font-size: 2.5em;
+        font-size: 2.8em;
     }
     
     .products-grid {
@@ -435,51 +481,51 @@ body {
 
 @media (max-width: 768px) {
     .hero-section {
-        padding: 60px 20px;
+        padding: 70px 20px;
     }
     
     .hero-section h1 {
-        font-size: 2em;
+        font-size: 2.2em;
     }
     
     .hero-section p {
-        font-size: 1em;
+        font-size: 1.1em;
     }
     
     .content-wrapper {
-        padding: 30px 15px;
+        padding: 40px 15px;
     }
     
     .products-grid {
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
-        gap: 20px !important;
+        gap: 25px !important;
     }
     
     .product-thumb {
-        height: 280px !important;
+        height: 300px !important;
     }
 }
 
 @media (max-width: 576px) {
     .hero-section {
-        padding: 40px 15px;
+        padding: 50px 15px;
     }
     
     .hero-section h1 {
-        font-size: 1.75em;
+        font-size: 1.9em;
     }
     
     .search-section {
-        padding: 30px 15px;
+        padding: 35px 15px;
     }
     
     .products-grid {
         grid-template-columns: 1fr !important;
-        gap: 20px !important;
+        gap: 25px !important;
     }
     
     .product-thumb {
-        height: 320px !important;
+        height: 340px !important;
     }
 }
 </style>
@@ -488,16 +534,17 @@ body {
      
     <div class="hero-section">
         <img src="uploads/banner.jpg" alt="" class="hero-image">
+        <div class="hero-content">
             <h1>Discover Our Products</h1>
             <p>Explore our carefully curated collection of premium products. From the latest trends to timeless classics, find exactly what you're looking for.</p>
+        </div>
     </div>
 
      
     <div class="search-section">
         <div class="search-box">
             <?php $searchValue = isset($_GET['search']) ? $_GET['search'] : ''; ?>
-        <input type="text" id="searchInput" placeholder="🔍 Search products by name..." value="<?php echo htmlspecialchars($searchValue); ?>">
-    
+            <input type="text" id="searchInput" placeholder="🔍 Search products by name..." value="<?php echo htmlspecialchars($searchValue); ?>">
         </div>
     </div>
 
@@ -545,7 +592,6 @@ body {
                 if ($results) {
                     while ($row = mysqli_fetch_assoc($results)) {
                         $item_name = htmlspecialchars($row['item_name'] ?? 'Unnamed Product');
-
                         $price = number_format($row['sell_price'], 2);
                         $itemId = $row['itemId'];
                         $stock = (int)$row['stock'];
@@ -572,23 +618,22 @@ body {
                             $cacheBuster = file_exists($img) ? filemtime($img) : time();
                             echo '<img src="' . $img . '?v=' . $cacheBuster . '" class="rotating-image" style="opacity:' . ($index === 0 ? 1 : 0) . ';">';
                         }
-                        echo '</div>'; 
+                        echo '</div>';
 
                         echo '<div class="product-info">';
                         echo '<div class="product-name">' . $item_name . '</div>';
                         echo '<div class="product-price ' . $stockClass . '">';
                         echo ($stock > 0) ? '₱' . $price : 'OUT OF STOCK';
                         echo '</div>';
-                        echo '</div>'; 
+                        echo '</div>';
 
                         echo '</a>';
-                        echo '</div>'; 
-                    } 
-                } 
+                        echo '</div>';
+                    }
+                }
                 ?>
-                </div> 
+                </div>
 
-                
                 <div class="no-results" id="noResults">
                     <h3>No products found</h3>
                     <p>Try adjusting your search or filter criteria</p>
@@ -599,7 +644,6 @@ body {
 </div>
 
 <script type="text/javascript">
-
 var productThumbs = document.querySelectorAll('.product-thumb');
 for (var i = 0; i < productThumbs.length; i++) {
     (function(container) {
@@ -691,6 +735,6 @@ function resetFilters() {
 filterProducts();
 </script>
 
-
 <?php
-include('./includes/footer.php'); ?>
+include('./includes/footer.php');
+?>

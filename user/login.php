@@ -207,7 +207,6 @@ if (isset($_POST['submit'])) {
       id="loginForm"
       novalidate>
     <h3 class="text-center mb-4">Login</h3>
-
     <div class="mb-3">
         <label class="form-label">Email address</label>
         <input type="text" class="form-control" name="email" id="email" autocomplete="off"

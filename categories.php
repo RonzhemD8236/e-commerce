@@ -31,7 +31,7 @@ $categories = [
     'Camera Accessories' => ['icon' => 'fa-toolbox', 'desc' => 'Essential gear to complete your setup']
 ];
 
-// Get product counts for each category
+  
 $categoryCounts = array();
 foreach (array_keys($categories) as $catName) {
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM item WHERE category = ?");
@@ -661,7 +661,7 @@ if ($selectedCategory) {
     margin-top: 0 !important;
 }
 
-/* Loading skeleton */
+ 
 .skeleton {
     background: linear-gradient(90deg, 
         rgba(255, 255, 255, 0.1) 25%, 

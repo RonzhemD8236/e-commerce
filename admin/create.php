@@ -35,5 +35,5 @@ include('../admin/header.php');
         <a href="index.php" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
-
+<br>
 <?php include('../includes/footer.php'); ?>

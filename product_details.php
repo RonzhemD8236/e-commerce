@@ -705,10 +705,69 @@ body::before {
         align-items: stretch;
     }
 }
-</style>
 
+ 
+
+.main-content {
+    padding-top: 80px;  
+    margin-top: 0;  
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+}
+
+ 
+.main-content::before {
+    content: '';
+    position: fixed;  
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('../uploads/login-bg.jpeg') no-repeat center center;
+    background-size: cover;
+    z-index: -1;  
+    opacity: 0.3;  
+}
+
+ 
+.product-container-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 50px 20px 100px 20px;
+    margin-top: 0;  
+}
+
+ 
+header,
+.navbar,
+.main-header {
+    position: relative;
+    z-index: 1000 !important;
+}
+
+ 
+.spacing-fix {
+    margin-bottom: 40px;  
+}
+
+ 
+body {
+    padding-top: 0;  
+}
+
+ 
+body.has-fixed-header {
+    padding-top: 70px;  
+}
+
+body.has-fixed-header .main-content {
+    padding-top: 30px;
+}
+</style>
+<br><br>
 <div class="main-content">
-<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 400px;">
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 450px;">
     <div class="product-section">
     <div class="row" style="margin-bottom: 60px; align-items: flex-end;">
         <div class="col-md-6 pe-4 d-flex align-items-end">
