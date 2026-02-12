@@ -193,8 +193,13 @@ if (function_exists('getProductReviews')) {
 
 body {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     background: #000000;  
     color: #ffffff;  
+=======
+    background: #000000;
+    color: #ffffff;
+>>>>>>> Stashed changes
 =======
     background: #000000;
     color: #ffffff;
@@ -237,7 +242,11 @@ body::before {
 
 .product-container {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     background: rgba(0, 0, 0, 0.85);  
+=======
+    background: rgba(0, 0, 0, 0.85);
+>>>>>>> Stashed changes
 =======
     background: rgba(0, 0, 0, 0.85);
 >>>>>>> Stashed changes
@@ -248,6 +257,7 @@ body::before {
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 40px;
     color: #ffffff;
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
     position: relative;
     overflow: hidden;
@@ -269,6 +279,8 @@ body::before {
 
 .product-container:hover::before {
     opacity: 0.3;
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 }
@@ -595,6 +607,7 @@ body::before {
 
 #reviewFormContainer {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     position: fixed;
     top: 50%;
     left: 50%;
@@ -789,11 +802,27 @@ body.has-fixed-header .main-content {
     color: #ffffff;
 }
 >>>>>>> Stashed changes
+=======
+    background: rgba(30, 30, 30, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#reviewFormContainer .card-body {
+    color: #ffffff;
+}
+>>>>>>> Stashed changes
 </style>
 <br><br>
 <div class="main-content">
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 450px;">
+=======
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 300px;">
+>>>>>>> Stashed changes
 =======
 <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 300px;">
 >>>>>>> Stashed changes
@@ -1184,6 +1213,7 @@ function toggleReviewForm() {
     var form = document.getElementById('reviewFormContainer');
     
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     if (!form) {
         console.error('Review form container not found');
         return;
@@ -1198,6 +1228,20 @@ function toggleReviewForm() {
 =======
     if (form.style.display === 'none' || form.style.display === '') {
         form.style.display = 'block';
+=======
+    if (form.style.display === 'none' || form.style.display === '') {
+        form.style.display = 'block';
+        
+        // Maintain scroll position
+        requestAnimationFrame(function() {
+            window.scrollTo({
+                top: currentScrollPosition,
+                behavior: 'auto'
+            });
+        });
+    } else {
+        form.style.display = 'none';
+>>>>>>> Stashed changes
         
         // Maintain scroll position
         requestAnimationFrame(function() {
@@ -1275,6 +1319,7 @@ function updateStars(rating) {
 
 function submitReview() {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     var ratingInput = document.getElementById('ratingValue');
     var form = document.getElementById('reviewForm');
     
@@ -1298,6 +1343,16 @@ function submitReview() {
     var reviewTitle = form.querySelector('[name="review_title"]');
     var reviewText = form.querySelector('[name="review_text"]');
 =======
+=======
+    var form = document.getElementById('reviewForm');
+    var ratingInput = document.getElementById('ratingValue');
+    
+    if (!ratingInput.value) {
+        alert('Please select a rating.');
+        return false;
+    }
+    
+>>>>>>> Stashed changes
     var reviewTitle = form.querySelector('[name="review_title"]').value.trim();
     var reviewText = form.querySelector('[name="review_text"]').value.trim();
 >>>>>>> Stashed changes
@@ -1349,7 +1404,11 @@ function submitReview() {
             } catch(e) {
                 console.error('Parse error:', e);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 console.log('Raw response:', xhr.responseText);
+=======
+                console.log('Response:', xhr.responseText);
+>>>>>>> Stashed changes
 =======
                 console.log('Response:', xhr.responseText);
 >>>>>>> Stashed changes
@@ -1362,8 +1421,12 @@ function submitReview() {
     
     xhr.onerror = function() {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         console.error('XHR error');
         alert('Error submitting review. Please check your connection.');
+=======
+        alert('Network error. Please check your connection and try again.');
+>>>>>>> Stashed changes
 =======
         alert('Network error. Please check your connection and try again.');
 >>>>>>> Stashed changes
@@ -1376,10 +1439,15 @@ function submitReview() {
 function deleteReview(reviewId) {
     if (!confirm('Are you sure you want to delete your review?')) {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         return;
     }
     
     console.log('Deleting review:', reviewId);
+=======
+        return false;
+    }
+>>>>>>> Stashed changes
 =======
         return false;
     }
@@ -1404,6 +1472,10 @@ function deleteReview(reviewId) {
             } catch(e) {
                 console.error('Parse error:', e);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+                console.log('Response:', xhr.responseText);
+>>>>>>> Stashed changes
 =======
                 console.log('Response:', xhr.responseText);
 >>>>>>> Stashed changes
@@ -1416,8 +1488,12 @@ function deleteReview(reviewId) {
     
     xhr.onerror = function() {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         console.error('XHR error');
         alert('Error deleting review. Please check your connection.');
+=======
+        alert('Network error. Please check your connection and try again.');
+>>>>>>> Stashed changes
 =======
         alert('Network error. Please check your connection and try again.');
 >>>>>>> Stashed changes

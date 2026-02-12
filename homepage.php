@@ -12,6 +12,9 @@ include("includes/config.php");
  
 =======
 // Fetch first 3 featured products
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 $sql = "
     SELECT i.item_id, i.description, i.short_description, i.sell_price, i.image_path, s.quantity
@@ -107,7 +110,11 @@ $products = $stmt->get_result();
     }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
      
+=======
+    /* SEARCH BAR SECTION */
+>>>>>>> Stashed changes
 =======
     /* SEARCH BAR SECTION */
 >>>>>>> Stashed changes
@@ -170,8 +177,11 @@ $products = $stmt->get_result();
     }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
      
 =======
+=======
+>>>>>>> Stashed changes
     /* FEATURE BOX */
 >>>>>>> Stashed changes
     .feature-box h4 {
@@ -252,7 +262,11 @@ $products = $stmt->get_result();
         <div class="row align-items-center">
             <div class="col-lg-6">
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                  
+=======
+                <!-- SEARCH BAR SECTION -->
+>>>>>>> Stashed changes
 =======
                 <!-- SEARCH BAR SECTION -->
 >>>>>>> Stashed changes
