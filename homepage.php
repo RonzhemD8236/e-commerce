@@ -8,7 +8,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
 include("includes/header.php");
 include("includes/config.php");
 
+<<<<<<< Updated upstream
  
+=======
+// Fetch first 3 featured products
+>>>>>>> Stashed changes
 $sql = "
     SELECT i.item_id, i.description, i.short_description, i.sell_price, i.image_path, s.quantity
     FROM item i
@@ -102,7 +106,11 @@ $products = $stmt->get_result();
         border-radius: 10px;
     }
 
+<<<<<<< Updated upstream
      
+=======
+    /* SEARCH BAR SECTION */
+>>>>>>> Stashed changes
     .search-section {
         margin: 0 0 20px 0;
         max-width: 600px;
@@ -161,7 +169,11 @@ $products = $stmt->get_result();
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
     }
 
+<<<<<<< Updated upstream
      
+=======
+    /* FEATURE BOX */
+>>>>>>> Stashed changes
     .feature-box h4 {
         color: white;
     }
@@ -239,7 +251,11 @@ $products = $stmt->get_result();
     <div class="container hero">
         <div class="row align-items-center">
             <div class="col-lg-6">
+<<<<<<< Updated upstream
                  
+=======
+                <!-- SEARCH BAR SECTION -->
+>>>>>>> Stashed changes
                 <div class="search-section">
                     <form action="/lensify/e-commerce/index.php" method="GET">
                         <div class="search-wrapper">

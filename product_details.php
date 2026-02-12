@@ -192,8 +192,13 @@ if (function_exists('getProductReviews')) {
 }
 
 body {
+<<<<<<< Updated upstream
     background: #000000;  
     color: #ffffff;  
+=======
+    background: #000000;
+    color: #ffffff;
+>>>>>>> Stashed changes
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
@@ -231,7 +236,11 @@ body::before {
 }
 
 .product-container {
+<<<<<<< Updated upstream
     background: rgba(0, 0, 0, 0.85);  
+=======
+    background: rgba(0, 0, 0, 0.85);
+>>>>>>> Stashed changes
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 40px;
@@ -239,6 +248,7 @@ body::before {
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 40px;
     color: #ffffff;
+<<<<<<< Updated upstream
     position: relative;
     overflow: hidden;
 }
@@ -259,6 +269,8 @@ body::before {
 
 .product-container:hover::before {
     opacity: 0.3;
+=======
+>>>>>>> Stashed changes
 }
 
 .product-container h2,
@@ -582,6 +594,7 @@ body::before {
 }
 
 #reviewFormContainer {
+<<<<<<< Updated upstream
     position: fixed;
     top: 50%;
     left: 50%;
@@ -764,10 +777,26 @@ body.has-fixed-header {
 body.has-fixed-header .main-content {
     padding-top: 30px;
 }
+=======
+    background: rgba(30, 30, 30, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#reviewFormContainer .card-body {
+    color: #ffffff;
+}
+>>>>>>> Stashed changes
 </style>
 <br><br>
 <div class="main-content">
+<<<<<<< Updated upstream
 <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 450px;">
+=======
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 100px 20px; margin-top: 300px;">
+>>>>>>> Stashed changes
     <div class="product-section">
     <div class="row" style="margin-bottom: 60px; align-items: flex-end;">
         <div class="col-md-6 pe-4 d-flex align-items-end">
@@ -902,16 +931,17 @@ body.has-fixed-header .main-content {
             <?php if ($isUserLoggedIn): ?>
                 <?php if ($canReview): ?>
                     <div class="mt-auto">
-                        <button class="btn btn-primary mb-4" onclick="toggleReviewForm()">
+                        <a href="/lensify/e-commerce/product_details.php?id=<?php echo $itemId; ?>">
+                        
                             <?php echo $userExistingReview ? 'Edit Your Review' : 'Write a Review'; ?>
-                        </button>
+                       </a>
                     </div>
                     
                     <div id="reviewFormContainer" style="display:none; margin-bottom: 100px;" class="card mb-4">
                         <button class="review-form-close" onclick="toggleReviewForm()">&times;</button>
                         <div class="card-body" style="padding: 30px;">
                             <h5 style="margin-bottom: 25px;"><?php echo $userExistingReview ? 'Edit Your Review' : 'Write Your Review'; ?></h5>
-                            <form id="reviewForm" onsubmit="return false;">
+                            <form id="reviewForm">
                                 <input type="hidden" name="item_id" value="<?php echo $itemId; ?>">
                                 <?php if ($userOrder && isset($userOrder['orderinfo_id'])): ?>
                                     <input type="hidden" name="orderinfo_id" value="<?php echo $userOrder['orderinfo_id']; ?>">
@@ -1153,6 +1183,7 @@ function submitCart() {
 function toggleReviewForm() {
     var form = document.getElementById('reviewFormContainer');
     
+<<<<<<< Updated upstream
     if (!form) {
         console.error('Review form container not found');
         return;
@@ -1164,6 +1195,28 @@ function toggleReviewForm() {
     } else {
         form.style.display = 'none';
         console.log('Review form closed');
+=======
+    if (form.style.display === 'none' || form.style.display === '') {
+        form.style.display = 'block';
+        
+        // Maintain scroll position
+        requestAnimationFrame(function() {
+            window.scrollTo({
+                top: currentScrollPosition,
+                behavior: 'auto'
+            });
+        });
+    } else {
+        form.style.display = 'none';
+        
+        // Maintain scroll position
+        requestAnimationFrame(function() {
+            window.scrollTo({
+                top: currentScrollPosition,
+                behavior: 'auto'
+            });
+        });
+>>>>>>> Stashed changes
     }
 }
 
@@ -1221,6 +1274,7 @@ function updateStars(rating) {
 }
 
 function submitReview() {
+<<<<<<< Updated upstream
     var ratingInput = document.getElementById('ratingValue');
     var form = document.getElementById('reviewForm');
     
@@ -1230,36 +1284,47 @@ function submitReview() {
     }
     
     if (!ratingInput || !ratingInput.value) {
+=======
+    var form = document.getElementById('reviewForm');
+    var ratingInput = document.getElementById('ratingValue');
+    
+    if (!ratingInput.value) {
+>>>>>>> Stashed changes
         alert('Please select a rating.');
-        return;
+        return false;
     }
     
+<<<<<<< Updated upstream
     var reviewTitle = form.querySelector('[name="review_title"]');
     var reviewText = form.querySelector('[name="review_text"]');
+=======
+    var reviewTitle = form.querySelector('[name="review_title"]').value.trim();
+    var reviewText = form.querySelector('[name="review_text"]').value.trim();
+>>>>>>> Stashed changes
     
     if (!reviewTitle || !reviewTitle.value.trim()) {
         alert('Please enter a review title.');
-        return;
+        return false;
     }
     
     if (reviewTitle.value.trim().length > 200) {
         alert('Review title must be 200 characters or less.');
-        return;
+        return false;
     }
     
     if (!reviewText || !reviewText.value.trim()) {
         alert('Please enter your review text.');
-        return;
+        return false;
     }
     
     if (reviewText.value.trim().length < 10) {
         alert('Review must be at least 10 characters long.');
-        return;
+        return false;
     }
     
     if (reviewText.value.trim().length > 2000) {
         alert('Review must be 2000 characters or less.');
-        return;
+        return false;
     }
     
     console.log('Submitting review...');
@@ -1283,7 +1348,11 @@ function submitReview() {
                 }
             } catch(e) {
                 console.error('Parse error:', e);
+<<<<<<< Updated upstream
                 console.log('Raw response:', xhr.responseText);
+=======
+                console.log('Response:', xhr.responseText);
+>>>>>>> Stashed changes
                 alert('Error submitting review. Please try again.');
             }
         } else {
@@ -1292,19 +1361,29 @@ function submitReview() {
     };
     
     xhr.onerror = function() {
+<<<<<<< Updated upstream
         console.error('XHR error');
         alert('Error submitting review. Please check your connection.');
+=======
+        alert('Network error. Please check your connection and try again.');
+>>>>>>> Stashed changes
     };
     
     xhr.send(formData);
+    return false;
 }
 
 function deleteReview(reviewId) {
     if (!confirm('Are you sure you want to delete your review?')) {
+<<<<<<< Updated upstream
         return;
     }
     
     console.log('Deleting review:', reviewId);
+=======
+        return false;
+    }
+>>>>>>> Stashed changes
     
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "review/delete_review.php", true);
@@ -1324,6 +1403,10 @@ function deleteReview(reviewId) {
                 }
             } catch(e) {
                 console.error('Parse error:', e);
+<<<<<<< Updated upstream
+=======
+                console.log('Response:', xhr.responseText);
+>>>>>>> Stashed changes
                 alert('Error deleting review.');
             }
         } else {
@@ -1332,11 +1415,16 @@ function deleteReview(reviewId) {
     };
     
     xhr.onerror = function() {
+<<<<<<< Updated upstream
         console.error('XHR error');
         alert('Error deleting review. Please check your connection.');
+=======
+        alert('Network error. Please check your connection and try again.');
+>>>>>>> Stashed changes
     };
     
     xhr.send('review_id=' + reviewId);
+    return false;
 }
 <?php endif; ?>
 </script>

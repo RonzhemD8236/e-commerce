@@ -110,7 +110,13 @@ if (strpos($current_dir, '/user') !== false ||
 
 <nav class="navbar navbar-expand-lg navbar-light">
     <div class="container-fluid">
+<<<<<<< Updated upstream
         <a class="navbar-brand fw-bold" href="/lensify/e-commerce/homepage.php">Lensify</a>
+=======
+        <a class="navbar-brand fw-bold" href="/lensify/e-commerce/homepage.php">
+            Lensify
+        </a>
+>>>>>>> Stashed changes
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#navbarUser" aria-controls="navbarUser" aria-expanded="false"
